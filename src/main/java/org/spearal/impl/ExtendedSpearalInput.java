@@ -34,16 +34,13 @@ public interface ExtendedSpearalInput extends SpearalInput {
 //	Object readAny(Type type) throws IOException;
 	Object readAny(int parameterizedType) throws IOException;
 	void skipAny(int parameterizedType) throws IOException;
-	
-	Class<?> readClass(int parameterizedType) throws IOException;
-	Object readBean(int parameterizedType) throws IOException;
-	
-	Enum<?> readEnum(int parameterizedType) throws IOException;
 
 	String readString(int parameterizedType) throws IOException;
 	long readIntegral(int parameterizedType) throws IOException;
 	double readFloating(int parameterizedType) throws IOException;
 	Date readDate(int parameterizedType) throws IOException;
+	
+	byte[] readByteArray(int parameterizedType) throws IOException;
 	
 	Collection<?> readCollection(int parameterizedType) throws IOException;
 	void readCollection(int parameterizedType, Object holder, Property property)
@@ -52,4 +49,8 @@ public interface ExtendedSpearalInput extends SpearalInput {
 	Map<?, ?> readMap(int parameterizedType) throws IOException;
 	void readMap(int parameterizedType, Object holder, Property property)
 		throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException;
+	
+	Enum<?> readEnum(int parameterizedType) throws IOException;
+	Class<?> readClass(int parameterizedType) throws IOException;
+	Object readBean(int parameterizedType) throws IOException;
 }

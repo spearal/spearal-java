@@ -19,7 +19,7 @@ package org.spearal.impl;
 
 import static org.spearal.SpearalType.BEAN;
 import static org.spearal.SpearalType.BIG_INTEGRAL;
-import static org.spearal.SpearalType.BYTES;
+import static org.spearal.SpearalType.BYTE_ARRAY;
 import static org.spearal.SpearalType.CLASS;
 import static org.spearal.SpearalType.COLLECTION;
 import static org.spearal.SpearalType.DATE;
@@ -493,15 +493,27 @@ public class SpearalOutputImpl implements ExtendedSpearalOutput {
 		writeLongData(value.getTime());
 	}
 
+	@Override
 	public void writeByteArray(byte[] value) throws IOException {
-		final int length0 = unsignedIntLength0(value.length);
 		
-		ensureCapacity(length0 + 2);
-		buffer[position++] = (byte)(BYTES.id() | length0);
-		writeUnsignedIntValue(value.length, length0);
-
-		flushBuffer();
-		out.write(value);
+		int reference = storedObjects.putIfAbsent(value);
+		
+		if (reference != -1) {
+			int length0 = unsignedIntLength0(reference);
+			ensureCapacity(length0 + 2);
+			buffer[position++] = (byte)(BYTE_ARRAY.id() | 0x08 | length0);
+			writeUnsignedIntValue(reference, length0);
+		}
+		else {
+			int length0 = unsignedIntLength0(value.length);
+			
+			ensureCapacity(length0 + 2);
+			buffer[position++] = (byte)(BYTE_ARRAY.id() | length0);
+			writeUnsignedIntValue(value.length, length0);
+	
+			flushBuffer();
+			out.write(value);
+		}
 	}
 
 	@Override

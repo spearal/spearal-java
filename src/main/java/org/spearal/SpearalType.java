@@ -29,25 +29,26 @@ public enum SpearalType {
 	TRUE(0x01),
 	FALSE(0x02),
 	
-	FLOATING(0x03),
-	DATE(0x04),
+	DATE(0x03),
 	
 	// 4 bits of parameters (0x10...0xf0).
 
 	INTEGRAL(0x10),
 	BIG_INTEGRAL(0x20),
 	
-	STRING(0x30),
+	FLOATING(0x30),
+	BIG_FLOATING(0x40),
+
+	STRING(0x50),
 	
-	BYTES(0x40),
+	BYTE_ARRAY(0x60),
+	ARRAY(0x70),
 	
-	COLLECTION(0x50),
-	MAP(0x60),
+	COLLECTION(0x80),
+	MAP(0x90),
 	
 	ENUM(0xd0),
-	
 	CLASS(0xe0),
-	
 	BEAN(0xf0);
 	
 	private static final SpearalType[] SIO_TYPES;

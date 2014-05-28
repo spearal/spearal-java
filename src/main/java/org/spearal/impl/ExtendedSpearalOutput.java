@@ -48,12 +48,13 @@ public interface ExtendedSpearalOutput extends SpearalOutput {
 	void writeString(String value) throws IOException;
 	void writeDate(Date value) throws IOException;
 	
-	void writeClass(Class<?> value) throws IOException;
-	void writeBean(Object value) throws IOException;
-	
-	void writeEnum(Enum<?> value) throws IOException;
-	
 	void writeArray(Object value) throws IOException;
+	void writeByteArray(byte[] value) throws IOException;
+	
 	void writeCollection(Collection<?> value) throws IOException;
 	void writeMap(Map<?, ?> value) throws IOException;
+	
+	void writeEnum(Enum<?> value) throws IOException;
+	void writeClass(Class<?> value) throws IOException;
+	void writeBean(Object value) throws IOException;
 }

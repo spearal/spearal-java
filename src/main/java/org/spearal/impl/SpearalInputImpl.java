@@ -91,6 +91,7 @@ public class SpearalInputImpl implements ExtendedSpearalInput {
 	@Override
     public Object readAny(int parameterizedType) throws IOException {
         switch (SpearalType.valueOf(parameterizedType)) {
+        
         case NULL:
         	return null;
         
@@ -98,28 +99,42 @@ public class SpearalInputImpl implements ExtendedSpearalInput {
         	return Boolean.TRUE;
         case FALSE:
         	return Boolean.FALSE;
-        	
-        case FLOATING:
-        	return Double.valueOf(readFloating(parameterizedType));
-        	
+
         case DATE:
         	return readDate(parameterizedType);
 
         case INTEGRAL:
         	return Long.valueOf(readIntegral(parameterizedType));
-        
+        case BIG_INTEGRAL:
+        	throw new UnsupportedOperationException("Not implemented");
+        	
+        case FLOATING:
+        	return Double.valueOf(readFloating(parameterizedType));
+        case BIG_FLOATING:
+        	throw new UnsupportedOperationException("Not implemented");
+        	
         case STRING:
         	return readString(parameterizedType);
-            
-        case BEAN:
-        	return readBean(parameterizedType);
+        
+        case BYTE_ARRAY:
+        	return readByteArray(parameterizedType);
+        case ARRAY:
+        	throw new UnsupportedOperationException("Not implemented");
             
         case COLLECTION:
         	return readCollection(parameterizedType);
-
-        default:
-        	throw new RuntimeException("Unexpected type: " + parameterizedType);
+        case MAP:
+        	return readMap(parameterizedType);
+            
+        case ENUM:
+        	return readEnum(parameterizedType);
+        case CLASS:
+        	return readClass(parameterizedType);
+        case BEAN:
+        	return readBean(parameterizedType);
         }
+        
+        throw new RuntimeException("Unexpected type: " + parameterizedType);
     }
 
     @Override
@@ -338,6 +353,22 @@ public class SpearalInputImpl implements ExtendedSpearalInput {
     }
     
     @Override
+	public byte[] readByteArray(int parameterizedType) throws IOException {
+    	boolean reference = (parameterizedType & 0x08) != 0;
+    	int length0 = (parameterizedType & 0x03);
+    	
+    	ensureAvailable(length0 + 1);
+    	int indexOrLength = readUnsignedIntegerValue(length0);
+    	
+    	if (reference)
+    		return (byte[])storedObjects.get(indexOrLength);
+    	
+    	byte[] bytes = new byte[indexOrLength];
+    	readFully(bytes, 0, indexOrLength);
+		return bytes;
+	}
+
+	@Override
 	public Collection<?> readCollection(int parameterizedType) throws IOException {
     	boolean reference = (parameterizedType & 0x08) != 0;
     	int length0 = (parameterizedType & 0x03);
