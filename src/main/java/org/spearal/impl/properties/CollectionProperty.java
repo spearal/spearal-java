@@ -23,10 +23,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
 
+import org.spearal.SpearalType;
 import org.spearal.configurable.ObjectWriterProvider.ObjectWriter;
 import org.spearal.impl.ExtendedSpearalInput;
 import org.spearal.impl.ExtendedSpearalOutput;
-import org.spearal.impl.SpearalType;
 
 /**
  * @author Franck WOLFF
@@ -52,9 +52,6 @@ public class CollectionProperty extends AbstractNonPrimitiveProperty {
 
 	public CollectionProperty(String name, Field field, Method getter, Method setter) {
 		super(name, field, getter, setter);
-		
-		if (!canCreateProperty(getType(field, getter)))
-			throw new RuntimeException("Not a Collection property: " + getType(field, getter) + " " + name);
 	}
 
 	@Override

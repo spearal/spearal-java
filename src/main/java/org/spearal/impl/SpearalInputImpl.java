@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.spearal.SpearalContext;
+import org.spearal.SpearalType;
 import org.spearal.configurable.PropertyFactory.Property;
 import org.spearal.impl.util.TypeUtil;
 import org.spearal.impl.util.UnmodifiableArray;
@@ -88,8 +89,8 @@ public class SpearalInputImpl implements ExtendedSpearalInput {
 //	}
 
 	@Override
-    public Object readAny(int type) throws IOException {
-        switch (SpearalType.valueOf(type)) {
+    public Object readAny(int parameterizedType) throws IOException {
+        switch (SpearalType.valueOf(parameterizedType)) {
         case NULL:
         	return null;
         
@@ -99,38 +100,55 @@ public class SpearalInputImpl implements ExtendedSpearalInput {
         	return Boolean.FALSE;
         	
         case FLOATING:
-        	return Double.valueOf(readFloating(type));
+        	return Double.valueOf(readFloating(parameterizedType));
         	
         case DATE:
-        	return readDate(type);
+        	return readDate(parameterizedType);
 
         case INTEGRAL:
-        	return Long.valueOf(readIntegral(type));
+        	return Long.valueOf(readIntegral(parameterizedType));
         
         case STRING:
-        	return readString(type);
+        	return readString(parameterizedType);
             
         case BEAN:
-        	return readBean(type);
+        	return readBean(parameterizedType);
             
         case COLLECTION:
-        	return readCollection(type);
+        	return readCollection(parameterizedType);
 
         default:
-        	throw new RuntimeException("Unexpected type: " + type);
+        	throw new RuntimeException("Unexpected type: " + parameterizedType);
         }
     }
 
     @Override
-	public void skipAny(int type) throws IOException {
+	public void skipAny(int parameterizedType) throws IOException {
     	// TODO
-		readAny(type);
+		readAny(parameterizedType);
 	}
 
 	@Override
-    public Object readBean(int type) throws IOException {
-    	boolean reference = (type & 0x08) != 0;
-    	int length0 = (type & 0x03);
+	public Class<?> readClass(int parameterizedType) throws IOException {
+		int length0 = (parameterizedType & 0x03);
+    	
+		ensureAvailable(length0 + 1);
+    	int indexOrLength = readUnsignedIntegerValue(length0);
+    	
+    	String className = readStringData(indexOrLength);
+		
+    	try {
+			return context.loadClass(context.getClassNameAlias(className));
+		}
+    	catch (ClassNotFoundException e) {
+    		throw new IOException(e);
+		}
+	}
+
+	@Override
+    public Object readBean(int parameterizedType) throws IOException {
+    	boolean reference = (parameterizedType & 0x08) != 0;
+    	int length0 = (parameterizedType & 0x03);
     	
     	ensureAvailable(length0 + 1);
     	int indexOrLength = readUnsignedIntegerValue(length0);
@@ -183,11 +201,35 @@ public class SpearalInputImpl implements ExtendedSpearalInput {
     	// TODO
     	readAny();
     }
-    
-    @Override
-    public String readString(int type) throws IOException {
-    	boolean reference = (type & 0x04) != 0;
-    	int length0 = (type & 0x03);
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+	@Override
+	public Enum<?> readEnum(int parameterizedType) throws IOException {
+		int length0 = (parameterizedType & 0x03);
+    	
+		ensureAvailable(length0 + 1);
+    	int indexOrLength = readUnsignedIntegerValue(length0);
+    	
+    	String className = readStringData(indexOrLength);
+		
+		Class<? extends Enum> cls;
+    	try {
+			cls = (Class<? extends Enum>)context.loadClass(context.getClassNameAlias(className));
+		}
+    	catch (ClassNotFoundException e) {
+			throw new IOException(e);
+		}
+    	
+    	ensureAvailable(1);
+    	String value = readString(buffer[position++] & 0xff);
+    	
+    	return Enum.valueOf(cls, value);
+	}
+
+	@Override
+    public String readString(int parameterizedType) throws IOException {
+    	boolean reference = (parameterizedType & 0x04) != 0;
+    	int length0 = (parameterizedType & 0x03);
     	
     	ensureAvailable(length0 + 1);
     	int indexOrLength = readUnsignedIntegerValue(length0);
@@ -247,8 +289,8 @@ public class SpearalInputImpl implements ExtendedSpearalInput {
     }
     
     @Override
-    public long readIntegral(int type) throws IOException {
-    	final int length0 = (type & 0x07);
+    public long readIntegral(int parameterizedType) throws IOException {
+    	final int length0 = (parameterizedType & 0x07);
     	
     	ensureAvailable(length0);
     	final byte[] buffer = this.buffer;
@@ -277,28 +319,28 @@ public class SpearalInputImpl implements ExtendedSpearalInput {
 		
 		this.position = position;
 		
-		if ((type & 0x08) != 0)
+		if ((parameterizedType & 0x08) != 0)
 			v = -v;
 		
 		return v;
     }
     
     @Override
-    public double readFloating(int type) throws IOException {
+    public double readFloating(int parameterizedType) throws IOException {
     	ensureAvailable(8);
     	return Double.longBitsToDouble(readLongData());
     }
     
     @Override
-    public Date readDate(int type) throws IOException {
+    public Date readDate(int parameterizedType) throws IOException {
     	ensureAvailable(8);
     	return new Date(readLongData());
     }
     
     @Override
-	public Collection<?> readCollection(int type) throws IOException {
-    	boolean reference = (type & 0x08) != 0;
-    	int length0 = (type & 0x03);
+	public Collection<?> readCollection(int parameterizedType) throws IOException {
+    	boolean reference = (parameterizedType & 0x08) != 0;
+    	int length0 = (parameterizedType & 0x03);
     	
     	ensureAvailable(length0 + 1);
     	int indexOrLength = readUnsignedIntegerValue(length0);
@@ -316,11 +358,11 @@ public class SpearalInputImpl implements ExtendedSpearalInput {
 	}
     
     @Override
-	public void readCollection(int type, Object holder, Property property)
+	public void readCollection(int parameterizedType, Object holder, Property property)
 		throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException {
     	
-    	boolean reference = (type & 0x08) != 0;
-    	int length0 = (type & 0x03);
+    	boolean reference = (parameterizedType & 0x08) != 0;
+    	int length0 = (parameterizedType & 0x03);
     	
     	ensureAvailable(length0 + 1);
     	int indexOrLength = readUnsignedIntegerValue(length0);
@@ -359,9 +401,9 @@ public class SpearalInputImpl implements ExtendedSpearalInput {
 	}
 
 	@Override
-	public Map<?, ?> readMap(int type) throws IOException {
-    	boolean reference = (type & 0x08) != 0;
-    	int length0 = (type & 0x03);
+	public Map<?, ?> readMap(int parameterizedType) throws IOException {
+    	boolean reference = (parameterizedType & 0x08) != 0;
+    	int length0 = (parameterizedType & 0x03);
     	
     	ensureAvailable(length0 + 1);
     	int indexOrLength = readUnsignedIntegerValue(length0);
@@ -382,11 +424,11 @@ public class SpearalInputImpl implements ExtendedSpearalInput {
 	}
 
 	@Override
-	public void readMap(int type, Object holder, Property property)
+	public void readMap(int parameterizedType, Object holder, Property property)
 		throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException {
     	
-		boolean reference = (type & 0x08) != 0;
-    	int length0 = (type & 0x03);
+		boolean reference = (parameterizedType & 0x08) != 0;
+    	int length0 = (parameterizedType & 0x03);
     	
     	ensureAvailable(length0 + 1);
     	int indexOrLength = readUnsignedIntegerValue(length0);
@@ -532,7 +574,7 @@ public class SpearalInputImpl implements ExtendedSpearalInput {
 		public final Collection<Property> properties;
 		public final boolean partial;
 
-		public static ClassDescriptor forDescription(SpearalContext ctx, String description)
+		public static ClassDescriptor forDescription(SpearalContext context, String description)
 			throws ClassNotFoundException {
 			
 			String className;
@@ -548,9 +590,9 @@ public class SpearalInputImpl implements ExtendedSpearalInput {
 				propertyNames = description.substring(index + 1).split(",");
 			}
 			
-			Class<?> cls = Class.forName(ctx.getClassNameAlias(className));
+			Class<?> cls = context.loadClass(context.getClassNameAlias(className));
 			
-			Collection<Property> properties = ctx.getProperties(cls);
+			Collection<Property> properties = context.getProperties(cls);
 			Property[] serializedProperties = new Property[propertyNames.length];
 			for (int i = 0; i < propertyNames.length; i++) {
 				String propertyName = propertyNames[i];

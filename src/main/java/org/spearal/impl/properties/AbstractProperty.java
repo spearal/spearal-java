@@ -28,13 +28,11 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.util.Arrays;
 
 import org.spearal.SpearalContext;
 import org.spearal.configurable.PropertyFactory.Property;
 import org.spearal.impl.ExtendedSpearalInput;
 import org.spearal.impl.ExtendedSpearalOutput;
-import org.spearal.impl.SpearalType;
 
 /**
  * @author Franck WOLFF
@@ -56,15 +54,15 @@ public abstract class AbstractProperty implements Property {
 		ObjectMethod
 	}
 	
-	protected final String name;
-	protected final Field field;
-	protected final Method getter;
-	protected final Method setter;
+	private final String name;
+	private final Field field;
+	private final Method getter;
+	private final Method setter;
 	
-	protected final Class<?> type;
-	protected final Type genericType;
-	protected final AccessType getAccess;
-	protected final AccessType setAccess;
+	private final Class<?> type;
+	private final Type genericType;
+	private final AccessType getAccess;
+	private final AccessType setAccess;
 
 	public AbstractProperty(String name, Field field, Method getter, Method setter) {
 		if (name == null || name.length() == 0)
@@ -177,29 +175,6 @@ public abstract class AbstractProperty implements Property {
 	@Override
 	public boolean isReadOnly() {
 		return (field == null && setter == null);
-	}
-	
-	protected void checkType(Class<?>...supportedTypes) {
-		for (Class<?> supportedType : supportedTypes) {
-			if (supportedType == type)
-				return;
-		}
-		throw new IllegalArgumentException(
-			"Unsupported type " + type + " for property '" + name +
-			"' (should be in " + Arrays.toString(supportedTypes) + ")"
-		);	
-	}
-	
-	protected void throwUnsupportedTypeException(Object obj, int parameterizedType) {
-		throw new UnsupportedOperationException(
-			"Cannot set value of type " + SpearalType.valueOf(parameterizedType) +
-			" in property " + obj.getClass().getName() + "." + name
-		);
-	}
-	
-	protected void checkSetter(Object obj) {
-		if (setter == null)
-			throw new UnsupportedOperationException(obj.getClass().getName() + "." + name + " is read-only");
 	}
 	
 	protected abstract void writePrimitiveField(ExtendedSpearalOutput out, Object obj, Field field)

@@ -182,8 +182,8 @@ public class SpearalContextImpl implements SpearalContext {
 	}
 
 	@Override
-	public Class<?> loadClass(String className) {
-		return null;
+	public Class<?> loadClass(String className) throws ClassNotFoundException {
+		return Class.forName(className);
 	}
 
 	@Override

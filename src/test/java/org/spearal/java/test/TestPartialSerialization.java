@@ -53,11 +53,17 @@ public class TestPartialSerialization {
 //		System.out.println(o);
 //	}
 
+	enum Enumx {
+		BLA
+	}
+	
 	@Test
 	public void testPartialWithAlias() throws Exception {
 		System.out.println("--------------------------------------------------------");
 		System.out.println("BooleanBean(tall, female) -> ClientBooleanBean");
 
+		System.out.println(Enumx.BLA.getClass().getSuperclass());
+		
 		SpearalFactory outFactory = new SpearalFactory();
 
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();

@@ -35,12 +35,16 @@ public interface SpearalContext {
 	void prependConfiguraableItem(ConfigurableItem item);
 	
 	String getClassNameAlias(String className);
-	Class<?> loadClass(String className);
+	
+	Class<?> loadClass(String className)
+		throws ClassNotFoundException;
 	
 	Collection<Property> getProperties(Class<?> cls);
 	
-	Object instantiate(Type type) throws InstantiationException, IllegalAccessException;
-	Object instantiate(Property property) throws InstantiationException, IllegalAccessException;
+	Object instantiate(Type type)
+		throws InstantiationException, IllegalAccessException;
+	Object instantiate(Property property)
+		throws InstantiationException, IllegalAccessException;
 	Object instantiatePartial(Class<?> cls, Collection<Property> partialProperties)
 		throws InstantiationException, IllegalAccessException;
 	

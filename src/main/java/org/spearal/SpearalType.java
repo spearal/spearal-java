@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.spearal.impl;
+package org.spearal;
 
 /**
  * @author Franck WOLFF
@@ -43,6 +43,10 @@ public enum SpearalType {
 	
 	COLLECTION(0x50),
 	MAP(0x60),
+	
+	ENUM(0xd0),
+	
+	CLASS(0xe0),
 	
 	BEAN(0xf0);
 	

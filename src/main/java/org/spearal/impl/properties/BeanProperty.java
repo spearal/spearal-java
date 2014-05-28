@@ -23,10 +23,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
+import org.spearal.SpearalType;
 import org.spearal.configurable.ObjectWriterProvider.ObjectWriter;
 import org.spearal.impl.ExtendedSpearalInput;
 import org.spearal.impl.ExtendedSpearalOutput;
-import org.spearal.impl.SpearalType;
 
 /**
  * @author Franck WOLFF
@@ -47,14 +47,18 @@ public class BeanProperty extends AbstractNonPrimitiveProperty {
 	}
 	
 	public static boolean canCreateProperty(Class<?> type) {
-		return !(type.isAnnotation() || type.isPrimitive() || type.isArray() || type.isEnum() || Proxy.isProxyClass(type));
+		return !(
+			type == Class.class ||
+			type.isAnnotation() ||
+			type.isPrimitive() ||
+			type.isArray() ||
+			type.isEnum() ||
+			Proxy.isProxyClass(type)
+		);
 	}
 
 	public BeanProperty(String name, Field field, Method getter, Method setter) {
 		super(name, field, getter, setter);
-		
-		if (!canCreateProperty(getType(field, getter)))
-			throw new RuntimeException("Not a Bean property: " + getType(field, getter) + " " + name);
 	}
 
 	@Override

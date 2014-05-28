@@ -17,17 +17,19 @@
  */
 package org.spearal.impl;
 
-import static org.spearal.impl.SpearalType.BEAN;
-import static org.spearal.impl.SpearalType.BIG_INTEGRAL;
-import static org.spearal.impl.SpearalType.BYTES;
-import static org.spearal.impl.SpearalType.COLLECTION;
-import static org.spearal.impl.SpearalType.DATE;
-import static org.spearal.impl.SpearalType.FALSE;
-import static org.spearal.impl.SpearalType.FLOATING;
-import static org.spearal.impl.SpearalType.INTEGRAL;
-import static org.spearal.impl.SpearalType.MAP;
-import static org.spearal.impl.SpearalType.STRING;
-import static org.spearal.impl.SpearalType.TRUE;
+import static org.spearal.SpearalType.BEAN;
+import static org.spearal.SpearalType.BIG_INTEGRAL;
+import static org.spearal.SpearalType.BYTES;
+import static org.spearal.SpearalType.CLASS;
+import static org.spearal.SpearalType.COLLECTION;
+import static org.spearal.SpearalType.DATE;
+import static org.spearal.SpearalType.ENUM;
+import static org.spearal.SpearalType.FALSE;
+import static org.spearal.SpearalType.FLOATING;
+import static org.spearal.SpearalType.INTEGRAL;
+import static org.spearal.SpearalType.MAP;
+import static org.spearal.SpearalType.STRING;
+import static org.spearal.SpearalType.TRUE;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -40,6 +42,7 @@ import java.util.Map;
 
 import org.spearal.SpearalContext;
 import org.spearal.SpearalRequest;
+import org.spearal.SpearalType;
 import org.spearal.configurable.ObjectWriterProvider.ObjectWriter;
 import org.spearal.configurable.PropertyFactory.Property;
 import org.spearal.impl.util.ObjectIndexedCache;
@@ -120,6 +123,13 @@ public class SpearalOutputImpl implements ExtendedSpearalOutput {
 	}
 	
 	@Override
+	public void writeClass(Class<?> value) throws IOException {
+		ensureCapacity(1);
+		buffer[position] = (byte)CLASS.id();
+		writeStringData(value.getName());
+	}
+
+	@Override
 	public void writeBean(Object value) throws IOException {
 		if (value == null)
 			throw new NullPointerException();
@@ -169,6 +179,15 @@ public class SpearalOutputImpl implements ExtendedSpearalOutput {
 				}
 			}
 		}
+	}
+
+	@Override
+	public void writeEnum(Enum<?> value) throws IOException {
+		ensureCapacity(1);
+		buffer[position] = (byte)ENUM.id();
+		writeStringData(value.getClass().getName());
+		
+		writeString(value.name());
 	}
 
 	@Override
@@ -354,34 +373,6 @@ public class SpearalOutputImpl implements ExtendedSpearalOutput {
 		buffer[position] = (byte)(STRING.id());
 		
 		writeStringData(value);
-
-//		if (value.length() == 0) {
-//			ensureCapacity(2);
-//			buffer[position++] = (byte)(STRING.id());
-//			buffer[position++] = (byte)0;
-//		}
-//		else {
-//			int reference = storedStrings.putIfAbsent(value);
-//			
-//			if (reference != -1) {
-//				int length0 = unsignedIntLength0(reference);
-//				ensureCapacity(length0 + 2);
-//				buffer[position++] = (byte)(STRING.id() | 0x08 | length0);
-//				writeUnsignedIntValue(reference, length0);
-//			}
-//			else {
-//				// TODO: optimize...
-//				byte[] bytes = value.getBytes("UTF-8");
-//				
-//				int length0 = unsignedIntLength0(bytes.length);
-//				ensureCapacity(length0 + 2);
-//				buffer[position++] = (byte)(STRING.id() | length0);
-//				writeUnsignedIntValue(bytes.length, length0);
-//				
-//				flushBuffer();
-//				out.write(bytes);
-//			}
-//		}
 	}
     
     private void writeStringData(String s) throws IOException {

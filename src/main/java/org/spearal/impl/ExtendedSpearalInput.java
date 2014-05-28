@@ -32,20 +32,24 @@ import org.spearal.configurable.PropertyFactory.Property;
 public interface ExtendedSpearalInput extends SpearalInput {
 
 //	Object readAny(Type type) throws IOException;
-	Object readAny(int type) throws IOException;
-	void skipAny(int type) throws IOException;
+	Object readAny(int parameterizedType) throws IOException;
+	void skipAny(int parameterizedType) throws IOException;
 	
-	Object readBean(int type) throws IOException;
-	String readString(int type) throws IOException;
-	long readIntegral(int type) throws IOException;
-	double readFloating(int type) throws IOException;
-	Date readDate(int type) throws IOException;
+	Class<?> readClass(int parameterizedType) throws IOException;
+	Object readBean(int parameterizedType) throws IOException;
 	
-	Collection<?> readCollection(int type) throws IOException;
-	void readCollection(int type, Object holder, Property property)
+	Enum<?> readEnum(int parameterizedType) throws IOException;
+
+	String readString(int parameterizedType) throws IOException;
+	long readIntegral(int parameterizedType) throws IOException;
+	double readFloating(int parameterizedType) throws IOException;
+	Date readDate(int parameterizedType) throws IOException;
+	
+	Collection<?> readCollection(int parameterizedType) throws IOException;
+	void readCollection(int parameterizedType, Object holder, Property property)
 		throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException;
 
-	Map<?, ?> readMap(int type) throws IOException;
-	void readMap(int type, Object holder, Property property)
+	Map<?, ?> readMap(int parameterizedType) throws IOException;
+	void readMap(int parameterizedType, Object holder, Property property)
 		throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException;
 }

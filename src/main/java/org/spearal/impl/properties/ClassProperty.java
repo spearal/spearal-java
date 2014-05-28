@@ -30,76 +30,41 @@ import org.spearal.impl.ExtendedSpearalOutput;
 /**
  * @author Franck WOLFF
  */
-public class FloatProperty extends AbstractProperty {
+public class ClassProperty extends AbstractNonPrimitiveProperty {
 	
 	public static boolean canCreateWriter(Class<?> type) {
-		return type == Float.class;
+		return canCreateProperty(type);
 	}
 	
 	public static ObjectWriter createWriter() {
 		return new ObjectWriter() {
 			@Override
 			public void write(ExtendedSpearalOutput out, Object o) throws IOException {
-				out.writeFloat(((Float)o).floatValue());
+				out.writeClass((Class<?>)o);
 			}
 		};
 	}
 	
 	public static boolean canCreateProperty(Class<?> type) {
-		return (type == float.class || type == Float.class);
+		return type == Class.class;
 	}
 
-	public FloatProperty(String name, Field field, Method getter, Method setter) {
+	public ClassProperty(String name, Field field, Method getter, Method setter) {
 		super(name, field, getter, setter);
-	}
-
-	@Override
-	protected void writePrimitiveField(ExtendedSpearalOutput out, Object obj, Field field)
-		throws IOException, IllegalAccessException {
-		
-		out.writeFloat(field.getFloat(obj));
 	}
 
 	@Override
 	protected void writeObjectField(ExtendedSpearalOutput out, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 		
-		writeFloat(out, (Float)field.get(obj));
-	}
-
-	@Override
-	protected void writePrimitiveMethod(ExtendedSpearalOutput out, Object obj, Method getter)
-		throws IOException, IllegalAccessException, InvocationTargetException {
-		
-		out.writeFloat(((Float)getter.invoke(obj)).floatValue());
+		writeClass(out, (Class<?>)field.get(obj));
 	}
 
 	@Override
 	protected void writeObjectMethod(ExtendedSpearalOutput out, Object obj, Method getter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 
-		writeFloat(out, (Float)getter.invoke(obj));
-	}
-	
-	@Override
-	protected void readPrimitiveField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
-		throws IOException, IllegalAccessException {
-		
-		switch (SpearalType.valueOf(parameterizedType)) {
-		
-		case NULL:
-			field.setFloat(obj, 0.0f);
-			break;
-			
-		case FLOATING:
-			field.setFloat(obj, (float)in.readFloating(parameterizedType));
-			break;
-		
-		default:
-			Float value = readAnyConvert(parameterizedType, in);
-			field.setFloat(obj, (value != null ? value.floatValue() : 0.0f));
-			break;
-		}
+		writeClass(out, (Class<?>)getter.invoke(obj));
 	}
 	
 	@Override
@@ -112,34 +77,13 @@ public class FloatProperty extends AbstractProperty {
 			field.set(obj, null);
 			break;
 			
-		case FLOATING:
-			field.set(obj, Float.valueOf((float)in.readFloating(parameterizedType)));
+		case CLASS:
+			field.set(obj, in.readClass(parameterizedType));
 			break;
 		
 		default:
-			Float value = readAnyConvert(parameterizedType, in);
+			Object value = readAnyConvert(parameterizedType, in);
 			field.set(obj, value);
-			break;
-		}
-	}
-
-	@Override
-	protected void readPrimitiveMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
-		throws IOException, IllegalAccessException, InvocationTargetException {
-
-		switch (SpearalType.valueOf(parameterizedType)) {
-		
-		case NULL:
-			setter.invoke(obj, Float.valueOf(0.0f));
-			break;
-		
-		case FLOATING:
-			setter.invoke(obj, Float.valueOf((float)in.readFloating(parameterizedType)));
-			break;
-		
-		default:
-			Float value = readAnyConvert(parameterizedType, in);
-			setter.invoke(obj, (value != null ? value : Float.valueOf(0.0f)));
 			break;
 		}
 	}
@@ -147,28 +91,28 @@ public class FloatProperty extends AbstractProperty {
 	@Override
 	protected void readObjectMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
-
+		
 		switch (SpearalType.valueOf(parameterizedType)) {
 		
 		case NULL:
 			setter.invoke(obj, (Object)null);
 			break;
 			
-		case FLOATING:
-			setter.invoke(obj, Float.valueOf((float)in.readFloating(parameterizedType)));
+		case CLASS:
+			setter.invoke(obj, in.readClass(parameterizedType));
 			break;
 		
 		default:
-			Float value = readAnyConvert(parameterizedType, in);
+			Object value = readAnyConvert(parameterizedType, in);
 			setter.invoke(obj, value);
 			break;
 		}
 	}
-	
-	private static void writeFloat(ExtendedSpearalOutput out, Float value) throws IOException {
+
+	private static void writeClass(ExtendedSpearalOutput out, Class<?> value) throws IOException {
 		if (value == null)
 			out.writeNull();
 		else
-			out.writeFloat(value.floatValue());
+			out.writeClass(value);
 	}
 }
