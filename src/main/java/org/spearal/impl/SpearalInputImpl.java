@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -106,12 +108,12 @@ public class SpearalInputImpl implements ExtendedSpearalInput {
         case INTEGRAL:
         	return Long.valueOf(readIntegral(parameterizedType));
         case BIG_INTEGRAL:
-        	throw new UnsupportedOperationException("Not implemented");
+        	return readBigIntegral(parameterizedType);
         	
         case FLOATING:
         	return Double.valueOf(readFloating(parameterizedType));
         case BIG_FLOATING:
-        	throw new UnsupportedOperationException("Not implemented");
+        	return readBigFloating(parameterizedType);
         	
         case STRING:
         	return readString(parameterizedType);
@@ -119,7 +121,7 @@ public class SpearalInputImpl implements ExtendedSpearalInput {
         case BYTE_ARRAY:
         	return readByteArray(parameterizedType);
         case ARRAY:
-        	throw new UnsupportedOperationException("Not implemented");
+        	return readArray(parameterizedType);
             
         case COLLECTION:
         	return readCollection(parameterizedType);
@@ -341,10 +343,20 @@ public class SpearalInputImpl implements ExtendedSpearalInput {
     }
     
     @Override
+	public BigInteger readBigIntegral(int parameterizedType) throws IOException {
+    	throw new UnsupportedOperationException("Not implemented");
+	}
+
+	@Override
     public double readFloating(int parameterizedType) throws IOException {
     	ensureAvailable(8);
     	return Double.longBitsToDouble(readLongData());
     }
+
+	@Override
+	public BigDecimal readBigFloating(int parameterizedType) throws IOException {
+		throw new UnsupportedOperationException("Not implemented");
+	}
     
     @Override
     public Date readDate(int parameterizedType) throws IOException {
@@ -366,6 +378,11 @@ public class SpearalInputImpl implements ExtendedSpearalInput {
     	byte[] bytes = new byte[indexOrLength];
     	readFully(bytes, 0, indexOrLength);
 		return bytes;
+	}
+
+	@Override
+	public Object readArray(int parameterizedType) throws IOException {
+		throw new UnsupportedOperationException("Not implemented");
 	}
 
 	@Override

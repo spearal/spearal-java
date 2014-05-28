@@ -19,6 +19,8 @@ package org.spearal.impl;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
@@ -36,11 +38,17 @@ public interface ExtendedSpearalInput extends SpearalInput {
 	void skipAny(int parameterizedType) throws IOException;
 
 	String readString(int parameterizedType) throws IOException;
+	
 	long readIntegral(int parameterizedType) throws IOException;
+	BigInteger readBigIntegral(int parameterizedType) throws IOException;
+	
 	double readFloating(int parameterizedType) throws IOException;
+	BigDecimal readBigFloating(int parameterizedType) throws IOException;
+	
 	Date readDate(int parameterizedType) throws IOException;
 	
 	byte[] readByteArray(int parameterizedType) throws IOException;
+	Object readArray(int parameterizedType) throws IOException;
 	
 	Collection<?> readCollection(int parameterizedType) throws IOException;
 	void readCollection(int parameterizedType, Object holder, Property property)

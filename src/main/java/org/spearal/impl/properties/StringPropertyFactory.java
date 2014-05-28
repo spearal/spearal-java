@@ -36,8 +36,6 @@ public class StringPropertyFactory implements PropertyFactory, ObjectWriterProvi
 			return CharArrayProperty.createWriter();
 		if (CharProperty.canCreateWriter(type))
 			return CharProperty.createWriter();
-		if (CharacterArrayProperty.canCreateWriter(type))
-			return CharacterArrayProperty.createWriter();
 		return null;
 	}
 
@@ -46,8 +44,7 @@ public class StringPropertyFactory implements PropertyFactory, ObjectWriterProvi
 		return (
 			StringProperty.canCreateProperty(type) ||
 			CharArrayProperty.canCreateProperty(type) ||
-			CharProperty.canCreateProperty(type) ||
-			CharacterArrayProperty.canCreateProperty(type)
+			CharProperty.canCreateProperty(type)
 		);
 	}
 
@@ -58,9 +55,7 @@ public class StringPropertyFactory implements PropertyFactory, ObjectWriterProvi
 			return new StringProperty(name, field, getter, setter);
 		if (CharArrayProperty.canCreateProperty(type))
 			return new CharArrayProperty(name, field, getter, setter);
-		if (CharProperty.canCreateProperty(type))
-			return new CharProperty(name, field, getter, setter);
-		// CharacterArrayProperty.canCreateProperty(type)
-		return new CharacterArrayProperty(name, field, getter, setter);
+		// CharProperty.canCreateProperty(type)
+		return new CharProperty(name, field, getter, setter);
 	}
 }
