@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.spearal.java.test;
+package org.spearal.test;
 
 import org.junit.Assert;
 import org.junit.Test;

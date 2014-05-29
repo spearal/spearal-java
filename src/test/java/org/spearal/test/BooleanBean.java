@@ -1,4 +1,4 @@
-package org.spearal.java.test;
+package org.spearal.test;
 
 public class BooleanBean {
 

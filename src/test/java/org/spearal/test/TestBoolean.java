@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.spearal.java.test;
+package org.spearal.test;
 
 import java.io.IOException;
 
@@ -25,19 +25,23 @@ import org.junit.Test;
 /**
  * @author Franck WOLFF
  */
-public class TestShort extends AbstractSpearalTestUnit {
+public class TestBoolean extends AbstractSpearalTestUnit {
 
 	@Test
 	public void test() throws IOException {
-		for (int i = Short.MIN_VALUE; i <= Short.MAX_VALUE; i++) {
-			Short value = Short.valueOf((short)i);
-			byte[] data = encode(value);
-			Object clone = decode(data);
-
-			Assert.assertEquals((Math.abs(i) <= 0xff ? 2 : 3), data.length);
-			if (!(clone instanceof Long))
-				Assert.fail("Not a Long: " + clone);
-			Assert.assertEquals(value.longValue(), ((Long)clone).longValue());
-		}
+		Object value, clone;
+		byte[] data;
+		
+		value = Boolean.FALSE;
+		data = encode(value);
+		clone = decode(data);
+		
+		Assert.assertSame(value, clone);
+		
+		value = Boolean.TRUE;
+		data = encode(value);
+		clone = decode(data);
+		
+		Assert.assertSame(value, clone);
 	}
 }

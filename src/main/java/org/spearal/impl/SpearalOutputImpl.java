@@ -574,8 +574,8 @@ public class SpearalOutputImpl implements ExtendedSpearalOutput {
 		if (value <= 0xffffffffL)
 			return (value <= 0xffffffL ? 2 : 3);
 		if (value <= 0xffffffffffffL)
-			return (value <= 0xffffffffL ? 4 : 5);
-		return (value <= 0xffffffffffffL ? 6 : 7);
+			return (value <= 0xffffffffffL ? 4 : 5);
+		return (value <= 0xffffffffffffffL ? 6 : 7);
 	}
 	
 	private void writeLongData(long value) {

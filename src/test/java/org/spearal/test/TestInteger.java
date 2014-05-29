@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.spearal.java.test;
+package org.spearal.test;
 
 import java.io.IOException;
 
@@ -38,7 +38,7 @@ public class TestInteger extends AbstractSpearalTestUnit {
 		encodeDecode(-0x00010000, 4);
 		
 		for (int i = -0xFFFF; i <= 0xFFFF; i++)
-			encodeDecode(i, (Math.abs(i) <= 0xff ? 2 : 3));
+			encodeDecode(i, (Math.abs(i) <= 0xFF ? 2 : 3));
 		
 		encodeDecode(0x00010000, 4);
 		

@@ -1,4 +1,4 @@
-package org.spearal.java.test;
+package org.spearal.test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

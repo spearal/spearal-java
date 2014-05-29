@@ -15,29 +15,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.spearal.java.test;
+package org.spearal.test;
 
-import java.io.IOException;
-
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
+import org.junit.runners.Suite.SuiteClasses;
 
 /**
  * @author Franck WOLFF
  */
-public class TestByte extends AbstractSpearalTestUnit {
+@RunWith(Suite.class)
+@SuiteClasses({
+	TestSpearalType.class,
 
-	@Test
-	public void test() throws IOException {
-		for (int i = Byte.MIN_VALUE; i <= Byte.MAX_VALUE; i++) {
-			Byte value = Byte.valueOf((byte)i);
-			byte[] data = encode(value);
-			Object clone = decode(data);
-
-			Assert.assertEquals(2, data.length);
-			if (!(clone instanceof Long))
-				Assert.fail("Not a Long: " + clone);
-			Assert.assertEquals(value.longValue(), ((Long)clone).longValue());
-		}
-	}
+	TestBoolean.class,
+	
+	TestByte.class,
+	TestShort.class,
+	TestInteger.class,
+	TestLong.class,
+})
+public class AllTests {
 }
