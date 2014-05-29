@@ -34,18 +34,19 @@ import org.spearal.configurable.PropertyFactory.Property;
 public interface ExtendedSpearalInput extends SpearalInput {
 
 //	Object readAny(Type type) throws IOException;
+
 	Object readAny(int parameterizedType) throws IOException;
 	void skipAny(int parameterizedType) throws IOException;
-
-	String readString(int parameterizedType) throws IOException;
+	
+	Date readDate(int parameterizedType) throws IOException;
 	
 	long readIntegral(int parameterizedType) throws IOException;
 	BigInteger readBigIntegral(int parameterizedType) throws IOException;
 	
 	double readFloating(int parameterizedType) throws IOException;
 	BigDecimal readBigFloating(int parameterizedType) throws IOException;
-	
-	Date readDate(int parameterizedType) throws IOException;
+
+	String readString(int parameterizedType) throws IOException;
 	
 	byte[] readByteArray(int parameterizedType) throws IOException;
 	Object readArray(int parameterizedType) throws IOException;

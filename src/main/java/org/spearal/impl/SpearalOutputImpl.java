@@ -17,19 +17,19 @@
  */
 package org.spearal.impl;
 
-import static org.spearal.SpearalType.BEAN;
-import static org.spearal.SpearalType.BIG_INTEGRAL;
-import static org.spearal.SpearalType.BYTE_ARRAY;
-import static org.spearal.SpearalType.CLASS;
-import static org.spearal.SpearalType.COLLECTION;
-import static org.spearal.SpearalType.DATE;
-import static org.spearal.SpearalType.ENUM;
-import static org.spearal.SpearalType.FALSE;
-import static org.spearal.SpearalType.FLOATING;
-import static org.spearal.SpearalType.INTEGRAL;
-import static org.spearal.SpearalType.MAP;
-import static org.spearal.SpearalType.STRING;
-import static org.spearal.SpearalType.TRUE;
+import static org.spearal.impl.SpearalType.BEAN;
+import static org.spearal.impl.SpearalType.BIG_INTEGRAL;
+import static org.spearal.impl.SpearalType.BYTE_ARRAY;
+import static org.spearal.impl.SpearalType.CLASS;
+import static org.spearal.impl.SpearalType.COLLECTION;
+import static org.spearal.impl.SpearalType.DATE;
+import static org.spearal.impl.SpearalType.ENUM;
+import static org.spearal.impl.SpearalType.FALSE;
+import static org.spearal.impl.SpearalType.FLOATING;
+import static org.spearal.impl.SpearalType.INTEGRAL;
+import static org.spearal.impl.SpearalType.MAP;
+import static org.spearal.impl.SpearalType.STRING;
+import static org.spearal.impl.SpearalType.TRUE;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -42,7 +42,6 @@ import java.util.Map;
 
 import org.spearal.SpearalContext;
 import org.spearal.SpearalRequest;
-import org.spearal.SpearalType;
 import org.spearal.configurable.ObjectWriterProvider.ObjectWriter;
 import org.spearal.configurable.PropertyFactory.Property;
 import org.spearal.impl.util.ObjectIndexedCache;

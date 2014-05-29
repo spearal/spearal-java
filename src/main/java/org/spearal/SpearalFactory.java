@@ -22,7 +22,6 @@ import java.io.OutputStream;
 
 import org.spearal.impl.SpearalContextImpl;
 import org.spearal.impl.SpearalInputImpl;
-import org.spearal.impl.ExtendedSpearalOutput;
 import org.spearal.impl.SpearalOutputImpl;
 import org.spearal.impl.introspector.FieldIntrospector;
 import org.spearal.introspect.Introspector;
@@ -65,8 +64,12 @@ public class SpearalFactory {
 		return context;
 	}
 	
-	public ExtendedSpearalOutput newOutput(OutputStream out) {
+	public SpearalOutput newOutput(OutputStream out) {
 		return new SpearalOutputImpl(context, out);
+	}
+	
+	public SpearalOutput newOutput(OutputStream out, SpearalRequest request) {
+		return new SpearalOutputImpl(context, request, out);
 	}
 	
 	public SpearalInput newInput(InputStream in) {

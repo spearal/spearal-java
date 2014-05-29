@@ -109,34 +109,34 @@ public class SpearalContextImpl implements SpearalContext {
 		
 		// Converters.
 		
-		prependConfiguraableItem(new ShortConverter());
-		prependConfiguraableItem(new ByteConverter());
-		prependConfiguraableItem(new CharConverter());
-		prependConfiguraableItem(new BooleanConverter());
-		prependConfiguraableItem(new LongConverter());
-		prependConfiguraableItem(new IntConverter());
+		prependConfigurableItem(new ShortConverter());
+		prependConfigurableItem(new ByteConverter());
+		prependConfigurableItem(new CharConverter());
+		prependConfigurableItem(new BooleanConverter());
+		prependConfigurableItem(new LongConverter());
+		prependConfigurableItem(new IntConverter());
 
 		// Instantiators.
 		
-		prependConfiguraableItem(new CollectionInstantiator());
-		prependConfiguraableItem(new MapInstantiator());
+		prependConfigurableItem(new CollectionInstantiator());
+		prependConfigurableItem(new MapInstantiator());
 		
 		// StaticObjectWriterProviders & PropertyFactories
 
-		prependConfiguraableItem(new BeanPropertyFactory());
+		prependConfigurableItem(new BeanPropertyFactory());
 		
-		prependConfiguraableItem(new DatePropertyFactory());
-		prependConfiguraableItem(new MapPropertyFactory());
-		prependConfiguraableItem(new CollectionPropertyFactory());
+		prependConfigurableItem(new DatePropertyFactory());
+		prependConfigurableItem(new MapPropertyFactory());
+		prependConfigurableItem(new CollectionPropertyFactory());
 		
-		prependConfiguraableItem(new FloatingPropertyFactory());
-		prependConfiguraableItem(new BooleanPropertyFactory());
-		prependConfiguraableItem(new IntegralPropertyFactory());
-		prependConfiguraableItem(new StringPropertyFactory());
+		prependConfigurableItem(new FloatingPropertyFactory());
+		prependConfigurableItem(new BooleanPropertyFactory());
+		prependConfigurableItem(new IntegralPropertyFactory());
+		prependConfigurableItem(new StringPropertyFactory());
 	}
 	
 	@Override
-	public void prependConfiguraableItem(ConfigurableItem item) {
+	public void prependConfigurableItem(ConfigurableItem item) {
 		boolean added = false;
 		
 		if (item instanceof ClassNameAlias) {

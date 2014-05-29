@@ -32,7 +32,7 @@ public interface SpearalContext {
 
 	void initStandardConfigurables();
 	
-	void prependConfiguraableItem(ConfigurableItem item);
+	void prependConfigurableItem(ConfigurableItem item);
 	
 	String getClassNameAlias(String className);
 	

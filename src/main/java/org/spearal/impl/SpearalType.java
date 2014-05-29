@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.spearal;
+package org.spearal.impl;
 
 /**
  * @author Franck WOLFF
@@ -76,13 +76,21 @@ public enum SpearalType {
 		return id;
 	}
 	
-	public static int idOf(int parameterizedType) {
-		if (parameterizedType < 0 || parameterizedType > 0xff)
-			throw new IndexOutOfBoundsException("Illegal type: " + parameterizedType);
-		return (parameterizedType > 0x0f ? (parameterizedType & 0xf0) : parameterizedType);
-	}
-	
 	public static SpearalType valueOf(int parameterizedType) {
-		return SIO_TYPES[idOf(parameterizedType)];
+		
+		if (parameterizedType >= 0x10) {
+			if (parameterizedType <= 0xff) {
+				SpearalType type = SIO_TYPES[parameterizedType & 0xf0];
+				if (type != null)
+					return type;
+			}
+		}
+		else if (parameterizedType >= 0) {
+			SpearalType type = SIO_TYPES[parameterizedType];
+			if (type != null)
+				return type;
+		}
+		
+		throw new IllegalArgumentException("Illegal parameterized type: " + parameterizedType);
 	}
 }

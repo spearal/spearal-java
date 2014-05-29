@@ -22,10 +22,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import org.spearal.SpearalType;
 import org.spearal.configurable.ObjectWriterProvider.ObjectWriter;
 import org.spearal.impl.ExtendedSpearalInput;
 import org.spearal.impl.ExtendedSpearalOutput;
+import org.spearal.impl.SpearalType;
 
 /**
  * @author Franck WOLFF

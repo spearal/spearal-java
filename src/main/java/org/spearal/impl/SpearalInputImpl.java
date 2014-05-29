@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.spearal.SpearalContext;
-import org.spearal.SpearalType;
 import org.spearal.configurable.PropertyFactory.Property;
 import org.spearal.impl.util.TypeUtil;
 import org.spearal.impl.util.UnmodifiableArray;
