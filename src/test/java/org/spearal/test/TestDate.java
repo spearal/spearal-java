@@ -17,29 +17,34 @@
  */
 package org.spearal.test;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
+import java.io.IOException;
+import java.util.Date;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * @author Franck WOLFF
  */
-@RunWith(Suite.class)
-@SuiteClasses({
-	TestSpearalType.class,
+public class TestDate extends AbstractSpearalTestUnit {
 
-	TestNull.class,
+	@Test
+	public void test() throws IOException {
+		encodeDecode(new Date(), 9);
+		
+		encodeDecode(new Date(0L), 9);
+		
+		encodeDecode(new Date(Long.MAX_VALUE), 9);
+	}
 	
-	TestBoolean.class,
-	
-	TestDate.class,
-	
-	TestByte.class,
-	TestShort.class,
-	TestInteger.class,
-	TestLong.class,
-
-	TestString.class,
-})
-public class AllTests {
+	private void encodeDecode(Date value, int expectedSize) throws IOException {
+		byte[] data = encode(value);
+		Object clone = decode(data);
+		
+		if (expectedSize >= 0)
+			Assert.assertEquals(expectedSize, data.length);
+		if (!(clone instanceof Date))
+			Assert.fail("Not a Date: " + clone);
+		Assert.assertEquals(value, clone);
+	}
 }

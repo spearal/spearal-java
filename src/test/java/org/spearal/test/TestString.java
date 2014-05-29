@@ -29,11 +29,12 @@ public class TestString extends AbstractSpearalTestUnit {
 
 	@Test
 	public void test() throws IOException {
-		// Empty String.
+
+		// -- Empty String --
 		
 		encodeDecode("", 2);
 		
-		// String of length 1 (all UTF8 chars).
+		// -- String of length 1 (all UTF8 chars) --
 		
 		for (char c = 0; c <= 0x7F; c++)
 			encodeDecode(String.valueOf(c), 3);
@@ -51,7 +52,7 @@ public class TestString extends AbstractSpearalTestUnit {
 			encodeDecode(String.valueOf(Character.toChars(i)), 8);
 		encodeDecode(String.valueOf(Character.toChars(0x10FFFF)), 8);
 		
-		// All UTF8 chars in a single String.
+		// -- All UTF8 chars in a single String --
 		
 		StringBuilder sb = new StringBuilder(2160639);
 		for (int i = 0; i < 0xD800; i++)
