@@ -307,8 +307,9 @@ public class SpearalInputImpl implements ExtendedSpearalInput {
     @Override
     public long readIntegral(int parameterizedType) throws IOException {
     	final int length0 = (parameterizedType & 0x07);
-    	
-    	ensureAvailable(length0);
+
+    	ensureAvailable(length0 + 1);
+
     	final byte[] buffer = this.buffer;
     	int position = this.position;
     	

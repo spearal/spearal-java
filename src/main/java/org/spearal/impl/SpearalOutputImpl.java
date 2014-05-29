@@ -209,9 +209,10 @@ public class SpearalOutputImpl implements ExtendedSpearalOutput {
 	@Override
 	public void writeByte(byte value) throws IOException {
 		int inverse = 0;
-		if (value < 0 && value != Byte.MIN_VALUE) {
+		if (value < 0) {
 			inverse = 0x08;
-			value = (byte)-value;
+			if (value != Byte.MIN_VALUE)
+				value = (byte)-value;
 		}
 		
 		ensureCapacity(2);
@@ -221,19 +222,21 @@ public class SpearalOutputImpl implements ExtendedSpearalOutput {
 	
 	@Override
 	public void writeShort(short value) throws IOException {
-		int inverse = 0;
+		int inverse;
 		int length0;
 		if (value < 0) {
+			inverse = 0x08;
 			if (value == Short.MIN_VALUE)
 				length0 = 1;
 			else {
-				inverse = 0x08;
 				value = (short)-value;
 				length0 = (value <= 0xff ? 0 : 1);
 			}
 		}
-		else
+		else {
+			inverse = 0;
 			length0 = (value <= 0xff ? 0 : 1);
+		}
 		
 		ensureCapacity(length0 + 2);
 		buffer[position++] = (byte)(INTEGRAL.id() | inverse | length0);
@@ -245,19 +248,21 @@ public class SpearalOutputImpl implements ExtendedSpearalOutput {
 	
 	@Override
 	public void writeInt(int value) throws IOException {
-		int inverse = 0;
+		int inverse;
 		int length0;
 		if (value < 0) {
+			inverse = 0x08;
 			if (value == Integer.MIN_VALUE)
 				length0 = 3;
 			else {
-				inverse = 0x08;
 				value = -value;
 				length0 = unsignedIntLength0(value);
 			}
 		}
-		else
+		else {
+			inverse = 0;
 			length0 = unsignedIntLength0(value);
+		}
 		
 		ensureCapacity(length0 + 2);
 		buffer[position++] = (byte)(INTEGRAL.id() | inverse | length0);
