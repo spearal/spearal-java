@@ -36,6 +36,8 @@ import org.junit.runners.Suite.SuiteClasses;
 	TestShort.class,
 	TestInteger.class,
 	TestLong.class,
+
+	TestString.class,
 })
 public class AllTests {
 }

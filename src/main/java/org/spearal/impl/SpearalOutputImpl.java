@@ -400,7 +400,7 @@ public class SpearalOutputImpl implements ExtendedSpearalOutput {
         else {
             final int count = utfByteCount(s);
             int length0 = unsignedIntLength0(count);
-            buffer[position++] |= (byte)(0x04 | length0);
+            buffer[position++] |= (byte)length0;
             ensureCapacity(length0 + 1);
         	writeUnsignedIntValue(count, length0);
             
