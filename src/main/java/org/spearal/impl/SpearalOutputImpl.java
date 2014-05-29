@@ -29,6 +29,7 @@ import static org.spearal.impl.SpearalType.FLOATING;
 import static org.spearal.impl.SpearalType.INTEGRAL;
 import static org.spearal.impl.SpearalType.MAP;
 import static org.spearal.impl.SpearalType.STRING;
+import static org.spearal.impl.SpearalType.TIMESTAMP;
 import static org.spearal.impl.SpearalType.TRUE;
 
 import java.io.IOException;
@@ -502,7 +503,7 @@ public class SpearalOutputImpl implements ExtendedSpearalOutput {
 	public void writeTimestamp(Timestamp value) throws IOException {
 		ensureCapacity(13);
 
-		buffer[position++] = (byte)DATE.id();
+		buffer[position++] = (byte)TIMESTAMP.id();
 		writeLongData(value.getTime());
 		writeIntData(value.getNanos());
 	}

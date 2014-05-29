@@ -31,11 +31,11 @@ import org.spearal.configurable.ClassNameAlias;
 import org.spearal.configurable.ConfigurableItem;
 import org.spearal.configurable.Converter;
 import org.spearal.configurable.ObjectWriterProvider;
+import org.spearal.configurable.ObjectWriterProvider.ObjectWriter;
 import org.spearal.configurable.PropertyFactory;
+import org.spearal.configurable.PropertyFactory.Property;
 import org.spearal.configurable.PropertyInstantiator;
 import org.spearal.configurable.TypeInstantiator;
-import org.spearal.configurable.ObjectWriterProvider.ObjectWriter;
-import org.spearal.configurable.PropertyFactory.Property;
 import org.spearal.impl.converter.BooleanConverter;
 import org.spearal.impl.converter.ByteConverter;
 import org.spearal.impl.converter.CharConverter;
@@ -47,7 +47,7 @@ import org.spearal.impl.instantiator.MapInstantiator;
 import org.spearal.impl.properties.BeanPropertyFactory;
 import org.spearal.impl.properties.BooleanPropertyFactory;
 import org.spearal.impl.properties.CollectionPropertyFactory;
-import org.spearal.impl.properties.DatePropertyFactory;
+import org.spearal.impl.properties.DateTimestampPropertyFactory;
 import org.spearal.impl.properties.FloatingPropertyFactory;
 import org.spearal.impl.properties.IntegralPropertyFactory;
 import org.spearal.impl.properties.MapPropertyFactory;
@@ -125,7 +125,7 @@ public class SpearalContextImpl implements SpearalContext {
 
 		prependConfigurableItem(new BeanPropertyFactory());
 		
-		prependConfigurableItem(new DatePropertyFactory());
+		prependConfigurableItem(new DateTimestampPropertyFactory());
 		prependConfigurableItem(new MapPropertyFactory());
 		prependConfigurableItem(new CollectionPropertyFactory());
 		

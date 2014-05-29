@@ -33,6 +33,7 @@ import org.junit.runners.Suite.SuiteClasses;
 	TestBoolean.class,
 	
 	TestDate.class,
+	TestTimestamp.class,
 	
 	TestByte.class,
 	TestShort.class,

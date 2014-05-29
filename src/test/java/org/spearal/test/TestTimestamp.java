@@ -18,6 +18,7 @@
 package org.spearal.test;
 
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.Date;
 
 import org.junit.Assert;
@@ -26,31 +27,23 @@ import org.junit.Test;
 /**
  * @author Franck WOLFF
  */
-public class TestDate extends AbstractSpearalTestUnit {
+public class TestTimestamp extends AbstractSpearalTestUnit {
 
 	@Test
 	public void test() throws IOException {
-		encodeDecode(new Date(), 9);
-		encodeDecode(new Date(0L), 9);
-		encodeDecode(new Date(Long.MAX_VALUE), 9);
-
-		encodeDecode(new java.sql.Date(new Date().getTime()), 9);
-		encodeDecode(new java.sql.Date(0L), 9);
-		encodeDecode(new java.sql.Date(Long.MAX_VALUE), 9);
-
-		encodeDecode(new java.sql.Time(new Date().getTime()), 9);
-		encodeDecode(new java.sql.Time(0L), 9);
-		encodeDecode(new java.sql.Time(Long.MAX_VALUE), 9);
+		encodeDecode(new Timestamp(new Date().getTime()), 13);
+		encodeDecode(new Timestamp(0L), 13);
+		encodeDecode(new Timestamp(Long.MAX_VALUE), 13);
 	}
 	
-	private void encodeDecode(Date value, int expectedSize) throws IOException {
+	private void encodeDecode(Timestamp value, int expectedSize) throws IOException {
 		byte[] data = encode(value);
 		Object clone = decode(data);
 		
 		if (expectedSize >= 0)
 			Assert.assertEquals(expectedSize, data.length);
-		if (!(clone instanceof Date))
-			Assert.fail("Not a Date: " + clone);
+		if (!(clone instanceof Timestamp))
+			Assert.fail("Not a Timestamp: " + clone);
 		Assert.assertEquals(value, clone);
 	}
 }

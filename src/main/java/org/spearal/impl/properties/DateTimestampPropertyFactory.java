@@ -26,20 +26,29 @@ import org.spearal.configurable.PropertyFactory;
 /**
  * @author Franck WOLFF
  */
-public class DatePropertyFactory implements PropertyFactory, ObjectWriterProvider {
+public class DateTimestampPropertyFactory implements PropertyFactory, ObjectWriterProvider {
 	
 	@Override
 	public ObjectWriter getWriter(Class<?> type) {
-		return (DateProperty.canCreateWriter(type) ? DateProperty.createWriter() : null);
+		if (DateProperty.canCreateWriter(type))
+			return DateProperty.createWriter();
+		if (TimestampProperty.canCreateWriter(type))
+			return TimestampProperty.createWriter();
+		return null;
 	}
 
 	@Override
 	public boolean canCreateProperty(Class<?> type) {
-		return DateProperty.canCreateProperty(type);
+		return (
+			DateProperty.canCreateProperty(type) ||
+			TimestampProperty.canCreateProperty(type)
+		);
 	}
 
 	@Override
 	public Property createProperty(String name, Field field, Method getter, Method setter) {
-		return new DateProperty(name, field, getter, setter);
+		if (DateProperty.canCreateProperty(AbstractProperty.getType(field, getter)))
+			return new DateProperty(name, field, getter, setter);
+		return new TimestampProperty(name, field, getter, setter);
 	}
 }
