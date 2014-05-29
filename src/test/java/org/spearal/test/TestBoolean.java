@@ -29,19 +29,22 @@ public class TestBoolean extends AbstractSpearalTestUnit {
 
 	@Test
 	public void test() throws IOException {
-		Object value, clone;
+		Boolean value;
 		byte[] data;
+		Object clone;
 		
 		value = Boolean.FALSE;
 		data = encode(value);
 		clone = decode(data);
 		
+		Assert.assertEquals(1, data.length);
 		Assert.assertSame(value, clone);
 		
 		value = Boolean.TRUE;
 		data = encode(value);
 		clone = decode(data);
 		
+		Assert.assertEquals(1, data.length);
 		Assert.assertSame(value, clone);
 	}
 }

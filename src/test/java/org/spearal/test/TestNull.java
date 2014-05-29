@@ -17,25 +17,26 @@
  */
 package org.spearal.test;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
+import java.io.IOException;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * @author Franck WOLFF
  */
-@RunWith(Suite.class)
-@SuiteClasses({
-	TestSpearalType.class,
+public class TestNull extends AbstractSpearalTestUnit {
 
-	TestNull.class,
-	
-	TestBoolean.class,
-	
-	TestByte.class,
-	TestShort.class,
-	TestInteger.class,
-	TestLong.class,
-})
-public class AllTests {
+	@Test
+	public void test() throws IOException {
+		Object value, clone;
+		byte[] data;
+		
+		value = null;
+		data = encode(value);
+		clone = decode(data);
+		
+		Assert.assertEquals(1, data.length);
+		Assert.assertNull(clone);
+	}
 }
