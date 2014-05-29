@@ -76,44 +76,40 @@ public class BeanProperty extends AbstractNonPrimitiveProperty {
 	}
 	
 	@Override
-	protected void readObjectField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
+	protected boolean readObjectField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 		
 		switch (SpearalType.valueOf(parameterizedType)) {
 		
 		case NULL:
 			field.set(obj, null);
-			break;
+			return true;
 			
 		case BEAN:
 			field.set(obj, in.readBean(parameterizedType));
-			break;
+			return true;
 		
 		default:
-			Object value = readAnyConvert(parameterizedType, in);
-			field.set(obj, value);
-			break;
+			return false;
 		}
 	}
 
 	@Override
-	protected void readObjectMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
+	protected boolean readObjectMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 		
 		switch (SpearalType.valueOf(parameterizedType)) {
 		
 		case NULL:
 			setter.invoke(obj, (Object)null);
-			break;
+			return true;
 			
 		case BEAN:
 			setter.invoke(obj, in.readBean(parameterizedType));
-			break;
+			return true;
 		
 		default:
-			Object value = readAnyConvert(parameterizedType, in);
-			setter.invoke(obj, value);
-			break;
+			return false;
 		}
 	}
 

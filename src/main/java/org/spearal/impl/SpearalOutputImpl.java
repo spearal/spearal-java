@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.Date;
 import java.util.IdentityHashMap;
@@ -496,6 +497,15 @@ public class SpearalOutputImpl implements ExtendedSpearalOutput {
 		buffer[position++] = (byte)DATE.id();
 		writeLongData(value.getTime());
 	}
+	
+	@Override
+	public void writeTimestamp(Timestamp value) throws IOException {
+		ensureCapacity(13);
+
+		buffer[position++] = (byte)DATE.id();
+		writeLongData(value.getTime());
+		writeIntData(value.getNanos());
+	}
 
 	@Override
 	public void writeByteArray(byte[] value) throws IOException {
@@ -586,6 +596,18 @@ public class SpearalOutputImpl implements ExtendedSpearalOutput {
 		buffer[position++] = (byte)(value >>> 48);
 		buffer[position++] = (byte)(value >>> 40);
 		buffer[position++] = (byte)(value >>> 32);
+		buffer[position++] = (byte)(value >>> 24);
+		buffer[position++] = (byte)(value >>> 16);
+		buffer[position++] = (byte)(value >>> 8);
+		buffer[position++] = (byte)value;
+		
+		this.position = position;
+	}
+	
+	private void writeIntData(int value) {
+		final byte[] buffer = this.buffer;
+		int position = this.position;
+		
 		buffer[position++] = (byte)(value >>> 24);
 		buffer[position++] = (byte)(value >>> 16);
 		buffer[position++] = (byte)(value >>> 8);

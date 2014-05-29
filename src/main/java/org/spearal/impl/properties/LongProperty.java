@@ -82,86 +82,78 @@ public class LongProperty extends AbstractProperty {
 	}
 	
 	@Override
-	protected void readPrimitiveField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
+	protected boolean readPrimitiveField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 		
 		switch (SpearalType.valueOf(parameterizedType)) {
 		
 		case NULL:
 			field.setLong(obj, 0L);
-			break;
+			return true;
 			
 		case INTEGRAL:
 			field.setLong(obj, in.readIntegral(parameterizedType));
-			break;
+			return true;
 		
 		default:
-			Long value = readAnyConvert(parameterizedType, in);
-			field.setLong(obj, (value != null ? value.longValue() : 0L));
-			break;
+			return false;
 		}
 	}
 	
 	@Override
-	protected void readObjectField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
+	protected boolean readObjectField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 		
 		switch (SpearalType.valueOf(parameterizedType)) {
 		
 		case NULL:
 			field.set(obj, null);
-			break;
+			return true;
 			
 		case INTEGRAL:
 			field.set(obj, Long.valueOf(in.readIntegral(parameterizedType)));
-			break;
+			return true;
 		
 		default:
-			Long value = readAnyConvert(parameterizedType, in);
-			field.set(obj, value);
-			break;
+			return false;
 		}
 	}
 
 	@Override
-	protected void readPrimitiveMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
+	protected boolean readPrimitiveMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 
 		switch (SpearalType.valueOf(parameterizedType)) {
 		
 		case NULL:
 			setter.invoke(obj, Long.valueOf(0L));
-			break;
+			return true;
 		
 		case INTEGRAL:
 			setter.invoke(obj, Long.valueOf(in.readIntegral(parameterizedType)));
-			break;
+			return true;
 		
 		default:
-			Long value = readAnyConvert(parameterizedType, in);
-			setter.invoke(obj, (value != null ? value : Long.valueOf(0L)));
-			break;
+			return false;
 		}
 	}
 
 	@Override
-	protected void readObjectMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
+	protected boolean readObjectMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 
 		switch (SpearalType.valueOf(parameterizedType)) {
 		
 		case NULL:
 			setter.invoke(obj, (Object)null);
-			break;
+			return true;
 			
 		case INTEGRAL:
 			setter.invoke(obj, Long.valueOf(in.readIntegral(parameterizedType)));
-			break;
+			return true;
 		
 		default:
-			Long value = readAnyConvert(parameterizedType, in);
-			setter.invoke(obj, value);
-			break;
+			return false;
 		}
 	}
 	

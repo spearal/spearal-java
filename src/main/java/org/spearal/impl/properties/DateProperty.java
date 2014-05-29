@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.sql.Timestamp;
 import java.util.Date;
 
 import org.spearal.configurable.ObjectWriterProvider.ObjectWriter;
@@ -47,7 +48,7 @@ public class DateProperty extends AbstractNonPrimitiveProperty {
 	}
 	
 	public static boolean canCreateProperty(Class<?> type) {
-		return Date.class.isAssignableFrom(type);
+		return Date.class.isAssignableFrom(type) && !Timestamp.class.isAssignableFrom(type);
 	}
 
 	public DateProperty(String name, Field field, Method getter, Method setter) {
@@ -69,45 +70,97 @@ public class DateProperty extends AbstractNonPrimitiveProperty {
 	}
 	
 	@Override
-	protected void readObjectField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
+	protected boolean readObjectField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 		
 		switch (SpearalType.valueOf(parameterizedType)) {
 		
 		case NULL:
 			field.set(obj, null);
-			break;
+			return true;
 			
 		case DATE:
-			field.set(obj, in.readDate(parameterizedType));
+			if (getGenericType() == Date.class) {
+				field.set(obj, in.readDate(parameterizedType));
+				return true;
+			}
+			if (getGenericType() == java.sql.Date.class) {
+				field.set(obj, new java.sql.Date(in.readDate(parameterizedType).getTime()));
+				return true;
+			}
+			if (getGenericType() == java.sql.Time.class) {
+				field.set(obj, new java.sql.Time(in.readDate(parameterizedType).getTime()));
+				return true;
+			}
+			break;
+			
+		case TIMESTAMP:
+			if (getGenericType() == Date.class) {
+				field.set(obj, in.readTimestamp(parameterizedType));
+				return true;
+			}
+			if (getGenericType() == java.sql.Date.class) {
+				field.set(obj, new java.sql.Date(in.readTimestamp(parameterizedType).getTime()));
+				return true;
+			}
+			if (getGenericType() == java.sql.Time.class) {
+				field.set(obj, new java.sql.Time(in.readTimestamp(parameterizedType).getTime()));
+				return true;
+			}
 			break;
 		
 		default:
-			Date value = readAnyConvert(parameterizedType, in);
-			field.set(obj, value);
 			break;
 		}
+
+		return false;
 	}
 
 	@Override
-	protected void readObjectMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
+	protected boolean readObjectMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 		
 		switch (SpearalType.valueOf(parameterizedType)) {
 		
 		case NULL:
 			setter.invoke(obj, (Object)null);
-			break;
+			return true;
 			
 		case DATE:
-			setter.invoke(obj, in.readDate(parameterizedType));
+			if (getGenericType() == Date.class) {
+				setter.invoke(obj, in.readDate(parameterizedType));
+				return true;
+			}
+			if (getGenericType() == java.sql.Date.class) {
+				setter.invoke(obj, new java.sql.Date(in.readDate(parameterizedType).getTime()));
+				return true;
+			}
+			if (getGenericType() == java.sql.Time.class) {
+				setter.invoke(obj, new java.sql.Time(in.readDate(parameterizedType).getTime()));
+				return true;
+			}
+			break;
+			
+		case TIMESTAMP:
+			if (getGenericType() == Date.class) {
+				setter.invoke(obj, in.readTimestamp(parameterizedType));
+				return true;
+			}
+			if (getGenericType() == java.sql.Date.class) {
+				setter.invoke(obj, new java.sql.Date(in.readTimestamp(parameterizedType).getTime()));
+				return true;
+			}
+			if (getGenericType() == java.sql.Time.class) {
+				setter.invoke(obj, new java.sql.Time(in.readTimestamp(parameterizedType).getTime()));
+				return true;
+			}
 			break;
 		
 		default:
-			Date value = readAnyConvert(parameterizedType, in);
-			setter.invoke(obj, value);
 			break;
 		}
+
+		return false;
 	}
 	
 	

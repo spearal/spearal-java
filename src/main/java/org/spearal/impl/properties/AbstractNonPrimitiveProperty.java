@@ -38,27 +38,27 @@ public abstract class AbstractNonPrimitiveProperty extends AbstractProperty {
 	protected void writePrimitiveField(ExtendedSpearalOutput out, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 		
-		throw new IllegalAccessException("Not a primitive property: " + this);
+		throw new IllegalAccessException("Primitive property: " + this);
 	}
 
 	@Override
 	protected void writePrimitiveMethod(ExtendedSpearalOutput out, Object obj, Method getter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 		
-		throw new IllegalAccessException("Not a primitive property: " + this);
+		throw new IllegalAccessException("Primitive property: " + this);
 	}
 
 	@Override
-	protected void readPrimitiveField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
+	protected boolean readPrimitiveField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 		
-		throw new IllegalAccessException("Not a primitive property: " + this);
+		throw new IllegalAccessException("Primitive property: " + this);
 	}
 
 	@Override
-	protected void readPrimitiveMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
+	protected boolean readPrimitiveMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 		
-		throw new IllegalAccessException("Not a primitive property: " + this);
+		throw new IllegalAccessException("Primitive property: " + this);
 	}
 }

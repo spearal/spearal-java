@@ -82,7 +82,7 @@ public class BooleanProperty extends AbstractProperty {
 	}
 	
 	@Override
-	protected void readPrimitiveField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
+	protected boolean readPrimitiveField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 		
 		switch (SpearalType.valueOf(parameterizedType)) {
@@ -90,46 +90,42 @@ public class BooleanProperty extends AbstractProperty {
 		case NULL:
 		case FALSE:
 			field.setBoolean(obj, false);
-			break;
+			return true;
 		
 		case TRUE:
 			field.setBoolean(obj, true);
-			break;
+			return true;
 		
 		default:
-			Boolean value = readAnyConvert(parameterizedType, in);
-			field.setBoolean(obj, (value != null ? value.booleanValue() : false));
-			break;
+			return false;
 		}
 	}
 	
 	@Override
-	protected void readObjectField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
+	protected boolean readObjectField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 		
 		switch (SpearalType.valueOf(parameterizedType)) {
 		
 		case NULL:
 			field.set(obj, null);
-			break;
+			return true;
 			
 		case FALSE:
 			field.set(obj, Boolean.FALSE);
-			break;
+			return true;
 		
 		case TRUE:
 			field.set(obj, Boolean.TRUE);
-			break;
+			return true;
 		
 		default:
-			Boolean value = readAnyConvert(parameterizedType, in);
-			field.set(obj, value);
-			break;
+			return false;
 		}
 	}
 	
 	@Override
-	protected void readPrimitiveMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
+	protected boolean readPrimitiveMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 		
 		switch (SpearalType.valueOf(parameterizedType)) {
@@ -137,41 +133,37 @@ public class BooleanProperty extends AbstractProperty {
 		case NULL:
 		case FALSE:
 			setter.invoke(obj, Boolean.FALSE);
-			break;
+			return true;
 		
 		case TRUE:
 			setter.invoke(obj, Boolean.TRUE);
-			break;
+			return true;
 		
 		default:
-			Boolean value = readAnyConvert(parameterizedType, in);
-			setter.invoke(obj, (value != null ? value : Boolean.FALSE));
-			break;
+			return false;
 		}		
 	}
 
 	@Override
-	protected void readObjectMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
+	protected boolean readObjectMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 		
 		switch (SpearalType.valueOf(parameterizedType)) {
 		
 		case NULL:
 			setter.invoke(obj, (Object)null);
-			break;
+			return true;
 			
 		case FALSE:
 			setter.invoke(obj, Boolean.FALSE);
-			break;
+			return true;
 		
 		case TRUE:
 			setter.invoke(obj, Boolean.TRUE);
-			break;
+			return true;
 		
 		default:
-			Boolean value = readAnyConvert(parameterizedType, in);
-			setter.invoke(obj, value);
-			break;
+			return false;
 		}
 	}
 	

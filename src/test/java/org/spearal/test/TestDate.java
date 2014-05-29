@@ -31,10 +31,12 @@ public class TestDate extends AbstractSpearalTestUnit {
 	@Test
 	public void test() throws IOException {
 		encodeDecode(new Date(), 9);
-		
 		encodeDecode(new Date(0L), 9);
-		
 		encodeDecode(new Date(Long.MAX_VALUE), 9);
+
+		encodeDecode(new java.sql.Date(new Date().getTime()), 9);
+		encodeDecode(new java.sql.Date(0L), 9);
+		encodeDecode(new java.sql.Date(Long.MAX_VALUE), 9);
 	}
 	
 	private void encodeDecode(Date value, int expectedSize) throws IOException {

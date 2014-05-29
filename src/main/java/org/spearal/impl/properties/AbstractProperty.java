@@ -213,51 +213,46 @@ public abstract class AbstractProperty implements Property {
 		}
 	}
 
-	protected abstract void readPrimitiveField(int type, ExtendedSpearalInput in, Object obj, Field field)
+	protected abstract boolean readPrimitiveField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
 			throws IOException, IllegalAccessException;
 
-	protected abstract void readObjectField(int type, ExtendedSpearalInput in, Object obj, Field field)
+	protected abstract boolean readObjectField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
 			throws IOException, IllegalAccessException;
 
-	protected abstract void readPrimitiveMethod(int type, ExtendedSpearalInput in, Object obj, Method setter)
+	protected abstract boolean readPrimitiveMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
 			throws IOException, IllegalAccessException, InvocationTargetException;
 
-	protected abstract void readObjectMethod(int type, ExtendedSpearalInput in, Object obj, Method setter)
+	protected abstract boolean readObjectMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
 			throws IOException, IllegalAccessException, InvocationTargetException;
-
-	@SuppressWarnings("unchecked")
-	protected <T> T readAnyConvert(int parameterizedType, ExtendedSpearalInput in)
-		throws IOException {
-		
-		return (T)in.getContext().convert(in.readAny(parameterizedType), genericType);
-	}
 	
 	@Override
-	public void read(ExtendedSpearalInput in, Object obj, int type)
+	public void read(ExtendedSpearalInput in, Object obj, int parameterizedType)
 		throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException {
 		
 		switch (setAccess) {
 		
 		case PrimitiveField:
-			readPrimitiveField(type, in, obj, field);
+			if (!readPrimitiveField(parameterizedType, in, obj, field))
+				field.set(obj, in.getContext().convert(in.readAny(parameterizedType), genericType));
 			break;
 			
 		case ObjectField:
-			readObjectField(type, in, obj, field);
+			if (!readObjectField(parameterizedType, in, obj, field))
+				field.set(obj, in.getContext().convert(in.readAny(parameterizedType), genericType));
 			break;
 			
 		case PrimitiveMethod:
 			if (setter == null)
-				in.skipAny(type);
-			else
-				readPrimitiveMethod(type, in, obj, setter);
+				in.skipAny(parameterizedType);
+			else if (!readPrimitiveMethod(parameterizedType, in, obj, setter))
+				setter.invoke(obj, in.getContext().convert(in.readAny(parameterizedType), genericType));
 			break;
 			
 		case ObjectMethod:
 			if (setter == null)
-				in.skipAny(type);
-			else
-				readObjectMethod(type, in, obj, setter);
+				in.skipAny(parameterizedType);
+			else if (!readObjectMethod(parameterizedType, in, obj, setter))
+				setter.invoke(obj, in.getContext().convert(in.readAny(parameterizedType), genericType));
 			break;
 		}
 	}

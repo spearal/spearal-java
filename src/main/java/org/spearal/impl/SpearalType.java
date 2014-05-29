@@ -30,6 +30,7 @@ public enum SpearalType {
 	FALSE(0x02),
 	
 	DATE(0x03),
+	TIMESTAMP(0x04),
 	
 	// 4 bits of parameters (0x10...0xf0).
 

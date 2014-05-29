@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.sql.Timestamp;
 
 import org.spearal.configurable.ObjectWriterProvider.ObjectWriter;
 import org.spearal.impl.ExtendedSpearalInput;
@@ -30,8 +31,8 @@ import org.spearal.impl.SpearalType;
 /**
  * @author Franck WOLFF
  */
-public class ByteArrayProperty extends AbstractNonPrimitiveProperty {
-
+public class TimestampProperty extends AbstractNonPrimitiveProperty {
+	
 	public static boolean canCreateWriter(Class<?> type) {
 		return canCreateProperty(type);
 	}
@@ -40,75 +41,100 @@ public class ByteArrayProperty extends AbstractNonPrimitiveProperty {
 		return new ObjectWriter() {
 			@Override
 			public void write(ExtendedSpearalOutput out, Object o) throws IOException {
-				out.writeByteArray((byte[])o);
+				out.writeTimestamp((Timestamp)o);
 			}
 		};
 	}
 	
 	public static boolean canCreateProperty(Class<?> type) {
-		return type == byte[].class;
+		return Timestamp.class.isAssignableFrom(type);
 	}
 
-	public ByteArrayProperty(String name, Field field, Method getter, Method setter) {
+	public TimestampProperty(String name, Field field, Method getter, Method setter) {
 		super(name, field, getter, setter);
 	}
 
 	@Override
 	protected void writeObjectField(ExtendedSpearalOutput out, Object obj, Field field)
 		throws IOException, IllegalAccessException {
-
-		writeByteArray(out, (byte[])field.get(obj));
+		
+		writeTimestamp(out, (Timestamp)field.get(obj));
 	}
 
 	@Override
 	protected void writeObjectMethod(ExtendedSpearalOutput out, Object obj, Method getter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 
-		writeByteArray(out, (byte[])getter.invoke(obj));
+		writeTimestamp(out, (Timestamp)getter.invoke(obj));
 	}
-
+	
 	@Override
 	protected boolean readObjectField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
 		throws IOException, IllegalAccessException {
-
+		
 		switch (SpearalType.valueOf(parameterizedType)) {
 		
 		case NULL:
 			field.set(obj, null);
 			return true;
-		
-		case BYTE_ARRAY:
-			field.set(obj, in.readByteArray(parameterizedType));
-			return true;
+			
+		case DATE:
+			if (getGenericType() == Timestamp.class) {
+				field.set(obj, new Timestamp(in.readDate(parameterizedType).getTime()));
+				return true;
+			}
+			break;
+			
+		case TIMESTAMP:
+			if (getGenericType() == Timestamp.class) {
+				field.set(obj, in.readTimestamp(parameterizedType));
+				return true;
+			}
+			break;
 		
 		default:
-			return false;
+			break;
 		}
+		
+		return false;
 	}
 
 	@Override
 	protected boolean readObjectMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
-
+		
 		switch (SpearalType.valueOf(parameterizedType)) {
 		
 		case NULL:
 			setter.invoke(obj, (Object)null);
 			return true;
-		
-		case BYTE_ARRAY:
-			setter.invoke(obj, in.readByteArray(parameterizedType));
-			return true;
+			
+		case DATE:
+			if (getGenericType() == Timestamp.class) {
+				setter.invoke(obj, new Timestamp(in.readDate(parameterizedType).getTime()));
+				return true;
+			}
+			break;
+			
+		case TIMESTAMP:
+			if (getGenericType() == Timestamp.class) {
+				setter.invoke(obj, in.readTimestamp(parameterizedType));
+				return true;
+			}
+			break;
 		
 		default:
-			return false;
+			break;
 		}
+
+		return false;
 	}
 	
-	private static void writeByteArray(ExtendedSpearalOutput out, byte[] value) throws IOException {
+	
+	private static void writeTimestamp(ExtendedSpearalOutput out, Timestamp value) throws IOException {
 		if (value == null)
 			out.writeNull();
 		else
-			out.writeByteArray(value);
+			out.writeTimestamp(value);
 	}
 }

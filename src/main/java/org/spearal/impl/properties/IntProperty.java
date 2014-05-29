@@ -82,86 +82,78 @@ public class IntProperty extends AbstractProperty {
 	}
 	
 	@Override
-	protected void readPrimitiveField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
+	protected boolean readPrimitiveField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 		
 		switch (SpearalType.valueOf(parameterizedType)) {
 		
 		case NULL:
 			field.setInt(obj, 0);
-			break;
+			return true;
 			
 		case INTEGRAL:
 			field.setInt(obj, (int)in.readIntegral(parameterizedType));
-			break;
+			return true;
 		
 		default:
-			Integer value = readAnyConvert(parameterizedType, in);
-			field.setInt(obj, (value != null ? value.intValue() : 0));
-			break;
+			return false;
 		}
 	}
 	
 	@Override
-	protected void readObjectField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
+	protected boolean readObjectField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 		
 		switch (SpearalType.valueOf(parameterizedType)) {
 		
 		case NULL:
 			field.set(obj, null);
-			break;
+			return true;
 			
 		case INTEGRAL:
 			field.set(obj, Integer.valueOf((int)in.readIntegral(parameterizedType)));
-			break;
+			return true;
 		
 		default:
-			Integer value = readAnyConvert(parameterizedType, in);
-			field.set(obj, value);
-			break;
+			return false;
 		}
 	}
 
 	@Override
-	protected void readPrimitiveMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
+	protected boolean readPrimitiveMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 
 		switch (SpearalType.valueOf(parameterizedType)) {
 		
 		case NULL:
 			setter.invoke(obj, Integer.valueOf(0));
-			break;
+			return true;
 		
 		case INTEGRAL:
 			setter.invoke(obj, Integer.valueOf((int)in.readIntegral(parameterizedType)));
-			break;
+			return true;
 		
 		default:
-			Integer value = readAnyConvert(parameterizedType, in);
-			setter.invoke(obj, (value != null ? value : Integer.valueOf(0)));
-			break;
+			return false;
 		}
 	}
 
 	@Override
-	protected void readObjectMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
+	protected boolean readObjectMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 
 		switch (SpearalType.valueOf(parameterizedType)) {
 		
 		case NULL:
 			setter.invoke(obj, (Object)null);
-			break;
+			return true;
 			
 		case INTEGRAL:
 			setter.invoke(obj, Integer.valueOf((int)in.readIntegral(parameterizedType)));
-			break;
+			return true;
 		
 		default:
-			Integer value = readAnyConvert(parameterizedType, in);
-			setter.invoke(obj, value);
-			break;
+			return false;
 		}
 	}
 	

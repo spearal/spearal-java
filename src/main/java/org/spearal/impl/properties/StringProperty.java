@@ -68,42 +68,40 @@ public class StringProperty extends AbstractNonPrimitiveProperty {
 	}
 
 	@Override
-	protected void readObjectField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
+	protected boolean readObjectField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 
 		switch (SpearalType.valueOf(parameterizedType)) {
 		
 		case NULL:
 			field.set(obj, null);
-			break;
+			return true;
 		
 		case STRING:
 			field.set(obj, in.readString(parameterizedType));
-			break;
+			return true;
 		
 		default:
-			field.set(obj, readAnyConvert(parameterizedType, in));
-			break;
+			return false;
 		}
 	}
 
 	@Override
-	protected void readObjectMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
+	protected boolean readObjectMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 
 		switch (SpearalType.valueOf(parameterizedType)) {
 		
 		case NULL:
 			setter.invoke(obj, (Object)null);
-			break;
+			return true;
 		
 		case STRING:
 			setter.invoke(obj, in.readString(parameterizedType));
-			break;
+			return true;
 		
 		default:
-			setter.invoke(obj, readAnyConvert(parameterizedType, in));
-			break;
+			return false;
 		}
 	}
 	

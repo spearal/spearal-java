@@ -24,6 +24,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -103,6 +104,8 @@ public class SpearalInputImpl implements ExtendedSpearalInput {
 
         case DATE:
         	return readDate(parameterizedType);
+        case TIMESTAMP:
+        	return readTimestamp(parameterizedType);
 
         case INTEGRAL:
         	return Long.valueOf(readIntegral(parameterizedType));
@@ -363,6 +366,13 @@ public class SpearalInputImpl implements ExtendedSpearalInput {
     	ensureAvailable(8);
     	return new Date(readLongData());
     }
+
+    public Timestamp readTimestamp(int parameterizedType) throws IOException {
+    	ensureAvailable(12);
+    	Timestamp timestamp = new Timestamp(readLongData());
+    	timestamp.setNanos(readIntData());
+    	return timestamp;
+    }
     
     @Override
 	public byte[] readByteArray(int parameterizedType) throws IOException {
@@ -540,6 +550,21 @@ public class SpearalInputImpl implements ExtendedSpearalInput {
 			(buffer[position++] & 0xffL) << 16 |
 			(buffer[position++] & 0xffL) <<  8 |
 			(buffer[position++] & 0xffL);
+
+		this.position = position;
+		
+		return v;
+    }
+
+	private int readIntData() {
+    	final byte[] buffer = this.buffer;
+    	int position = this.position;
+    	
+		int v =
+			(buffer[position++] & 0xff) << 24 |
+			(buffer[position++] & 0xff) << 16 |
+			(buffer[position++] & 0xff) <<  8 |
+			(buffer[position++] & 0xff);
 
 		this.position = position;
 		

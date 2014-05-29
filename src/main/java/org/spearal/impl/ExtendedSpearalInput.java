@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
@@ -39,6 +40,7 @@ public interface ExtendedSpearalInput extends SpearalInput {
 	void skipAny(int parameterizedType) throws IOException;
 	
 	Date readDate(int parameterizedType) throws IOException;
+	Timestamp readTimestamp(int parameterizedType) throws IOException;
 	
 	long readIntegral(int parameterizedType) throws IOException;
 	BigInteger readBigIntegral(int parameterizedType) throws IOException;

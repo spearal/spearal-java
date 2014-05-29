@@ -82,86 +82,78 @@ public class ByteProperty extends AbstractProperty {
 	}
 	
 	@Override
-	protected void readPrimitiveField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
+	protected boolean readPrimitiveField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 		
 		switch (SpearalType.valueOf(parameterizedType)) {
 		
 		case NULL:
 			field.setByte(obj, (byte)0);
-			break;
+			return true;
 			
 		case INTEGRAL:
 			field.setByte(obj, (byte)in.readIntegral(parameterizedType));
-			break;
+			return true;
 		
 		default:
-			Byte value = readAnyConvert(parameterizedType, in);
-			field.setByte(obj, (value != null ? value.byteValue() : (byte)0));
-			break;
+			return false;
 		}
 	}
 	
 	@Override
-	protected void readObjectField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
+	protected boolean readObjectField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 		
 		switch (SpearalType.valueOf(parameterizedType)) {
 		
 		case NULL:
 			field.set(obj, null);
-			break;
+			return true;
 			
 		case INTEGRAL:
 			field.set(obj, Byte.valueOf((byte)in.readIntegral(parameterizedType)));
-			break;
+			return true;
 		
 		default:
-			Byte value = readAnyConvert(parameterizedType, in);
-			field.set(obj, value);
-			break;
+			return false;
 		}
 	}
 
 	@Override
-	protected void readPrimitiveMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
+	protected boolean readPrimitiveMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 
 		switch (SpearalType.valueOf(parameterizedType)) {
 		
 		case NULL:
 			setter.invoke(obj, Byte.valueOf((byte)0));
-			break;
+			return true;
 		
 		case INTEGRAL:
 			setter.invoke(obj, Byte.valueOf((byte)in.readIntegral(parameterizedType)));
-			break;
+			return true;
 		
 		default:
-			Byte value = readAnyConvert(parameterizedType, in);
-			setter.invoke(obj, (value != null ? value : Byte.valueOf((byte)0)));
-			break;
+			return false;
 		}
 	}
 
 	@Override
-	protected void readObjectMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
+	protected boolean readObjectMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 
 		switch (SpearalType.valueOf(parameterizedType)) {
 		
 		case NULL:
 			setter.invoke(obj, (Object)null);
-			break;
+			return true;
 			
 		case INTEGRAL:
 			setter.invoke(obj, Byte.valueOf((byte)in.readIntegral(parameterizedType)));
-			break;
+			return true;
 		
 		default:
-			Byte value = readAnyConvert(parameterizedType, in);
-			setter.invoke(obj, value);
-			break;
+			return false;
 		}
 	}
 	

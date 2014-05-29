@@ -20,6 +20,7 @@ package org.spearal.impl;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
@@ -34,19 +35,22 @@ public interface ExtendedSpearalOutput extends SpearalOutput {
 	void writeNull() throws IOException;
 	
 	void writeBoolean(boolean value) throws IOException;
-	void writeChar(char value) throws IOException;
+
+	void writeDate(Date value) throws IOException;
+	void writeTimestamp(Timestamp value) throws IOException;
+
 	void writeByte(byte value) throws IOException;
 	void writeShort(short value) throws IOException;
 	void writeInt(int value) throws IOException;
 	void writeLong(long value) throws IOException;
+	void writeBigInteger(BigInteger value) throws IOException;
+
 	void writeFloat(float value) throws IOException;
 	void writeDouble(double value) throws IOException;
-	
-	void writeBigInteger(BigInteger value) throws IOException;
 	void writeBigDecimal(BigDecimal value) throws IOException;
 
+	void writeChar(char value) throws IOException;
 	void writeString(String value) throws IOException;
-	void writeDate(Date value) throws IOException;
 	
 	void writeByteArray(byte[] value) throws IOException;
 	void writeArray(Object value) throws IOException;
