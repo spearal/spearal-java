@@ -46,6 +46,7 @@ import org.spearal.impl.instantiator.CollectionInstantiator;
 import org.spearal.impl.instantiator.MapInstantiator;
 import org.spearal.impl.properties.BeanPropertyFactory;
 import org.spearal.impl.properties.BooleanPropertyFactory;
+import org.spearal.impl.properties.ByteArrayPropertyFactory;
 import org.spearal.impl.properties.CollectionPropertyFactory;
 import org.spearal.impl.properties.DateTimestampPropertyFactory;
 import org.spearal.impl.properties.FloatingPropertyFactory;
@@ -109,34 +110,39 @@ public class SpearalContextImpl implements SpearalContext {
 		
 		// Converters.
 		
-		prependConfigurableItem(new ShortConverter());
-		prependConfigurableItem(new ByteConverter());
-		prependConfigurableItem(new CharConverter());
-		prependConfigurableItem(new BooleanConverter());
-		prependConfigurableItem(new LongConverter());
-		prependConfigurableItem(new IntConverter());
+		addConfigurableItem(new IntConverter(), false);
+		addConfigurableItem(new BooleanConverter(), false);
+		addConfigurableItem(new LongConverter(), false);
+		addConfigurableItem(new ByteConverter(), false);
+		addConfigurableItem(new CharConverter(), false);
+		addConfigurableItem(new ShortConverter(), false);
 
 		// Instantiators.
 		
-		prependConfigurableItem(new CollectionInstantiator());
-		prependConfigurableItem(new MapInstantiator());
+		addConfigurableItem(new CollectionInstantiator(), false);
+		addConfigurableItem(new MapInstantiator(), false);
 		
-		// StaticObjectWriterProviders & PropertyFactories
+		// StaticObjectWriterProviders & PropertyFactories.
 
-		prependConfigurableItem(new BeanPropertyFactory());
-		
-		prependConfigurableItem(new DateTimestampPropertyFactory());
-		prependConfigurableItem(new MapPropertyFactory());
-		prependConfigurableItem(new CollectionPropertyFactory());
-		
-		prependConfigurableItem(new FloatingPropertyFactory());
-		prependConfigurableItem(new BooleanPropertyFactory());
-		prependConfigurableItem(new IntegralPropertyFactory());
-		prependConfigurableItem(new StringPropertyFactory());
+		addConfigurableItem(new StringPropertyFactory(), false);
+		addConfigurableItem(new IntegralPropertyFactory(), false);
+		addConfigurableItem(new BooleanPropertyFactory(), false);
+		addConfigurableItem(new FloatingPropertyFactory(), false);
+
+		addConfigurableItem(new CollectionPropertyFactory(), false);
+		addConfigurableItem(new MapPropertyFactory(), false);
+		addConfigurableItem(new DateTimestampPropertyFactory(), false);
+		addConfigurableItem(new ByteArrayPropertyFactory(), false);
+
+		addConfigurableItem(new BeanPropertyFactory(), false);
 	}
 	
 	@Override
 	public void prependConfigurableItem(ConfigurableItem item) {
+		addConfigurableItem(item, true);
+	}
+	
+	private void addConfigurableItem(ConfigurableItem item, boolean first) {
 		boolean added = false;
 		
 		if (item instanceof ClassNameAlias) {
@@ -147,27 +153,42 @@ public class SpearalContextImpl implements SpearalContext {
 		}
 		
 		if (item instanceof TypeInstantiator) {
-			typeInstantiators.add(0, (TypeInstantiator)item);
+			if (first)
+				typeInstantiators.add(0, (TypeInstantiator)item);
+			else
+				typeInstantiators.add((TypeInstantiator)item);
 			added = true;
 		}
 		
 		if (item instanceof PropertyInstantiator) {
-			propertyInstantiators.add(0, (PropertyInstantiator)item);
+			if (first)
+				propertyInstantiators.add(0, (PropertyInstantiator)item);
+			else
+				propertyInstantiators.add((PropertyInstantiator)item);
 			added = true;
 		}
 		
 		if (item instanceof Converter) {
-			converters.add(0, (Converter)item);
+			if (first)
+				converters.add(0, (Converter)item);
+			else
+				converters.add((Converter)item);
 			added = true;
 		}
 		
 		if (item instanceof ObjectWriterProvider) {
-			staticObjectWriterProviders.add(0, (ObjectWriterProvider)item);
+			if (first)
+				staticObjectWriterProviders.add(0, (ObjectWriterProvider)item);
+			else
+				staticObjectWriterProviders.add((ObjectWriterProvider)item);
 			added = true;
 		}
 		
 		if (item instanceof PropertyFactory) {
-			propertyFactories.add(0, (PropertyFactory)item);
+			if (first)
+				propertyFactories.add(0, (PropertyFactory)item);
+			else
+				propertyFactories.add((PropertyFactory)item);
 			added = true;
 		}
 		

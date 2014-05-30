@@ -594,6 +594,8 @@ public class SpearalInputImpl implements ExtendedSpearalInput {
 			
 			while (len > 0) {
 				int count = in.read(b, off, len);
+				if (count == len)
+					return;
 	            if (count <= 0)
 	                throw new EOFException();
 	            off += count;

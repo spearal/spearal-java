@@ -526,8 +526,7 @@ public class SpearalOutputImpl implements ExtendedSpearalOutput {
 			buffer[position++] = (byte)(BYTE_ARRAY.id() | length0);
 			writeUnsignedIntValue(value.length, length0);
 	
-			flushBuffer();
-			out.write(value);
+			writeBytes(value);
 		}
 	}
 
@@ -655,6 +654,19 @@ public class SpearalOutputImpl implements ExtendedSpearalOutput {
 			position = 0;
 		}
 	}
+    
+    private void writeBytes(byte[] bytes) throws IOException {
+    	if (bytes.length > 0) {
+	    	if (buffer.length - position >= bytes.length) {
+	    		System.arraycopy(bytes, 0, buffer, position, bytes.length);
+	    		position += bytes.length;
+	    	}
+	    	else {
+	    		flushBuffer();
+	    		out.write(bytes, 0, bytes.length);
+	    	}
+    	}
+    }
     
     private static int utfByteCount(String s) {
     	final int length = s.length();
