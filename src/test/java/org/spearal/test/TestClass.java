@@ -17,35 +17,31 @@
  */
 package org.spearal.test;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
+import java.io.IOException;
+import java.util.ArrayList;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * @author Franck WOLFF
  */
-@RunWith(Suite.class)
-@SuiteClasses({
-	TestSpearalType.class,
-
-	TestNull.class,
+public class TestClass extends AbstractSpearalTestUnit {
 	
-	TestBoolean.class,
+	@Test
+	public void test() throws IOException {
+		encodeDecode(TestClass.class, TestClass.class.getName().length() + 2);
+		encodeDecode(ArrayList.class, ArrayList.class.getName().length() + 2);
+	}
 	
-	TestDate.class,
-	TestTimestamp.class,
-	
-	TestByte.class,
-	TestShort.class,
-	TestInteger.class,
-	TestLong.class,
-
-	TestString.class,
-	
-	TestByteArray.class,
-	
-	TestEnum.class,
-	TestClass.class,
-})
-public class AllTests {
+	private void encodeDecode(Class<?> value, int expectedSize) throws IOException {
+		byte[] data = encode(value);
+		Object clone = decode(data);
+		
+		if (expectedSize >= 0)
+			Assert.assertEquals(expectedSize, data.length);
+		if (!(clone instanceof Class))
+			Assert.fail("Not a Class: " + clone);
+		Assert.assertEquals(value, clone);
+	}
 }
