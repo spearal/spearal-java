@@ -92,7 +92,11 @@ public class DoubleProperty extends AbstractProperty {
 			return true;
 			
 		case FLOATING:
-			field.setDouble(obj,in.readFloating(parameterizedType));
+			field.setDouble(obj, in.readFloating(parameterizedType));
+			return true;
+			
+		case INTEGRAL:
+			field.setDouble(obj, in.readIntegral(parameterizedType));
 			return true;
 		
 		default:
@@ -113,6 +117,10 @@ public class DoubleProperty extends AbstractProperty {
 		case FLOATING:
 			field.set(obj, Double.valueOf(in.readFloating(parameterizedType)));
 			return true;
+			
+		case INTEGRAL:
+			field.set(obj, Double.valueOf(in.readIntegral(parameterizedType)));
+			return true;
 		
 		default:
 			return false;
@@ -132,6 +140,10 @@ public class DoubleProperty extends AbstractProperty {
 		case FLOATING:
 			setter.invoke(obj, Double.valueOf(in.readFloating(parameterizedType)));
 			return true;
+			
+		case INTEGRAL:
+			setter.invoke(obj, Double.valueOf(in.readIntegral(parameterizedType)));
+			return true;
 		
 		default:
 			return false;
@@ -150,6 +162,10 @@ public class DoubleProperty extends AbstractProperty {
 			
 		case FLOATING:
 			setter.invoke(obj, Double.valueOf(in.readFloating(parameterizedType)));
+			return true;
+			
+		case INTEGRAL:
+			setter.invoke(obj, Double.valueOf(in.readIntegral(parameterizedType)));
 			return true;
 		
 		default:

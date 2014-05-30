@@ -352,6 +352,35 @@ public class SpearalInputImpl implements ExtendedSpearalInput {
 
 	@Override
     public double readFloating(int parameterizedType) throws IOException {
+		if ((parameterizedType & 0x08) != 0) {
+			int length0 = (parameterizedType & 0x03);
+			
+			ensureAvailable(length0 + 1);
+	    	
+			final byte[] buffer = this.buffer;
+	    	int position = this.position;
+			
+			long doubleAsLong = 0L;
+			
+			switch (length0) {
+			case 3:
+				doubleAsLong |= (buffer[position++] & 0xffL) << 24;
+			case 2:
+				doubleAsLong |= (buffer[position++] & 0xffL) << 16;
+			case 1:
+				doubleAsLong |= (buffer[position++] & 0xffL) << 8;
+			case 0:
+				doubleAsLong |= (buffer[position++] & 0xffL);
+			}
+			
+			this.position = position;
+			
+			if ((parameterizedType & 0x04) != 0)
+				doubleAsLong = -doubleAsLong;
+			
+			return (doubleAsLong / 1000.0);
+		}
+		
     	ensureAvailable(8);
     	return Double.longBitsToDouble(readLongData());
     }

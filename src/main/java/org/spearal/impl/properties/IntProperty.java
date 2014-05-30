@@ -94,6 +94,10 @@ public class IntProperty extends AbstractProperty {
 		case INTEGRAL:
 			field.setInt(obj, (int)in.readIntegral(parameterizedType));
 			return true;
+			
+		case FLOATING:
+			field.setInt(obj, (int)in.readFloating(parameterizedType));
+			return true;
 		
 		default:
 			return false;
@@ -112,6 +116,10 @@ public class IntProperty extends AbstractProperty {
 			
 		case INTEGRAL:
 			field.set(obj, Integer.valueOf((int)in.readIntegral(parameterizedType)));
+			return true;
+			
+		case FLOATING:
+			field.set(obj, Integer.valueOf((int)in.readFloating(parameterizedType)));
 			return true;
 		
 		default:
@@ -132,6 +140,10 @@ public class IntProperty extends AbstractProperty {
 		case INTEGRAL:
 			setter.invoke(obj, Integer.valueOf((int)in.readIntegral(parameterizedType)));
 			return true;
+			
+		case FLOATING:
+			setter.invoke(obj, Integer.valueOf((int)in.readFloating(parameterizedType)));
+			return true;
 		
 		default:
 			return false;
@@ -150,6 +162,10 @@ public class IntProperty extends AbstractProperty {
 			
 		case INTEGRAL:
 			setter.invoke(obj, Integer.valueOf((int)in.readIntegral(parameterizedType)));
+			return true;
+			
+		case FLOATING:
+			setter.invoke(obj, Integer.valueOf((int)in.readFloating(parameterizedType)));
 			return true;
 		
 		default:

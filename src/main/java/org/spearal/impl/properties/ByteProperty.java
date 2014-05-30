@@ -94,6 +94,10 @@ public class ByteProperty extends AbstractProperty {
 		case INTEGRAL:
 			field.setByte(obj, (byte)in.readIntegral(parameterizedType));
 			return true;
+			
+		case FLOATING:
+			field.setByte(obj, (byte)in.readFloating(parameterizedType));
+			return true;
 		
 		default:
 			return false;
@@ -112,6 +116,10 @@ public class ByteProperty extends AbstractProperty {
 			
 		case INTEGRAL:
 			field.set(obj, Byte.valueOf((byte)in.readIntegral(parameterizedType)));
+			return true;
+			
+		case FLOATING:
+			field.set(obj, Byte.valueOf((byte)in.readFloating(parameterizedType)));
 			return true;
 		
 		default:
@@ -132,6 +140,10 @@ public class ByteProperty extends AbstractProperty {
 		case INTEGRAL:
 			setter.invoke(obj, Byte.valueOf((byte)in.readIntegral(parameterizedType)));
 			return true;
+			
+		case FLOATING:
+			setter.invoke(obj, Byte.valueOf((byte)in.readFloating(parameterizedType)));
+			return true;
 		
 		default:
 			return false;
@@ -150,6 +162,10 @@ public class ByteProperty extends AbstractProperty {
 			
 		case INTEGRAL:
 			setter.invoke(obj, Byte.valueOf((byte)in.readIntegral(parameterizedType)));
+			return true;
+			
+		case FLOATING:
+			setter.invoke(obj, Byte.valueOf((byte)in.readFloating(parameterizedType)));
 			return true;
 		
 		default:

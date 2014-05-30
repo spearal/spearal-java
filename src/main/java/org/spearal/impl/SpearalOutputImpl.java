@@ -326,10 +326,72 @@ public class SpearalOutputImpl implements ExtendedSpearalOutput {
 
 	@Override
 	public void writeDouble(double value) throws IOException {
+
+		long bits = Double.doubleToLongBits(value);
+		
+		// Not NaN, +/-Infinity or -0.0
+		if ((bits & 0x7ff0000000000000L) != 0x7ff0000000000000L && bits != 0x8000000000000000L) {
+			
+			long doubleAsLong = (long)value;
+			
+			if (value == doubleAsLong) {
+				// 6.5 bytes max (absolute value), i.e. max length of a IEEE 754 fraction part.
+				if (doubleAsLong >= -0x000fffffffffffffL && doubleAsLong <= 0x000fffffffffffffL) {
+					writeLong(doubleAsLong);
+					return;
+				}
+			}
+			else {
+				doubleAsLong = (long)(value * 1000.0);
+
+				if (value == (doubleAsLong / 1000.0) ||
+					value == ((doubleAsLong += (doubleAsLong < 0 ? -1 : 1)) / 1000.0)) {
+					
+					// 4 bytes max (absolute value)
+					if (doubleAsLong >= -0xffffffffL && doubleAsLong <= 0xffffffffL) {
+						int inverse;
+						
+						if (doubleAsLong < 0) {
+							doubleAsLong = -doubleAsLong;
+							inverse = 0x04;
+						}
+						else
+							inverse = 0x00;
+						
+						int length0 = unsignedLongLength0(doubleAsLong);
+						
+						ensureCapacity(length0 + 2);
+	
+						final byte[] buffer = this.buffer;
+						int position = this.position;
+						
+						buffer[position++] = (byte)(FLOATING.id() | 0x08 | inverse | length0);
+						
+						switch (length0) {
+						case 3:
+							buffer[position++] = (byte)(doubleAsLong >>> 24);
+						case 2:
+							buffer[position++] = (byte)(doubleAsLong >>> 16);
+						case 1:
+							buffer[position++] = (byte)(doubleAsLong >>> 8);
+						case 0:
+							buffer[position++] = (byte)doubleAsLong;
+							break;
+						default:
+							throw new RuntimeException("Internal error: length0=" + length0);
+						}
+						
+						this.position = position;
+						
+						return;
+					}
+				}
+			}
+		}
+		
 		ensureCapacity(9);
 		buffer[position++] = (byte)FLOATING.id();
-		
-		writeLongData(Double.doubleToLongBits(value));
+		writeLongData(bits);
 	}
 	
 	private static final BigInteger LONG_MIN_VALUE = BigInteger.valueOf(Long.MIN_VALUE);
@@ -579,10 +641,11 @@ public class SpearalOutputImpl implements ExtendedSpearalOutput {
 	}
 	
 	private static int unsignedLongLength0(long value) {
-		if (value <= 0xffffL)
-			return (value <= 0xffL ? 0 : 1);
-		if (value <= 0xffffffffL)
+		if (value <= 0xffffffffL) {
+			if (value <= 0xffffL)
+				return (value <= 0xffL ? 0 : 1);
 			return (value <= 0xffffffL ? 2 : 3);
+		}
 		if (value <= 0xffffffffffffL)
 			return (value <= 0xffffffffffL ? 4 : 5);
 		return (value <= 0xffffffffffffffL ? 6 : 7);

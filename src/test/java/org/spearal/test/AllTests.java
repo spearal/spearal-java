@@ -40,6 +40,9 @@ import org.junit.runners.Suite.SuiteClasses;
 	TestInteger.class,
 	TestLong.class,
 
+	TestFloat.class,
+	TestDouble.class,
+
 	TestString.class,
 	
 	TestByteArray.class,

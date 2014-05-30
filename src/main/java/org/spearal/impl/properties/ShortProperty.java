@@ -94,6 +94,10 @@ public class ShortProperty extends AbstractProperty {
 		case INTEGRAL:
 			field.setShort(obj, (short)in.readIntegral(parameterizedType));
 			return true;
+			
+		case FLOATING:
+			field.setShort(obj, (short)in.readFloating(parameterizedType));
+			return true;
 		
 		default:
 			return false;
@@ -112,6 +116,10 @@ public class ShortProperty extends AbstractProperty {
 			
 		case INTEGRAL:
 			field.set(obj, Short.valueOf((short)in.readIntegral(parameterizedType)));
+			return true;
+			
+		case FLOATING:
+			field.set(obj, Short.valueOf((short)in.readFloating(parameterizedType)));
 			return true;
 		
 		default:
@@ -132,6 +140,10 @@ public class ShortProperty extends AbstractProperty {
 		case INTEGRAL:
 			setter.invoke(obj, Short.valueOf((short)in.readIntegral(parameterizedType)));
 			return true;
+			
+		case FLOATING:
+			setter.invoke(obj, Short.valueOf((short)in.readFloating(parameterizedType)));
+			return true;
 		
 		default:
 			return false;
@@ -150,6 +162,10 @@ public class ShortProperty extends AbstractProperty {
 			
 		case INTEGRAL:
 			setter.invoke(obj, Short.valueOf((short)in.readIntegral(parameterizedType)));
+			return true;
+			
+		case FLOATING:
+			setter.invoke(obj, Short.valueOf((short)in.readFloating(parameterizedType)));
 			return true;
 		
 		default:

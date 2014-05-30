@@ -94,6 +94,10 @@ public class LongProperty extends AbstractProperty {
 		case INTEGRAL:
 			field.setLong(obj, in.readIntegral(parameterizedType));
 			return true;
+			
+		case FLOATING:
+			field.setLong(obj, (long)in.readFloating(parameterizedType));
+			return true;
 		
 		default:
 			return false;
@@ -112,6 +116,10 @@ public class LongProperty extends AbstractProperty {
 			
 		case INTEGRAL:
 			field.set(obj, Long.valueOf(in.readIntegral(parameterizedType)));
+			return true;
+			
+		case FLOATING:
+			field.set(obj, Long.valueOf((long)in.readFloating(parameterizedType)));
 			return true;
 		
 		default:
@@ -132,6 +140,10 @@ public class LongProperty extends AbstractProperty {
 		case INTEGRAL:
 			setter.invoke(obj, Long.valueOf(in.readIntegral(parameterizedType)));
 			return true;
+			
+		case FLOATING:
+			setter.invoke(obj, Long.valueOf((long)in.readFloating(parameterizedType)));
+			return true;
 		
 		default:
 			return false;
@@ -150,6 +162,10 @@ public class LongProperty extends AbstractProperty {
 			
 		case INTEGRAL:
 			setter.invoke(obj, Long.valueOf(in.readIntegral(parameterizedType)));
+			return true;
+			
+		case FLOATING:
+			setter.invoke(obj, Long.valueOf((long)in.readFloating(parameterizedType)));
 			return true;
 		
 		default:
