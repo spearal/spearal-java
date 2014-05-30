@@ -41,6 +41,10 @@ import org.junit.runners.Suite.SuiteClasses;
 	TestLong.class,
 
 	TestString.class,
+	
+	TestByteArray.class,
+	
+	TestEnum.class,
 })
 public class AllTests {
 }
