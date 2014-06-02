@@ -9,8 +9,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.spearal.SpearalFactory;
-import org.spearal.SpearalInput;
-import org.spearal.SpearalOutput;
+import org.spearal.SpearalDecoder;
+import org.spearal.SpearalEncoder;
 import org.spearal.configurable.ClassNameAlias;
 import org.spearal.partial.PartialObjectProxy;
 import org.spearal.partial.UndefinedPropertyException;
@@ -70,7 +70,7 @@ public class TestPartialSerialization {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		BooleanBean bean = new BooleanBean(true, true, true);
 		
-		SpearalOutput out = outFactory.newOutput(baos);
+		SpearalEncoder out = outFactory.newEncoder(baos);
 		out.getRequest().addPropertyFilter(BooleanBean.class, "tall", "female");
 		out.writeAny(bean);
 		
@@ -80,7 +80,7 @@ public class TestPartialSerialization {
 		SpearalFactory inFactory = new SpearalFactory();
 		inFactory.getContext().prependConfigurableItem(new ClassNameAlias(BooleanBean.class, ClientBooleanBean.class));
 
-		SpearalInput in = inFactory.newInput(new ByteArrayInputStream(bytes));
+		SpearalDecoder in = inFactory.newDecoder(new ByteArrayInputStream(bytes));
 		Object o = in.readAny();
 
 		System.out.println(o);

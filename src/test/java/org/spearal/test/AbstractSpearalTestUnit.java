@@ -5,8 +5,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import org.spearal.SpearalFactory;
-import org.spearal.SpearalInput;
-import org.spearal.SpearalOutput;
+import org.spearal.SpearalDecoder;
+import org.spearal.SpearalEncoder;
 import org.spearal.SpearalRequest;
 
 public abstract class AbstractSpearalTestUnit {
@@ -28,7 +28,7 @@ public abstract class AbstractSpearalTestUnit {
 
 	protected byte[] encode(SpearalFactory factory, SpearalRequest request, Object o) throws IOException {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		SpearalOutput out = factory.newOutput(baos, request);
+		SpearalEncoder out = factory.newEncoder(baos, request);
 		out.writeAny(o);
 		return baos.toByteArray();
 	}
@@ -39,7 +39,7 @@ public abstract class AbstractSpearalTestUnit {
 	
 	protected Object decode(SpearalFactory factory, byte[] bytes) throws IOException {
 		ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-		SpearalInput in = factory.newInput(bais);
+		SpearalDecoder in = factory.newDecoder(bais);
 		return in.readAny();
 	}
 }

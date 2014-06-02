@@ -31,8 +31,8 @@ import java.lang.reflect.Type;
 
 import org.spearal.SpearalContext;
 import org.spearal.configurable.PropertyFactory.Property;
-import org.spearal.impl.ExtendedSpearalInput;
-import org.spearal.impl.ExtendedSpearalOutput;
+import org.spearal.impl.ExtendedSpearalDecoder;
+import org.spearal.impl.ExtendedSpearalEncoder;
 
 /**
  * @author Franck WOLFF
@@ -177,20 +177,20 @@ public abstract class AbstractProperty implements Property {
 		return (field == null && setter == null);
 	}
 	
-	protected abstract void writePrimitiveField(ExtendedSpearalOutput out, Object obj, Field field)
+	protected abstract void writePrimitiveField(ExtendedSpearalEncoder out, Object obj, Field field)
 			throws IOException, IllegalAccessException;
 
-	protected abstract void writeObjectField(ExtendedSpearalOutput out, Object obj, Field field)
+	protected abstract void writeObjectField(ExtendedSpearalEncoder out, Object obj, Field field)
 			throws IOException, IllegalAccessException;
 
-	protected abstract void writePrimitiveMethod(ExtendedSpearalOutput out, Object obj, Method getter)
+	protected abstract void writePrimitiveMethod(ExtendedSpearalEncoder out, Object obj, Method getter)
 			throws IOException, IllegalAccessException, InvocationTargetException;
 
-	protected abstract void writeObjectMethod(ExtendedSpearalOutput out, Object obj, Method getter)
+	protected abstract void writeObjectMethod(ExtendedSpearalEncoder out, Object obj, Method getter)
 			throws IOException, IllegalAccessException, InvocationTargetException;
 	
 	@Override
-	public void write(ExtendedSpearalOutput out, Object obj)
+	public void write(ExtendedSpearalEncoder out, Object obj)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 		
 		switch (getAccess) {
@@ -213,20 +213,20 @@ public abstract class AbstractProperty implements Property {
 		}
 	}
 
-	protected abstract boolean readPrimitiveField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
+	protected abstract boolean readPrimitiveField(int parameterizedType, ExtendedSpearalDecoder in, Object obj, Field field)
 			throws IOException, IllegalAccessException;
 
-	protected abstract boolean readObjectField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
+	protected abstract boolean readObjectField(int parameterizedType, ExtendedSpearalDecoder in, Object obj, Field field)
 			throws IOException, IllegalAccessException;
 
-	protected abstract boolean readPrimitiveMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
+	protected abstract boolean readPrimitiveMethod(int parameterizedType, ExtendedSpearalDecoder in, Object obj, Method setter)
 			throws IOException, IllegalAccessException, InvocationTargetException;
 
-	protected abstract boolean readObjectMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
+	protected abstract boolean readObjectMethod(int parameterizedType, ExtendedSpearalDecoder in, Object obj, Method setter)
 			throws IOException, IllegalAccessException, InvocationTargetException;
 	
 	@Override
-	public void read(ExtendedSpearalInput in, Object obj, int parameterizedType)
+	public void read(ExtendedSpearalDecoder in, Object obj, int parameterizedType)
 		throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException {
 		
 		switch (setAccess) {

@@ -53,7 +53,7 @@ import org.spearal.impl.util.StringIndexedCache;
 /**
  * @author Franck WOLFF
  */
-public class SpearalOutputImpl implements ExtendedSpearalOutput {
+public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 
 	private final SpearalContext context;
 	private final SpearalRequest request;
@@ -68,19 +68,19 @@ public class SpearalOutputImpl implements ExtendedSpearalOutput {
 	
 	private int depth;
 	
-	public SpearalOutputImpl(SpearalContext context, OutputStream out) {
+	public SpearalEncoderImpl(SpearalContext context, OutputStream out) {
 		this(context, null, out, 1024);
 	}
 	
-	public SpearalOutputImpl(SpearalContext context, OutputStream out, int capacity) {
+	public SpearalEncoderImpl(SpearalContext context, OutputStream out, int capacity) {
 		this(context, null, out, capacity);
 	}
 	
-	public SpearalOutputImpl(SpearalContext context, SpearalRequest request, OutputStream out) {
+	public SpearalEncoderImpl(SpearalContext context, SpearalRequest request, OutputStream out) {
 		this(context, request, out, 1024);
 	}
 	
-	public SpearalOutputImpl(SpearalContext context, SpearalRequest request, OutputStream out, int capacity) {
+	public SpearalEncoderImpl(SpearalContext context, SpearalRequest request, OutputStream out, int capacity) {
 		this.context = context;
 		this.request = (request != null ? request : new SpearalRequestImpl(context));
 		this.out = out;

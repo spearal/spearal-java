@@ -25,12 +25,12 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 
-import org.spearal.SpearalOutput;
+import org.spearal.SpearalEncoder;
 
 /**
  * @author Franck WOLFF
  */
-public interface ExtendedSpearalOutput extends SpearalOutput {
+public interface ExtendedSpearalEncoder extends SpearalEncoder {
 	
 	void writeNull() throws IOException;
 	

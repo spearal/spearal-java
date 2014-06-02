@@ -19,7 +19,7 @@ package org.spearal.configurable;
 
 import java.io.IOException;
 
-import org.spearal.impl.ExtendedSpearalOutput;
+import org.spearal.impl.ExtendedSpearalEncoder;
 
 
 /**
@@ -29,7 +29,7 @@ public interface ObjectWriterProvider extends ConfigurableItem {
 
 	public static interface ObjectWriter {
 
-		void write(ExtendedSpearalOutput out, Object o) throws IOException;
+		void write(ExtendedSpearalEncoder out, Object o) throws IOException;
 	}
 	
 	ObjectWriter getWriter(Class<?> cls);

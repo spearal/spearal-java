@@ -21,8 +21,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import org.spearal.impl.SpearalContextImpl;
-import org.spearal.impl.SpearalInputImpl;
-import org.spearal.impl.SpearalOutputImpl;
+import org.spearal.impl.SpearalDecoderImpl;
+import org.spearal.impl.SpearalEncoderImpl;
 import org.spearal.impl.introspector.IntrospectorImpl;
 import org.spearal.introspect.Introspector;
 import org.spearal.partial.PartialObjectFactory;
@@ -64,15 +64,15 @@ public class SpearalFactory {
 		return context;
 	}
 	
-	public SpearalOutput newOutput(OutputStream out) {
-		return new SpearalOutputImpl(context, out);
+	public SpearalEncoder newEncoder(OutputStream out) {
+		return new SpearalEncoderImpl(context, out);
 	}
 	
-	public SpearalOutput newOutput(OutputStream out, SpearalRequest request) {
-		return new SpearalOutputImpl(context, request, out);
+	public SpearalEncoder newEncoder(OutputStream out, SpearalRequest request) {
+		return new SpearalEncoderImpl(context, request, out);
 	}
 	
-	public SpearalInput newInput(InputStream in) {
-		return new SpearalInputImpl(context, in);
+	public SpearalDecoder newDecoder(InputStream in) {
+		return new SpearalDecoderImpl(context, in);
 	}
 }

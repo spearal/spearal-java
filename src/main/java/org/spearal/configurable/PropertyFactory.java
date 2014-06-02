@@ -25,8 +25,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
 import org.spearal.SpearalContext;
-import org.spearal.impl.ExtendedSpearalInput;
-import org.spearal.impl.ExtendedSpearalOutput;
+import org.spearal.impl.ExtendedSpearalDecoder;
+import org.spearal.impl.ExtendedSpearalEncoder;
 
 /**
  * @author Franck WOLFF
@@ -57,10 +57,10 @@ public interface PropertyFactory extends ConfigurableItem {
 		
 		boolean isReadOnly();
 		
-		public void write(ExtendedSpearalOutput out, Object obj)
+		public void write(ExtendedSpearalEncoder out, Object obj)
 			throws IOException, IllegalAccessException, InvocationTargetException;
 			
-		public void read(ExtendedSpearalInput in, Object obj, int type)
+		public void read(ExtendedSpearalDecoder in, Object obj, int type)
 			throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException;
 	}
 

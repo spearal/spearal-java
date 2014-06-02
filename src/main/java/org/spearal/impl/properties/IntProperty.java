@@ -23,8 +23,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import org.spearal.configurable.ObjectWriterProvider.ObjectWriter;
-import org.spearal.impl.ExtendedSpearalInput;
-import org.spearal.impl.ExtendedSpearalOutput;
+import org.spearal.impl.ExtendedSpearalDecoder;
+import org.spearal.impl.ExtendedSpearalEncoder;
 import org.spearal.impl.SpearalType;
 
 /**
@@ -39,7 +39,7 @@ public class IntProperty extends AbstractProperty {
 	public static ObjectWriter createWriter() {
 		return new ObjectWriter() {
 			@Override
-			public void write(ExtendedSpearalOutput out, Object o) throws IOException {
+			public void write(ExtendedSpearalEncoder out, Object o) throws IOException {
 				out.writeInt(((Integer)o).intValue());
 			}
 		};
@@ -54,35 +54,35 @@ public class IntProperty extends AbstractProperty {
 	}
 
 	@Override
-	protected void writePrimitiveField(ExtendedSpearalOutput out, Object obj, Field field)
+	protected void writePrimitiveField(ExtendedSpearalEncoder out, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 		
 		out.writeInt(field.getInt(obj));
 	}
 
 	@Override
-	protected void writeObjectField(ExtendedSpearalOutput out, Object obj, Field field)
+	protected void writeObjectField(ExtendedSpearalEncoder out, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 		
 		writeInteger(out, (Integer)field.get(obj));
 	}
 
 	@Override
-	protected void writePrimitiveMethod(ExtendedSpearalOutput out, Object obj, Method getter)
+	protected void writePrimitiveMethod(ExtendedSpearalEncoder out, Object obj, Method getter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 		
 		out.writeInt(((Integer)getter.invoke(obj)).intValue());
 	}
 
 	@Override
-	protected void writeObjectMethod(ExtendedSpearalOutput out, Object obj, Method getter)
+	protected void writeObjectMethod(ExtendedSpearalEncoder out, Object obj, Method getter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 
 		writeInteger(out, (Integer)getter.invoke(obj));
 	}
 	
 	@Override
-	protected boolean readPrimitiveField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
+	protected boolean readPrimitiveField(int parameterizedType, ExtendedSpearalDecoder in, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 		
 		switch (SpearalType.valueOf(parameterizedType)) {
@@ -105,7 +105,7 @@ public class IntProperty extends AbstractProperty {
 	}
 	
 	@Override
-	protected boolean readObjectField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
+	protected boolean readObjectField(int parameterizedType, ExtendedSpearalDecoder in, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 		
 		switch (SpearalType.valueOf(parameterizedType)) {
@@ -128,7 +128,7 @@ public class IntProperty extends AbstractProperty {
 	}
 
 	@Override
-	protected boolean readPrimitiveMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
+	protected boolean readPrimitiveMethod(int parameterizedType, ExtendedSpearalDecoder in, Object obj, Method setter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 
 		switch (SpearalType.valueOf(parameterizedType)) {
@@ -151,7 +151,7 @@ public class IntProperty extends AbstractProperty {
 	}
 
 	@Override
-	protected boolean readObjectMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
+	protected boolean readObjectMethod(int parameterizedType, ExtendedSpearalDecoder in, Object obj, Method setter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 
 		switch (SpearalType.valueOf(parameterizedType)) {
@@ -173,7 +173,7 @@ public class IntProperty extends AbstractProperty {
 		}
 	}
 	
-	private static void writeInteger(ExtendedSpearalOutput out, Integer value) throws IOException {
+	private static void writeInteger(ExtendedSpearalEncoder out, Integer value) throws IOException {
 		if (value == null)
 			out.writeNull();
 		else

@@ -26,13 +26,13 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 
-import org.spearal.SpearalInput;
+import org.spearal.SpearalDecoder;
 import org.spearal.configurable.PropertyFactory.Property;
 
 /**
  * @author Franck WOLFF
  */
-public interface ExtendedSpearalInput extends SpearalInput {
+public interface ExtendedSpearalDecoder extends SpearalDecoder {
 
 //	Object readAny(Type type) throws IOException;
 

@@ -23,8 +23,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import org.spearal.configurable.ObjectWriterProvider.ObjectWriter;
-import org.spearal.impl.ExtendedSpearalInput;
-import org.spearal.impl.ExtendedSpearalOutput;
+import org.spearal.impl.ExtendedSpearalDecoder;
+import org.spearal.impl.ExtendedSpearalEncoder;
 import org.spearal.impl.SpearalType;
 
 /**
@@ -39,7 +39,7 @@ public class CharProperty extends AbstractProperty {
 	public static ObjectWriter createWriter() {
 		return new ObjectWriter() {
 			@Override
-			public void write(ExtendedSpearalOutput out, Object o) throws IOException {
+			public void write(ExtendedSpearalEncoder out, Object o) throws IOException {
 				out.writeString(String.valueOf(((Character)o).charValue()));
 			}
 		};
@@ -54,35 +54,35 @@ public class CharProperty extends AbstractProperty {
 	}
 
 	@Override
-	protected void writePrimitiveField(ExtendedSpearalOutput out, Object obj, Field field)
+	protected void writePrimitiveField(ExtendedSpearalEncoder out, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 		
 		out.writeChar(field.getChar(obj));
 	}
 
 	@Override
-	protected void writeObjectField(ExtendedSpearalOutput out, Object obj, Field field)
+	protected void writeObjectField(ExtendedSpearalEncoder out, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 		
 		writeCharacter(out, (Character)field.get(obj));
 	}
 
 	@Override
-	protected void writePrimitiveMethod(ExtendedSpearalOutput out, Object obj, Method getter)
+	protected void writePrimitiveMethod(ExtendedSpearalEncoder out, Object obj, Method getter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 		
 		out.writeChar(((Character)getter.invoke(obj)).charValue());
 	}
 
 	@Override
-	protected void writeObjectMethod(ExtendedSpearalOutput out, Object obj, Method getter)
+	protected void writeObjectMethod(ExtendedSpearalEncoder out, Object obj, Method getter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 
 		writeCharacter(out, (Character)getter.invoke(obj));
 	}
 	
 	@Override
-	protected boolean readPrimitiveField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
+	protected boolean readPrimitiveField(int parameterizedType, ExtendedSpearalDecoder in, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 		
 		switch (SpearalType.valueOf(parameterizedType)) {
@@ -101,7 +101,7 @@ public class CharProperty extends AbstractProperty {
 	}
 	
 	@Override
-	protected boolean readObjectField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
+	protected boolean readObjectField(int parameterizedType, ExtendedSpearalDecoder in, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 		
 		switch (SpearalType.valueOf(parameterizedType)) {
@@ -120,7 +120,7 @@ public class CharProperty extends AbstractProperty {
 	}
 
 	@Override
-	protected boolean readPrimitiveMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
+	protected boolean readPrimitiveMethod(int parameterizedType, ExtendedSpearalDecoder in, Object obj, Method setter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 
 		switch (SpearalType.valueOf(parameterizedType)) {
@@ -139,7 +139,7 @@ public class CharProperty extends AbstractProperty {
 	}
 
 	@Override
-	protected boolean readObjectMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
+	protected boolean readObjectMethod(int parameterizedType, ExtendedSpearalDecoder in, Object obj, Method setter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 
 		switch (SpearalType.valueOf(parameterizedType)) {
@@ -157,7 +157,7 @@ public class CharProperty extends AbstractProperty {
 		}
 	}
 	
-	private static void writeCharacter(ExtendedSpearalOutput out, Character value) throws IOException {
+	private static void writeCharacter(ExtendedSpearalEncoder out, Character value) throws IOException {
 		if (value == null)
 			out.writeNull();
 		else

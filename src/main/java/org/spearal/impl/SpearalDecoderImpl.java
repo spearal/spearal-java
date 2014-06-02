@@ -41,7 +41,7 @@ import org.spearal.impl.util.UnmodifiableArray;
 /**
  * @author Franck WOLFF
  */
-public class SpearalInputImpl implements ExtendedSpearalInput {
+public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
 	private final List<String> storedStrings;
 	private final List<Object> storedObjects;
@@ -55,11 +55,11 @@ public class SpearalInputImpl implements ExtendedSpearalInput {
 	private int size;
 	private boolean eof;
 
-	public SpearalInputImpl(SpearalContext context, InputStream in) {
+	public SpearalDecoderImpl(SpearalContext context, InputStream in) {
 		this(context, in, 1024);
 	}
 
-	public SpearalInputImpl(SpearalContext context, InputStream in, int capacity) {
+	public SpearalDecoderImpl(SpearalContext context, InputStream in, int capacity) {
         this.storedStrings = new ArrayList<String>(64);
         this.storedObjects = new ArrayList<Object>(64);
         this.descriptors = new HashMap<String, ClassDescriptor>();

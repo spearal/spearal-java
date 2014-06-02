@@ -22,7 +22,7 @@ import java.io.IOException;
 /**
  * @author Franck WOLFF
  */
-public interface SpearalOutput {
+public interface SpearalEncoder {
 
 	SpearalContext getContext();
 	SpearalRequest getRequest();

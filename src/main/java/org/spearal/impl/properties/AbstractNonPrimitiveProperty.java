@@ -22,8 +22,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import org.spearal.impl.ExtendedSpearalInput;
-import org.spearal.impl.ExtendedSpearalOutput;
+import org.spearal.impl.ExtendedSpearalDecoder;
+import org.spearal.impl.ExtendedSpearalEncoder;
 
 /**
  * @author Franck WOLFF
@@ -35,28 +35,28 @@ public abstract class AbstractNonPrimitiveProperty extends AbstractProperty {
 	}
 
 	@Override
-	protected void writePrimitiveField(ExtendedSpearalOutput out, Object obj, Field field)
+	protected void writePrimitiveField(ExtendedSpearalEncoder out, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 		
 		throw new IllegalAccessException("Primitive property: " + this);
 	}
 
 	@Override
-	protected void writePrimitiveMethod(ExtendedSpearalOutput out, Object obj, Method getter)
+	protected void writePrimitiveMethod(ExtendedSpearalEncoder out, Object obj, Method getter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 		
 		throw new IllegalAccessException("Primitive property: " + this);
 	}
 
 	@Override
-	protected boolean readPrimitiveField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
+	protected boolean readPrimitiveField(int parameterizedType, ExtendedSpearalDecoder in, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 		
 		throw new IllegalAccessException("Primitive property: " + this);
 	}
 
 	@Override
-	protected boolean readPrimitiveMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
+	protected boolean readPrimitiveMethod(int parameterizedType, ExtendedSpearalDecoder in, Object obj, Method setter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 		
 		throw new IllegalAccessException("Primitive property: " + this);

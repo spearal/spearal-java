@@ -24,8 +24,8 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 
 import org.spearal.configurable.ObjectWriterProvider.ObjectWriter;
-import org.spearal.impl.ExtendedSpearalInput;
-import org.spearal.impl.ExtendedSpearalOutput;
+import org.spearal.impl.ExtendedSpearalDecoder;
+import org.spearal.impl.ExtendedSpearalEncoder;
 import org.spearal.impl.SpearalType;
 
 /**
@@ -40,7 +40,7 @@ public class CollectionProperty extends AbstractNonPrimitiveProperty {
 	public static ObjectWriter createWriter() {
 		return new ObjectWriter() {
 			@Override
-			public void write(ExtendedSpearalOutput out, Object o) throws IOException {
+			public void write(ExtendedSpearalEncoder out, Object o) throws IOException {
 				out.writeCollection((Collection<?>)o);
 			}
 		};
@@ -55,21 +55,21 @@ public class CollectionProperty extends AbstractNonPrimitiveProperty {
 	}
 
 	@Override
-	protected void writeObjectField(ExtendedSpearalOutput out, Object obj, Field field)
+	protected void writeObjectField(ExtendedSpearalEncoder out, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 		
 		writeCollection(out, (Collection<?>)field.get(obj));
 	}
 
 	@Override
-	protected void writeObjectMethod(ExtendedSpearalOutput out, Object obj, Method getter)
+	protected void writeObjectMethod(ExtendedSpearalEncoder out, Object obj, Method getter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 
 		writeCollection(out, (Collection<?>)getter.invoke(obj));
 	}
 
 	@Override
-	protected boolean readObjectField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
+	protected boolean readObjectField(int parameterizedType, ExtendedSpearalDecoder in, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 		
 		switch (SpearalType.valueOf(parameterizedType)) {
@@ -96,7 +96,7 @@ public class CollectionProperty extends AbstractNonPrimitiveProperty {
 	}
 
 	@Override
-	protected boolean readObjectMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
+	protected boolean readObjectMethod(int parameterizedType, ExtendedSpearalDecoder in, Object obj, Method setter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 
 		switch (SpearalType.valueOf(parameterizedType)) {
@@ -119,7 +119,7 @@ public class CollectionProperty extends AbstractNonPrimitiveProperty {
 		}
 	}
 	
-	private static void writeCollection(ExtendedSpearalOutput out, Collection<?> value)
+	private static void writeCollection(ExtendedSpearalEncoder out, Collection<?> value)
 		throws IOException {
 		
 		if (value == null)

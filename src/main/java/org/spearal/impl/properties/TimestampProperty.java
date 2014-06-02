@@ -24,8 +24,8 @@ import java.lang.reflect.Method;
 import java.sql.Timestamp;
 
 import org.spearal.configurable.ObjectWriterProvider.ObjectWriter;
-import org.spearal.impl.ExtendedSpearalInput;
-import org.spearal.impl.ExtendedSpearalOutput;
+import org.spearal.impl.ExtendedSpearalDecoder;
+import org.spearal.impl.ExtendedSpearalEncoder;
 import org.spearal.impl.SpearalType;
 
 /**
@@ -40,7 +40,7 @@ public class TimestampProperty extends AbstractNonPrimitiveProperty {
 	public static ObjectWriter createWriter() {
 		return new ObjectWriter() {
 			@Override
-			public void write(ExtendedSpearalOutput out, Object o) throws IOException {
+			public void write(ExtendedSpearalEncoder out, Object o) throws IOException {
 				out.writeTimestamp((Timestamp)o);
 			}
 		};
@@ -55,21 +55,21 @@ public class TimestampProperty extends AbstractNonPrimitiveProperty {
 	}
 
 	@Override
-	protected void writeObjectField(ExtendedSpearalOutput out, Object obj, Field field)
+	protected void writeObjectField(ExtendedSpearalEncoder out, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 		
 		writeTimestamp(out, (Timestamp)field.get(obj));
 	}
 
 	@Override
-	protected void writeObjectMethod(ExtendedSpearalOutput out, Object obj, Method getter)
+	protected void writeObjectMethod(ExtendedSpearalEncoder out, Object obj, Method getter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 
 		writeTimestamp(out, (Timestamp)getter.invoke(obj));
 	}
 	
 	@Override
-	protected boolean readObjectField(int parameterizedType, ExtendedSpearalInput in, Object obj, Field field)
+	protected boolean readObjectField(int parameterizedType, ExtendedSpearalDecoder in, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 		
 		switch (SpearalType.valueOf(parameterizedType)) {
@@ -100,7 +100,7 @@ public class TimestampProperty extends AbstractNonPrimitiveProperty {
 	}
 
 	@Override
-	protected boolean readObjectMethod(int parameterizedType, ExtendedSpearalInput in, Object obj, Method setter)
+	protected boolean readObjectMethod(int parameterizedType, ExtendedSpearalDecoder in, Object obj, Method setter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 		
 		switch (SpearalType.valueOf(parameterizedType)) {
@@ -131,7 +131,7 @@ public class TimestampProperty extends AbstractNonPrimitiveProperty {
 	}
 	
 	
-	private static void writeTimestamp(ExtendedSpearalOutput out, Timestamp value) throws IOException {
+	private static void writeTimestamp(ExtendedSpearalEncoder out, Timestamp value) throws IOException {
 		if (value == null)
 			out.writeNull();
 		else
