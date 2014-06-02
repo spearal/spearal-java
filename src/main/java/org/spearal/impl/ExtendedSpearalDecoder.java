@@ -34,8 +34,6 @@ import org.spearal.configurable.PropertyFactory.Property;
  */
 public interface ExtendedSpearalDecoder extends SpearalDecoder {
 
-//	Object readAny(Type type) throws IOException;
-
 	Object readAny(int parameterizedType) throws IOException;
 	void skipAny(int parameterizedType) throws IOException;
 	

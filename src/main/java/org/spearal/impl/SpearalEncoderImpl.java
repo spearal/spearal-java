@@ -123,13 +123,6 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 		if (depth == 0)
 			flushBuffer();
 	}
-	
-	@Override
-	public void writeClass(Class<?> value) throws IOException {
-		ensureCapacity(1);
-		buffer[position] = (byte)CLASS.id();
-		writeStringData(value.getName());
-	}
 
 	@Override
 	public void writeNull() throws IOException {
@@ -144,8 +137,20 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 	}
 	
 	@Override
-	public void writeChar(char value) throws IOException {
-		writeString(String.valueOf(value));
+	public void writeDate(Date value) throws IOException {
+		ensureCapacity(9);
+
+		buffer[position++] = (byte)DATE.id();
+		writeLongData(value.getTime());
+	}
+	
+	@Override
+	public void writeTimestamp(Timestamp value) throws IOException {
+		ensureCapacity(13);
+
+		buffer[position++] = (byte)TIMESTAMP.id();
+		writeLongData(value.getTime());
+		writeIntData(value.getNanos());
 	}
 	
 	@Override
@@ -258,6 +263,43 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 		
 		this.position = position;
 	}
+	
+	private static final BigInteger LONG_MIN_VALUE = BigInteger.valueOf(Long.MIN_VALUE);
+	private static final BigInteger LONG_MAX_VALUE = BigInteger.valueOf(Long.MAX_VALUE);
+	
+	@Override
+	public void writeBigInteger(BigInteger value) throws IOException {
+		if (value.compareTo(LONG_MIN_VALUE) >= 0 && value.compareTo(LONG_MAX_VALUE) <= 0) {
+			writeLong(value.longValue());
+			return;
+		}
+		
+		String digits = value.toString();
+		
+		int negative = 0x00;
+		int start = 0;
+		int length = digits.length();
+		if (digits.charAt(0) == '-') {
+			negative = 0x80;
+			start = 1;
+			length--;
+		}
+		
+		int length0 = unsignedIntLength0(length);
+		
+		ensureCapacity(length0 + 2);
+		buffer[position++] = (byte)(BIG_INTEGRAL.id() | negative | length0);
+		writeUnsignedIntValue(length, length0);
+		
+		do {
+			ensureCapacity(1);
+			int b = ((digits.charAt(start++) - '0') << 4);
+			if (start < length)
+				b |= (digits.charAt(start++) - '0');
+			buffer[position++] = (byte)b;
+		}
+		while (start < length);
+	}
 
 	@Override
 	public void writeFloat(float value) throws IOException {
@@ -333,46 +375,15 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 		buffer[position++] = (byte)FLOATING.id();
 		writeLongData(bits);
 	}
-	
-	private static final BigInteger LONG_MIN_VALUE = BigInteger.valueOf(Long.MIN_VALUE);
-	private static final BigInteger LONG_MAX_VALUE = BigInteger.valueOf(Long.MAX_VALUE);
-	
-	@Override
-	public void writeBigInteger(BigInteger value) throws IOException {
-		if (value.compareTo(LONG_MIN_VALUE) >= 0 && value.compareTo(LONG_MAX_VALUE) <= 0) {
-			writeLong(value.longValue());
-			return;
-		}
-		
-		String digits = value.toString();
-		
-		int negative = 0x00;
-		int start = 0;
-		int length = digits.length();
-		if (digits.charAt(0) == '-') {
-			negative = 0x80;
-			start = 1;
-			length--;
-		}
-		
-		int length0 = unsignedIntLength0(length);
-		
-		ensureCapacity(length0 + 2);
-		buffer[position++] = (byte)(BIG_INTEGRAL.id() | negative | length0);
-		writeUnsignedIntValue(length, length0);
-		
-		do {
-			ensureCapacity(1);
-			int b = ((digits.charAt(start++) - '0') << 4);
-			if (start < length)
-				b |= (digits.charAt(start++) - '0');
-			buffer[position++] = (byte)b;
-		}
-		while (start < length);
-	}
 
 	@Override
 	public void writeBigDecimal(BigDecimal value) throws IOException {
+		// TODO
+	}
+	
+	@Override
+	public void writeChar(char value) throws IOException {
+		writeString(String.valueOf(value));
 	}
 
 	@Override
@@ -492,23 +503,6 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
             }
         }
     }
-	
-	@Override
-	public void writeDate(Date value) throws IOException {
-		ensureCapacity(9);
-
-		buffer[position++] = (byte)DATE.id();
-		writeLongData(value.getTime());
-	}
-	
-	@Override
-	public void writeTimestamp(Timestamp value) throws IOException {
-		ensureCapacity(13);
-
-		buffer[position++] = (byte)TIMESTAMP.id();
-		writeLongData(value.getTime());
-		writeIntData(value.getNanos());
-	}
 
 	@Override
 	public void writeByteArray(byte[] value) throws IOException {
@@ -534,6 +528,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 
 	@Override
 	public void writeArray(Object value) throws IOException {
+		// TODO
 	}
 
 	@Override
@@ -587,6 +582,13 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 		writeStringData(value.getClass().getName());
 		
 		writeString(value.name());
+	}
+	
+	@Override
+	public void writeClass(Class<?> value) throws IOException {
+		ensureCapacity(1);
+		buffer[position] = (byte)CLASS.id();
+		writeStringData(value.getName());
 	}
 
 	@Override

@@ -83,13 +83,6 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
         return readAny(buffer[position++] & 0xff);
     }
 
-//	@Override
-//	public Object readAny(Type type) throws IOException {
-//    	ensureAvailable(1);
-//    	int t = buffer[position++] & 0xff;
-//    	return null; // readCollection(t, null, type);
-//	}
-
 	@Override
     public Object readAny(int parameterizedType) throws IOException {
         switch (SpearalType.valueOf(parameterizedType)) {
@@ -146,146 +139,18 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	// TODO
 		readAny(parameterizedType);
 	}
-
-	@Override
-	public Class<?> readClass(int parameterizedType) throws IOException {
-		int length0 = (parameterizedType & 0x03);
-    	
-		ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-    	
-    	String className = readStringData(indexOrLength);
-		return context.loadClass(context.getClassNameAlias(className));
-	}
-
-	@Override
-    public Object readBean(int parameterizedType) throws IOException {
-    	boolean reference = (parameterizedType & 0x08) != 0;
-    	int length0 = (parameterizedType & 0x03);
-    	
-    	ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-    	
-    	if (reference)
-    		return storedObjects.get(indexOrLength);
-    	
-    	String classDescription = readStringData(indexOrLength);
-    	
-    	ClassDescriptor descriptor = descriptors.get(classDescription);
-    	if (descriptor == null) {
-    		descriptor = ClassDescriptor.forDescription(context, classDescription);
-    		descriptors.put(classDescription, descriptor);
-    	}
-
-    	try {
-	    	Class<?> cls = descriptor.cls;
-
-	    	Object value = (
-	    		descriptor.partial
-	    		? context.instantiatePartial(cls, descriptor.properties)
-	    		: context.instantiate(cls)
-	    	);
-	    	storedObjects.add(value);
-	    	
-	    	for (Property property : descriptor.properties) {
-	    		if (property != null) {
-	    	    	ensureAvailable(1);
-	    	    	int propertyType = (buffer[position++] & 0xff);
-	    			property.read(this, value, propertyType);
-	    		}
-	    		else
-	    			skipObject();
-	    	}
-	    	
-	    	return value;
-    	}
-    	catch (Exception e) {
-    		throw new IOException(e);
-    	}
-    }
     
-    private void skipObject() throws IOException {
-    	// TODO
-    	readAny();
+    @Override
+    public Date readDate(int parameterizedType) throws IOException {
+    	ensureAvailable(8);
+    	return new Date(readLongData());
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-	@Override
-	public Enum<?> readEnum(int parameterizedType) throws IOException {
-		int length0 = (parameterizedType & 0x03);
-    	
-		ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-    	
-    	String className = context.getClassNameAlias(readStringData(indexOrLength));
-		Class<? extends Enum> cls = (Class<? extends Enum>)context.loadClass(className);
-    	
-    	ensureAvailable(1);
-    	String value = readString(buffer[position++] & 0xff);
-    	
-    	return Enum.valueOf(cls, value);
-	}
-
-	@Override
-    public String readString(int parameterizedType) throws IOException {
-    	boolean reference = (parameterizedType & 0x04) != 0;
-    	int length0 = (parameterizedType & 0x03);
-    	
-    	ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-    	
-    	if (reference)
-    		return storedStrings.get(indexOrLength);
-    	
-    	String value = readStringData(indexOrLength);
-    	if (value.length() > 0)
-    		storedStrings.add(value);
-    	return value;
-    }
-    
-    private String readStringData(int length) throws IOException {
-    	if (length == 0)
-    		return "";
-        
-    	String result;
-        if (length <= size - position) {
-        	result = new String(buffer, position, length, "UTF-8");
-        	position += length;
-        }
-        else if (length <= buffer.length) {
-        	ensureAvailable(length);
-        	result = new String(buffer, position, length, "UTF-8");
-        	position += length;
-        }
-        else {
-	        byte[] bytes = new byte[length];
-	        readFully(bytes, 0, length);
-	        result = new String(bytes, "UTF-8");
-        }
-        //storedStrings.add(result);
-        return result;
-    }
-    
-    private int readUnsignedIntegerValue(int length0) {
-		int v = 0;
-		
-    	final byte[] buffer = this.buffer;
-    	int position = this.position;
-
-    	switch (length0) {
-		case 3:
-			v |= (buffer[position++] & 0xff) << 24;
-		case 2:
-			v |= (buffer[position++] & 0xff) << 16;
-		case 1:
-			v |= (buffer[position++] & 0xff) << 8;
-		case 0:
-			v |= (buffer[position++] & 0xff);
-		}
-		
-    	this.position = position;
-		
-		return v;
+    public Timestamp readTimestamp(int parameterizedType) throws IOException {
+    	ensureAvailable(12);
+    	Timestamp timestamp = new Timestamp(readLongData());
+    	timestamp.setNanos(readIntData());
+    	return timestamp;
     }
     
     @Override
@@ -328,6 +193,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     
     @Override
 	public BigInteger readBigIntegral(int parameterizedType) throws IOException {
+    	// TODO
     	throw new UnsupportedOperationException("Not implemented");
 	}
 
@@ -368,20 +234,19 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
 	@Override
 	public BigDecimal readBigFloating(int parameterizedType) throws IOException {
+		// TODO
 		throw new UnsupportedOperationException("Not implemented");
 	}
-    
-    @Override
-    public Date readDate(int parameterizedType) throws IOException {
-    	ensureAvailable(8);
-    	return new Date(readLongData());
-    }
 
-    public Timestamp readTimestamp(int parameterizedType) throws IOException {
-    	ensureAvailable(12);
-    	Timestamp timestamp = new Timestamp(readLongData());
-    	timestamp.setNanos(readIntData());
-    	return timestamp;
+	@Override
+    public String readString(int parameterizedType) throws IOException {
+    	boolean reference = (parameterizedType & 0x04) != 0;
+    	int length0 = (parameterizedType & 0x03);
+    	
+    	ensureAvailable(length0 + 1);
+    	int indexOrLength = readUnsignedIntegerValue(length0);
+    	
+    	return readStringData(indexOrLength, reference);
     }
     
     @Override
@@ -402,6 +267,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
 	@Override
 	public Object readArray(int parameterizedType) throws IOException {
+		// TODO
 		throw new UnsupportedOperationException("Not implemented");
 	}
 
@@ -546,6 +412,133 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	    	}
     	}
 	}
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+	@Override
+	public Enum<?> readEnum(int parameterizedType) throws IOException {
+    	boolean reference = (parameterizedType & 0x04) != 0;
+    	int length0 = (parameterizedType & 0x03);
+    	
+		ensureAvailable(length0 + 1);
+    	int indexOrLength = readUnsignedIntegerValue(length0);
+    	
+    	String className = context.getClassNameAlias(readStringData(indexOrLength, reference));
+		Class<? extends Enum> cls = (Class<? extends Enum>)context.loadClass(className);
+    	
+    	ensureAvailable(1);
+    	String value = readString(buffer[position++] & 0xff);
+    	
+    	return Enum.valueOf(cls, value);
+	}
+
+	@Override
+	public Class<?> readClass(int parameterizedType) throws IOException {
+		boolean reference = (parameterizedType & 0x04) != 0;
+		int length0 = (parameterizedType & 0x03);
+    	
+		ensureAvailable(length0 + 1);
+    	int indexOrLength = readUnsignedIntegerValue(length0);
+    	
+    	String className = readStringData(indexOrLength, reference);
+		return context.loadClass(context.getClassNameAlias(className));
+	}
+
+	@Override
+    public Object readBean(int parameterizedType) throws IOException {
+    	boolean reference = (parameterizedType & 0x08) != 0;
+    	int length0 = (parameterizedType & 0x03);
+    	
+    	ensureAvailable(length0 + 1);
+    	int indexOrLength = readUnsignedIntegerValue(length0);
+    	
+    	if (reference)
+    		return storedObjects.get(indexOrLength);
+    	
+    	boolean classDescReference = (parameterizedType & 0x04) != 0;
+    	String classDescription = readStringData(indexOrLength, classDescReference);
+    	
+    	ClassDescriptor descriptor = descriptors.get(classDescription);
+    	if (descriptor == null) {
+    		descriptor = ClassDescriptor.forDescription(context, classDescription);
+    		descriptors.put(classDescription, descriptor);
+    	}
+
+    	try {
+	    	Class<?> cls = descriptor.cls;
+
+	    	Object value = (
+	    		descriptor.partial
+	    		? context.instantiatePartial(cls, descriptor.properties)
+	    		: context.instantiate(cls)
+	    	);
+	    	storedObjects.add(value);
+	    	
+	    	for (Property property : descriptor.properties) {
+	    		ensureAvailable(1);
+	    		int propertyType = (buffer[position++] & 0xff);
+	    		
+	    		if (property != null)
+	    			property.read(this, value, propertyType);
+	    		else
+	    			skipAny(propertyType);
+	    	}
+	    	
+	    	return value;
+    	}
+    	catch (Exception e) {
+    		throw new IOException(e);
+    	}
+    }
+    
+    private int readUnsignedIntegerValue(int length0) {
+		int v = 0;
+		
+    	final byte[] buffer = this.buffer;
+    	int position = this.position;
+
+    	switch (length0) {
+		case 3:
+			v |= (buffer[position++] & 0xff) << 24;
+		case 2:
+			v |= (buffer[position++] & 0xff) << 16;
+		case 1:
+			v |= (buffer[position++] & 0xff) << 8;
+		case 0:
+			v |= (buffer[position++] & 0xff);
+		}
+		
+    	this.position = position;
+		
+		return v;
+    }
+    
+    private String readStringData(int indexOrLength, boolean reference) throws IOException {
+    	if (reference)
+    		return storedStrings.get(indexOrLength);
+    	
+    	if (indexOrLength == 0)
+    		return "";
+        
+    	String value;
+        if (indexOrLength <= size - position) {
+        	value = new String(buffer, position, indexOrLength, "UTF-8");
+        	position += indexOrLength;
+        }
+        else if (indexOrLength <= buffer.length) {
+        	ensureAvailable(indexOrLength);
+        	value = new String(buffer, position, indexOrLength, "UTF-8");
+        	position += indexOrLength;
+        }
+        else {
+	        byte[] bytes = new byte[indexOrLength];
+	        readFully(bytes, 0, indexOrLength);
+	        value = new String(bytes, "UTF-8");
+        }
+        
+    	storedStrings.add(value);
+        
+        return value;
+    }
 
 	private long readLongData() {
     	final byte[] buffer = this.buffer;
