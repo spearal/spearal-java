@@ -15,41 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.spearal.test;
+package org.spearal.loader;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
+import java.io.Serializable;
 
 /**
  * @author Franck WOLFF
  */
-@RunWith(Suite.class)
-@SuiteClasses({
-	TestSpearalType.class,
+public interface ClassNotFoundProxy extends Serializable {
 
-	TestNull.class,
-	
-	TestBoolean.class,
-	
-	TestDate.class,
-	TestTimestamp.class,
-	
-	TestByte.class,
-	TestShort.class,
-	TestInteger.class,
-	TestLong.class,
-
-	TestFloat.class,
-	TestDouble.class,
-
-	TestString.class,
-	
-	TestByteArray.class,
-	
-	TestEnum.class,
-	TestClass.class,
-	TestProxy.class,
-})
-public class AllTests {
+	String $encodedClassName();
 }

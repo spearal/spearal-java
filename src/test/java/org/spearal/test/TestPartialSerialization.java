@@ -2,6 +2,7 @@ package org.spearal.test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.lang.reflect.Proxy;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -84,10 +85,11 @@ public class TestPartialSerialization {
 
 		System.out.println(o);
 		if (o instanceof PartialObjectProxy) {
-			System.out.println("tall defined: " + ((PartialObjectProxy)o).spearalIsDefined("tall"));
-			System.out.println("old defined: " + ((PartialObjectProxy)o).spearalIsDefined("old"));
-			System.out.println("female defined: " + ((PartialObjectProxy)o).spearalIsDefined("female"));
-			System.out.println("defined properties: " + ((PartialObjectProxy)o).spearalGetDefinedProperties());
+			System.out.println("Proxy.isProxyClass: " + Proxy.isProxyClass(o.getClass()));
+			System.out.println("tall defined: " + ((PartialObjectProxy)o).$isDefined("tall"));
+			System.out.println("old defined: " + ((PartialObjectProxy)o).$isDefined("old"));
+			System.out.println("female defined: " + ((PartialObjectProxy)o).$isDefined("female"));
+			System.out.println("defined properties: " + ((PartialObjectProxy)o).$getDefinedProperties());
 		}
 		
 		ClientBooleanBean b = (ClientBooleanBean)o;

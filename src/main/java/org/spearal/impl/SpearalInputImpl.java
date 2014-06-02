@@ -155,13 +155,7 @@ public class SpearalInputImpl implements ExtendedSpearalInput {
     	int indexOrLength = readUnsignedIntegerValue(length0);
     	
     	String className = readStringData(indexOrLength);
-		
-    	try {
-			return context.loadClass(context.getClassNameAlias(className));
-		}
-    	catch (ClassNotFoundException e) {
-    		throw new IOException(e);
-		}
+		return context.loadClass(context.getClassNameAlias(className));
 	}
 
 	@Override
@@ -179,16 +173,10 @@ public class SpearalInputImpl implements ExtendedSpearalInput {
     	
     	ClassDescriptor descriptor = descriptors.get(classDescription);
     	if (descriptor == null) {
-    		try {
-				descriptor = ClassDescriptor.forDescription(context, classDescription);
-			}
-    		catch (ClassNotFoundException e) {
-    			throw new IOException(e);
-			}
+    		descriptor = ClassDescriptor.forDescription(context, classDescription);
     		descriptors.put(classDescription, descriptor);
     	}
-    	
-    	
+
     	try {
 	    	Class<?> cls = descriptor.cls;
 
@@ -229,15 +217,8 @@ public class SpearalInputImpl implements ExtendedSpearalInput {
 		ensureAvailable(length0 + 1);
     	int indexOrLength = readUnsignedIntegerValue(length0);
     	
-    	String className = readStringData(indexOrLength);
-		
-		Class<? extends Enum> cls;
-    	try {
-			cls = (Class<? extends Enum>)context.loadClass(context.getClassNameAlias(className));
-		}
-    	catch (ClassNotFoundException e) {
-			throw new IOException(e);
-		}
+    	String className = context.getClassNameAlias(readStringData(indexOrLength));
+		Class<? extends Enum> cls = (Class<? extends Enum>)context.loadClass(className);
     	
     	ensureAvailable(1);
     	String value = readString(buffer[position++] & 0xff);
@@ -678,23 +659,24 @@ public class SpearalInputImpl implements ExtendedSpearalInput {
 		public final Collection<Property> properties;
 		public final boolean partial;
 
-		public static ClassDescriptor forDescription(SpearalContext context, String description)
-			throws ClassNotFoundException {
+		public static ClassDescriptor forDescription(SpearalContext context, String description) {
 			
-			String className;
+			String[] classNames;
 			String[] propertyNames;
 
-			int index = description.indexOf(':');
-			if (index == -1) {
-				className = description;
+			int iLastColon = description.lastIndexOf(':');
+			if (iLastColon == -1) {
+				classNames = new String[]{ context.getClassNameAlias(description) };
 				propertyNames = new String[0];
 			}
 			else {
-				className = description.substring(0, index);
-				propertyNames = description.substring(index + 1).split(",");
+				classNames = description.substring(0, iLastColon).split(":");
+				for (int i = 0; i < classNames.length; i++)
+					classNames[i] = context.getClassNameAlias(classNames[i]);
+				propertyNames = description.substring(iLastColon + 1).split(",");
 			}
 			
-			Class<?> cls = context.loadClass(context.getClassNameAlias(className));
+			Class<?> cls = context.loadClass(classNames);
 			
 			Collection<Property> properties = context.getProperties(cls);
 			Property[] serializedProperties = new Property[propertyNames.length];

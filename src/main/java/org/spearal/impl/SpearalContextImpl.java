@@ -42,8 +42,11 @@ import org.spearal.impl.converter.CharConverter;
 import org.spearal.impl.converter.IntConverter;
 import org.spearal.impl.converter.LongConverter;
 import org.spearal.impl.converter.ShortConverter;
+import org.spearal.impl.instantiator.ClassInstantiator;
 import org.spearal.impl.instantiator.CollectionInstantiator;
 import org.spearal.impl.instantiator.MapInstantiator;
+import org.spearal.impl.instantiator.ProxyInstantiator;
+import org.spearal.impl.loader.TypeLoaderImpl;
 import org.spearal.impl.properties.BeanPropertyFactory;
 import org.spearal.impl.properties.BooleanPropertyFactory;
 import org.spearal.impl.properties.ByteArrayPropertyFactory;
@@ -56,6 +59,7 @@ import org.spearal.impl.properties.IntegralPropertyFactory;
 import org.spearal.impl.properties.MapPropertyFactory;
 import org.spearal.impl.properties.StringPropertyFactory;
 import org.spearal.introspect.Introspector;
+import org.spearal.loader.TypeLoader;
 import org.spearal.partial.PartialObjectFactory;
 
 /**
@@ -64,7 +68,7 @@ import org.spearal.partial.PartialObjectFactory;
 public class SpearalContextImpl implements SpearalContext {
 	
 	private final Introspector introspector;
-	
+	private final TypeLoader loader;
 	private final PartialObjectFactory partialObjectFactory;
 	
 	private final Map<String, String> classAliases;
@@ -78,15 +82,15 @@ public class SpearalContextImpl implements SpearalContext {
 	private final List<Converter> converters;
 	private final ConcurrentMap<InputConverterKey, Converter> convertersCache;
 	
-	private final List<ObjectWriterProvider> staticObjectWriterProviders;
-	private final ConcurrentMap<Class<?>, ObjectWriter> staticObjectWriterCache;
+	private final List<ObjectWriterProvider> objectWriterProviders;
+	private final ConcurrentMap<Class<?>, ObjectWriter> objectWriterCache;
 	
 	private final List<PropertyFactory> propertyFactories;
 	private final ConcurrentMap<Class<?>, PropertyFactory> propertyFactoriesCache;
 	
 	public SpearalContextImpl(Introspector introspector, PartialObjectFactory partialObjectFactory) {
 		this.introspector = introspector;
-		
+		this.loader = new TypeLoaderImpl();
 		this.partialObjectFactory = partialObjectFactory;
 		
 		this.classAliases = new HashMap<String, String>();
@@ -100,8 +104,8 @@ public class SpearalContextImpl implements SpearalContext {
 		this.converters = new ArrayList<Converter>();
 		this.convertersCache = new ConcurrentHashMap<InputConverterKey, Converter>();
 		
-		this.staticObjectWriterProviders = new ArrayList<ObjectWriterProvider>();
-		this.staticObjectWriterCache = new ConcurrentHashMap<Class<?>, ObjectWriter>();
+		this.objectWriterProviders = new ArrayList<ObjectWriterProvider>();
+		this.objectWriterCache = new ConcurrentHashMap<Class<?>, ObjectWriter>();
 		
 		this.propertyFactories = new ArrayList<PropertyFactory>();
 		this.propertyFactoriesCache = new ConcurrentHashMap<Class<?>, PropertyFactory>();
@@ -123,6 +127,8 @@ public class SpearalContextImpl implements SpearalContext {
 		
 		addConfigurableItem(new CollectionInstantiator(), false);
 		addConfigurableItem(new MapInstantiator(), false);
+		addConfigurableItem(new ProxyInstantiator(), false);
+		addConfigurableItem(new ClassInstantiator(), false);
 		
 		// StaticObjectWriterProviders & PropertyFactories.
 
@@ -182,9 +188,9 @@ public class SpearalContextImpl implements SpearalContext {
 		
 		if (item instanceof ObjectWriterProvider) {
 			if (first)
-				staticObjectWriterProviders.add(0, (ObjectWriterProvider)item);
+				objectWriterProviders.add(0, (ObjectWriterProvider)item);
 			else
-				staticObjectWriterProviders.add((ObjectWriterProvider)item);
+				objectWriterProviders.add((ObjectWriterProvider)item);
 			added = true;
 		}
 		
@@ -207,8 +213,8 @@ public class SpearalContextImpl implements SpearalContext {
 	}
 
 	@Override
-	public Class<?> loadClass(String className) throws ClassNotFoundException {
-		return Class.forName(className);
+	public Class<?> loadClass(String...classNames) throws SecurityException {
+		return loader.loadClass(classNames);
 	}
 
 	@Override
@@ -233,7 +239,7 @@ public class SpearalContextImpl implements SpearalContext {
 		if (typeInstantiator == null)
 			throw new InstantiationException("Could not find any instantiator for: " + type);
 
-		return typeInstantiator.instantiate(type);
+		return typeInstantiator.instantiate(this, type);
 	}
 
 	@Override
@@ -253,7 +259,7 @@ public class SpearalContextImpl implements SpearalContext {
 		if (propertyInstantiator == null)
 			throw new InstantiationException("Could not find any instantiator for: " + property);
 
-		return propertyInstantiator.instantiate(property);
+		return propertyInstantiator.instantiate(this, property);
 	}
 
 	@Override
@@ -266,6 +272,10 @@ public class SpearalContextImpl implements SpearalContext {
 	@Override
 	public Object convert(Object o, Type target) {
 		Class<?> cls = (o != null ? o.getClass() : null);
+		
+		if (cls == target)
+			return o;
+		
 		InputConverterKey key = new InputConverterKey(cls, target);
 		
 		Converter inputConverter = convertersCache.get(key);
@@ -285,17 +295,17 @@ public class SpearalContextImpl implements SpearalContext {
 	
 	@Override
 	public ObjectWriter getWriter(Class<?> type) {
-		ObjectWriter writer = staticObjectWriterCache.get(type);
+		ObjectWriter writer = objectWriterCache.get(type);
 		if (writer == null) {
-			for (ObjectWriterProvider provider : staticObjectWriterProviders) {
+			for (ObjectWriterProvider provider : objectWriterProviders) {
 				writer = provider.getWriter(type);
 				if (writer != null) {
-					staticObjectWriterCache.putIfAbsent(type, writer);
+					objectWriterCache.putIfAbsent(type, writer);
 					break;
 				}
 			}
 			if (writer == null)
-				throw new UnsupportedOperationException("Not static writer for type: " + type);
+				throw new UnsupportedOperationException("Not writer for type: " + type);
 		}
 		return writer;
 	}

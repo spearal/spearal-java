@@ -17,6 +17,7 @@
  */
 package org.spearal.configurable;
 
+import org.spearal.SpearalContext;
 import org.spearal.configurable.PropertyFactory.Property;
 
 /**
@@ -25,5 +26,5 @@ import org.spearal.configurable.PropertyFactory.Property;
 public interface PropertyInstantiator extends ConfigurableItem {
 
 	boolean canInstantiate(Property property);
-	Object instantiate(Property property);
+	Object instantiate(SpearalContext context, Property property);
 }

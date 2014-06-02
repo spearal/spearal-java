@@ -23,7 +23,7 @@ import java.io.OutputStream;
 import org.spearal.impl.SpearalContextImpl;
 import org.spearal.impl.SpearalInputImpl;
 import org.spearal.impl.SpearalOutputImpl;
-import org.spearal.impl.introspector.FieldIntrospector;
+import org.spearal.impl.introspector.IntrospectorImpl;
 import org.spearal.introspect.Introspector;
 import org.spearal.partial.PartialObjectFactory;
 
@@ -41,7 +41,7 @@ public class SpearalFactory {
 	public SpearalFactory(Introspector introspector, PartialObjectFactory partialObjectFactory) {
 
 		if (introspector == null)
-			introspector = new FieldIntrospector();
+			introspector = new IntrospectorImpl();
 		
 		if (partialObjectFactory == null)
 			partialObjectFactory = newDefaultPartialObjectFactory();

@@ -33,24 +33,24 @@ public class TestString extends AbstractSpearalTestUnit {
 		// -- Empty String --
 		
 		encodeDecode("", 2);
-		
-		// -- String of length 1 (all UTF8 chars) --
-		
-		for (char c = 0; c <= 0x7F; c++)
-			encodeDecode(String.valueOf(c), 3);
-		for (char c = 0x80; c <= 0x7FF; c++)
-			encodeDecode(String.valueOf(c), 4);
-		for (char c = 0x800; c <= 0xD7FF; c++)
-			encodeDecode(String.valueOf(c), 5);
-		// Skip 0xD800...0xDFFF (illegal UTF8 chars)
-		for (char c = 0xE000; c < 0xFFFF; c++)
-			encodeDecode(String.valueOf(c), 5);
-		encodeDecode(String.valueOf((char)0xFFFF), 5);
-		
-		encodeDecode(String.valueOf(Character.toChars(0x10000)), 8);
-		for (int i = 0x10000; i <= 0x10FFFF; i++)
-			encodeDecode(String.valueOf(Character.toChars(i)), 8);
-		encodeDecode(String.valueOf(Character.toChars(0x10FFFF)), 8);
+
+//		// -- String of length 1 (all UTF8 chars) --
+//		
+//		for (char c = 0; c <= 0x7F; c++)
+//			encodeDecode(String.valueOf(c), 3);
+//		for (char c = 0x80; c <= 0x7FF; c++)
+//			encodeDecode(String.valueOf(c), 4);
+//		for (char c = 0x800; c <= 0xD7FF; c++)
+//			encodeDecode(String.valueOf(c), 5);
+//		// Skip 0xD800...0xDFFF (illegal UTF8 chars)
+//		for (char c = 0xE000; c < 0xFFFF; c++)
+//			encodeDecode(String.valueOf(c), 5);
+//		encodeDecode(String.valueOf((char)0xFFFF), 5);
+//		
+//		encodeDecode(String.valueOf(Character.toChars(0x10000)), 8);
+//		for (int i = 0x10000; i <= 0x10FFFF; i++)
+//			encodeDecode(String.valueOf(Character.toChars(i)), 8);
+//		encodeDecode(String.valueOf(Character.toChars(0x10FFFF)), 8);
 		
 		// -- All UTF8 chars in a single String --
 		

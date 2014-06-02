@@ -34,6 +34,7 @@ import static org.spearal.impl.SpearalType.TRUE;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Proxy;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Timestamp;
@@ -128,67 +129,6 @@ public class SpearalOutputImpl implements ExtendedSpearalOutput {
 		ensureCapacity(1);
 		buffer[position] = (byte)CLASS.id();
 		writeStringData(value.getName());
-	}
-
-	@Override
-	public void writeBean(Object value) throws IOException {
-		if (value == null)
-			throw new NullPointerException();
-		
-		int reference = storedObjects.putIfAbsent(value);
-		if (reference != -1) {
-			int length0 = unsignedIntLength0(reference);
-			ensureCapacity(length0 + 2);
-			buffer[position++] = (byte)(BEAN.id() | 0x08 | length0);
-			writeUnsignedIntValue(reference, length0);
-		}
-		else {
-			Class<?> cls = value.getClass();
-			
-			ClassDescriptor descriptor = descriptors.get(cls);
-			if (descriptor == null) {
-				String className = context.getClassNameAlias(cls.getName());
-				StringBuilder sb = new StringBuilder(className).append(':');
-
-				Collection<Property> selectedProperties = request.getFilteredProperties(cls);
-				boolean first = true;
-				for (Property property : selectedProperties) {
-					if (first)
-						first = false;
-					else
-						sb.append(',');
-					sb.append(property.getName());
-				}
-				
-				descriptor = new ClassDescriptor(sb.toString(), selectedProperties);
-				descriptors.put(cls, descriptor);
-			}
-			
-			ensureCapacity(1);
-			buffer[position] = (byte)BEAN.id();
-			writeStringData(descriptor.description);
-			
-			for (Property property : descriptor.properties) {
-				try {
-					property.write(this, value);
-				}
-				catch (IOException e) {
-					throw e;
-				}
-				catch (Exception e) {
-					throw new IOException(e);
-				}
-			}
-		}
-	}
-
-	@Override
-	public void writeEnum(Enum<?> value) throws IOException {
-		ensureCapacity(1);
-		buffer[position] = (byte)ENUM.id();
-		writeStringData(value.getClass().getName());
-		
-		writeString(value.name());
 	}
 
 	@Override
@@ -639,7 +579,81 @@ public class SpearalOutputImpl implements ExtendedSpearalOutput {
 			}
 		}
 	}
+
+	@Override
+	public void writeEnum(Enum<?> value) throws IOException {
+		ensureCapacity(1);
+		buffer[position] = (byte)ENUM.id();
+		writeStringData(value.getClass().getName());
+		
+		writeString(value.name());
+	}
+
+	@Override
+	public void writeBean(Object value) throws IOException {
+
+		int reference = storedObjects.putIfAbsent(value);
+		if (reference != -1) {
+			int length0 = unsignedIntLength0(reference);
+			ensureCapacity(length0 + 2);
+			buffer[position++] = (byte)(BEAN.id() | 0x08 | length0);
+			writeUnsignedIntValue(reference, length0);
+		}
+		else {
+			ClassDescriptor descriptor = getDescriptor(value.getClass());
+			
+			ensureCapacity(1);
+			buffer[position] = (byte)BEAN.id();
+			writeStringData(descriptor.description);
+			
+			for (Property property : descriptor.properties) {
+				try {
+					property.write(this, value);
+				}
+				catch (IOException e) {
+					throw e;
+				}
+				catch (Exception e) {
+					throw new IOException(e);
+				}
+			}
+		}
+	}
 	
+	private ClassDescriptor getDescriptor(Class<?> cls) {
+		ClassDescriptor descriptor = descriptors.get(cls);
+		
+		if (descriptor == null) {
+			descriptor = createDescriptor(cls);
+			descriptors.put(cls, descriptor);
+		}
+		
+		return descriptor;
+	}
+	
+	private ClassDescriptor createDescriptor(Class<?> cls) {
+		StringBuilder sb = new StringBuilder();
+
+		if (!Proxy.isProxyClass(cls))
+			sb.append(context.getClassNameAlias(cls.getName())).append(':');
+		else {
+			for (Class<?> inter : cls.getInterfaces())
+				sb.append(context.getClassNameAlias(inter.getName())).append(':');
+		}
+
+		Collection<Property> selectedProperties = request.getFilteredProperties(cls);
+		boolean first = true;
+		for (Property property : selectedProperties) {
+			if (first)
+				first = false;
+			else
+				sb.append(',');
+			sb.append(property.getName());
+		}
+		
+		return new ClassDescriptor(sb.toString(), selectedProperties);
+	}
+
 	private static int unsignedLongLength0(long value) {
 		if (value <= 0xffffffffL) {
 			if (value <= 0xffffL)

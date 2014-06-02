@@ -36,8 +36,8 @@ public interface SpearalContext {
 	
 	String getClassNameAlias(String className);
 	
-	Class<?> loadClass(String className)
-		throws ClassNotFoundException;
+	Class<?> loadClass(String...classNames)
+		throws SecurityException;
 	
 	Collection<Property> getProperties(Class<?> cls);
 	

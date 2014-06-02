@@ -66,6 +66,15 @@ public class JavassistPartialObjectFactory implements PartialObjectFactory {
 		return proxyObject;
 	}
 	
+	private static boolean isPartialObjectProxyMethod(Method method) {
+		for (Method m : PartialObjectProxy.class.getMethods()) {
+			if (m.equals(method))
+				return true;
+		}
+		
+		return false;
+	}
+	
 	private static class PartialObjectFilter implements MethodFilter {
 
 		private final Set<Method> getters;
@@ -81,7 +90,7 @@ public class JavassistPartialObjectFactory implements PartialObjectFactory {
 
 		@Override
 		public boolean isHandled(Method method) {
-			return method.getName().startsWith("spearal") || getters.contains(method);
+			return getters.contains(method) || isPartialObjectProxyMethod(method);
 		}
 	}
 	
@@ -110,9 +119,9 @@ public class JavassistPartialObjectFactory implements PartialObjectFactory {
 				return proceed.invoke(obj, args);
 
 			String name = method.getName();
-			if ("spearalIsDefined".equals(name))
+			if ("$isDefined".equals(name))
 				return Boolean.valueOf(partialPropertiesNames.contains(args[0]));
-			if ("spearalGetDefinedProperties".equals(name))
+			if ("$getDefinedProperties".equals(name))
 				return partialProperties;
 			
 			throw new UndefinedPropertyException(method.toString());

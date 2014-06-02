@@ -17,8 +17,10 @@
  */
 package org.spearal.impl.instantiator;
 
+import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
 
+import org.spearal.SpearalContext;
 import org.spearal.configurable.PropertyInstantiator;
 import org.spearal.configurable.TypeInstantiator;
 import org.spearal.configurable.PropertyFactory.Property;
@@ -32,11 +34,18 @@ public class ClassInstantiator implements TypeInstantiator, PropertyInstantiator
 	@Override
 	public boolean canInstantiate(Type type) {
 		Class<?> cls = TypeUtil.classOfType(type);
-		return !(cls.isInterface() || cls.isPrimitive() || cls.isEnum() || cls.isAnnotation());
+		return !(
+			cls == Class.class ||
+			cls.isInterface() ||
+			cls.isPrimitive() ||
+			cls.isEnum() ||
+			cls.isAnnotation() ||
+			Proxy.isProxyClass(cls)
+		);
 	}
 
 	@Override
-	public Object instantiate(Type type) {
+	public Object instantiate(SpearalContext context, Type type) {
 		Class<?> cls = TypeUtil.classOfType(type);
         try {
 			return cls.newInstance();
@@ -52,7 +61,7 @@ public class ClassInstantiator implements TypeInstantiator, PropertyInstantiator
 	}
 
 	@Override
-	public Object instantiate(Property property) {
-		return instantiate(property.getGenericType());
+	public Object instantiate(SpearalContext context, Property property) {
+		return instantiate(context, property.getGenericType());
 	}
 }

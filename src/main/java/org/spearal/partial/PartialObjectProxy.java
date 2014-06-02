@@ -26,6 +26,6 @@ import org.spearal.configurable.PropertyFactory.Property;
  */
 public interface PartialObjectProxy {
 
-	boolean spearalIsDefined(String propertyName);
-	Collection<Property> spearalGetDefinedProperties();
+	boolean $isDefined(String propertyName);
+	Collection<Property> $getDefinedProperties();
 }
