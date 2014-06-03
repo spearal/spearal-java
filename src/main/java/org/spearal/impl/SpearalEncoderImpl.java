@@ -35,6 +35,7 @@ import static org.spearal.impl.SpearalType.TRUE;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Array;
 import java.lang.reflect.Proxy;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -411,8 +412,23 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 
 	@Override
 	public void writeArray(Object value) throws IOException {
-		// TODO
-		throw new UnsupportedOperationException("Not implemented");
+		int reference = storedObjects.putIfAbsent(value);
+		
+		if (reference != -1) {
+			int length0 = unsignedIntLength0(reference);
+			ensureCapacity(length0 + 2);
+			buffer[position++] = (byte)(COLLECTION.id() | 0x08 | length0);
+			writeUnsignedIntValue(reference, length0);
+		}
+		else {
+			int size = Array.getLength(value);
+			int length0 = unsignedIntLength0(size);
+			ensureCapacity(length0 + 2);
+			buffer[position++] = (byte)(COLLECTION.id() | length0);
+			writeUnsignedIntValue(size, length0);
+			for (int i = 0; i < size; i++)
+				writeAny(Array.get(value, i));
+		}
 	}
 
 	@Override

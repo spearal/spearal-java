@@ -118,8 +118,8 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
         
         case BYTE_ARRAY:
         	return readByteArray(parameterizedType);
-        case ARRAY:
-        	return readArray(parameterizedType);
+//        case ARRAY:
+//        	return readArray(parameterizedType);
             
         case COLLECTION:
         	return readCollection(parameterizedType);
@@ -284,12 +284,6 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	byte[] bytes = new byte[indexOrLength];
     	readFully(bytes, 0, indexOrLength);
 		return bytes;
-	}
-
-	@Override
-	public Object readArray(int parameterizedType) throws IOException {
-		// TODO
-		throw new UnsupportedOperationException("Not implemented");
 	}
 
 	@Override

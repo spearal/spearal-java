@@ -49,7 +49,6 @@ public interface ExtendedSpearalDecoder extends SpearalDecoder {
 	String readString(int parameterizedType) throws IOException;
 	
 	byte[] readByteArray(int parameterizedType) throws IOException;
-	Object readArray(int parameterizedType) throws IOException;
 	
 	Collection<?> readCollection(int parameterizedType) throws IOException;
 	void readCollection(int parameterizedType, Object holder, Property property)

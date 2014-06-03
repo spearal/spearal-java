@@ -39,13 +39,17 @@ import org.junit.runners.Suite.SuiteClasses;
 	TestShort.class,
 	TestInteger.class,
 	TestLong.class,
+	TestBigInteger.class,
 
 	TestFloat.class,
 	TestDouble.class,
+	TestBigDecimal.class,
 
 	TestString.class,
 	
 	TestByteArray.class,
+	
+	TestArray.class,
 	
 	TestEnum.class,
 	TestClass.class,

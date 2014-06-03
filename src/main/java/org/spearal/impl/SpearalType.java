@@ -43,14 +43,13 @@ public enum SpearalType {
 	STRING(0x50),
 	
 	BYTE_ARRAY(0x60),
-	ARRAY(0x70),
 	
-	COLLECTION(0x80),
-	MAP(0x90),
+	COLLECTION(0x70),
+	MAP(0x80),
 	
-	ENUM(0xd0),
-	CLASS(0xe0),
-	BEAN(0xf0);
+	ENUM(0x90),
+	CLASS(0xa0),
+	BEAN(0xb0);
 	
 	private static final SpearalType[] SIO_TYPES;
 	static {

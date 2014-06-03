@@ -19,7 +19,6 @@ package org.spearal.impl.properties;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.Collection;
 
 import org.spearal.configurable.ObjectWriterProvider;
 import org.spearal.configurable.PropertyFactory;
@@ -31,16 +30,25 @@ public class CollectionPropertyFactory implements PropertyFactory, ObjectWriterP
 	
 	@Override
 	public ObjectWriter getWriter(Class<?> type) {
-		return (CollectionProperty.canCreateWriter(type) ? CollectionProperty.createWriter() : null);
+		if (CollectionProperty.canCreateWriter(type))
+			return CollectionProperty.createWriter();
+		if (ArrayProperty.canCreateWriter(type))
+			return ArrayProperty.createWriter();
+		return null;
 	}
 
 	@Override
 	public boolean canCreateProperty(Class<?> type) {
-		return Collection.class.isAssignableFrom(type);
+		return (
+			CollectionProperty.canCreateProperty(type) ||
+			ArrayProperty.canCreateProperty(type)
+		);
 	}
 
 	@Override
 	public Property createProperty(String name, Field field, Method getter, Method setter) {
-		return new CollectionProperty(name, field, getter, setter);
+		if (CollectionProperty.canCreateProperty(AbstractProperty.getType(field, getter)))
+			return new CollectionProperty(name, field, getter, setter);
+		return new ArrayProperty(name, field, getter, setter);
 	}
 }
