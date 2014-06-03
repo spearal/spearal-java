@@ -24,6 +24,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,6 +44,8 @@ import org.spearal.impl.util.UnmodifiableArray;
  */
 public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
+	private static final Charset UTF8 = Charset.forName("UTF-8");
+	
 	private final List<String> storedStrings;
 	private final List<Object> storedObjects;
 	private final Map<String, ClassDescriptor> descriptors;
@@ -193,8 +196,14 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     
     @Override
 	public BigInteger readBigIntegral(int parameterizedType) throws IOException {
-    	// TODO
-    	throw new UnsupportedOperationException("Not implemented");
+    	int length0 = (parameterizedType & 0x03);
+    	
+    	ensureAvailable(length0 + 1);
+    	int length = readUnsignedIntegerValue(length0);
+    	
+    	byte[] bytes = new byte[length];
+    	readFully(bytes, 0, length);
+    	return new BigInteger(bytes);
 	}
 
 	@Override
@@ -234,8 +243,20 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
 	@Override
 	public BigDecimal readBigFloating(int parameterizedType) throws IOException {
-		// TODO
-		throw new UnsupportedOperationException("Not implemented");
+		int bytesLength0 = (parameterizedType & 0x03);
+		
+		ensureAvailable(bytesLength0 + 2);
+		int length = readUnsignedIntegerValue(bytesLength0);
+		
+		byte[] bytes = new byte[length];
+    	readFully(bytes, 0, length);
+    	
+    	ensureAvailable(1);
+    	parameterizedType = (buffer[position++] & 0xff);
+    	// assert (SpearalType.valueOf(parameterizedType) == SpearalType.INTEGRAL);
+    	int scale = (int)readIntegral(parameterizedType);
+    	
+    	return new BigDecimal(new BigInteger(bytes), scale);
 	}
 
 	@Override
@@ -520,19 +541,15 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     		return "";
         
     	String value;
-        if (indexOrLength <= size - position) {
-        	value = new String(buffer, position, indexOrLength, "UTF-8");
-        	position += indexOrLength;
-        }
-        else if (indexOrLength <= buffer.length) {
+        if (indexOrLength <= buffer.length) {
         	ensureAvailable(indexOrLength);
-        	value = new String(buffer, position, indexOrLength, "UTF-8");
+        	value = new String(buffer, position, indexOrLength, UTF8);
         	position += indexOrLength;
         }
         else {
 	        byte[] bytes = new byte[indexOrLength];
 	        readFully(bytes, 0, indexOrLength);
-	        value = new String(bytes, "UTF-8");
+	        value = new String(bytes, UTF8);
         }
         
     	storedStrings.add(value);

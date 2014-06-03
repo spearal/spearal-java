@@ -48,6 +48,7 @@ import org.spearal.impl.instantiator.MapInstantiator;
 import org.spearal.impl.instantiator.ProxyInstantiator;
 import org.spearal.impl.loader.TypeLoaderImpl;
 import org.spearal.impl.properties.BeanPropertyFactory;
+import org.spearal.impl.properties.BigNumberPropertyFactory;
 import org.spearal.impl.properties.BooleanPropertyFactory;
 import org.spearal.impl.properties.ByteArrayPropertyFactory;
 import org.spearal.impl.properties.ClassPropertyFactory;
@@ -141,6 +142,8 @@ public class SpearalContextImpl implements SpearalContext {
 		addConfigurableItem(new MapPropertyFactory(), false);
 		addConfigurableItem(new DateTimestampPropertyFactory(), false);
 		addConfigurableItem(new ByteArrayPropertyFactory(), false);
+
+		addConfigurableItem(new BigNumberPropertyFactory(), false);
 
 		addConfigurableItem(new EnumPropertyFactory(), false);
 		addConfigurableItem(new ClassPropertyFactory(), false);

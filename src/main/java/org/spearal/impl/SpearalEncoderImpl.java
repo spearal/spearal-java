@@ -18,6 +18,7 @@
 package org.spearal.impl;
 
 import static org.spearal.impl.SpearalType.BEAN;
+import static org.spearal.impl.SpearalType.BIG_FLOATING;
 import static org.spearal.impl.SpearalType.BIG_INTEGRAL;
 import static org.spearal.impl.SpearalType.BYTE_ARRAY;
 import static org.spearal.impl.SpearalType.CLASS;
@@ -274,31 +275,14 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 			return;
 		}
 		
-		String digits = value.toString();
-		
-		int negative = 0x00;
-		int start = 0;
-		int length = digits.length();
-		if (digits.charAt(0) == '-') {
-			negative = 0x80;
-			start = 1;
-			length--;
-		}
-		
-		int length0 = unsignedIntLength0(length);
+		byte[] bytes = value.toByteArray();
+		int length0 = unsignedIntLength0(bytes.length);
 		
 		ensureCapacity(length0 + 2);
-		buffer[position++] = (byte)(BIG_INTEGRAL.id() | negative | length0);
-		writeUnsignedIntValue(length, length0);
+		buffer[position++] = (byte)(BIG_INTEGRAL.id() | length0);
+		writeUnsignedIntValue(bytes.length, length0);
 		
-		do {
-			ensureCapacity(1);
-			int b = ((digits.charAt(start++) - '0') << 4);
-			if (start < length)
-				b |= (digits.charAt(start++) - '0');
-			buffer[position++] = (byte)b;
-		}
-		while (start < length);
+		writeBytes(bytes);
 	}
 
 	@Override
@@ -378,7 +362,16 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 
 	@Override
 	public void writeBigDecimal(BigDecimal value) throws IOException {
-		// TODO
+		byte[] bytes = value.unscaledValue().toByteArray();
+		int length0 = unsignedIntLength0(bytes.length);
+
+		ensureCapacity(length0 + 2);
+		buffer[position++] = (byte)(BIG_FLOATING.id() | length0);
+		writeUnsignedIntValue(bytes.length, length0);
+		
+		writeBytes(bytes);
+
+		writeInt(value.scale());
 	}
 	
 	@Override
@@ -393,116 +386,6 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 		
 		writeStringData(value);
 	}
-    
-    private void writeStringData(String s) throws IOException {
-    	final int length = s.length();
-
-    	if (length == 0) {
-    		position++;
-        	ensureCapacity(1);
-        	buffer[position++] = 0;
-            return;
-        }
-
-        int index = storedStrings.putIfAbsent(s);
-
-        if (index >= 0) {
-        	int length0 = unsignedIntLength0(index);
-        	buffer[position++] |= (byte)(0x04 | length0);
-        	ensureCapacity(length0 + 1);
-        	writeUnsignedIntValue(index, length0);
-        }
-        else {
-            final int count = utfByteCount(s);
-            int length0 = unsignedIntLength0(count);
-            buffer[position++] |= (byte)length0;
-            ensureCapacity(length0 + 1);
-        	writeUnsignedIntValue(count, length0);
-            
-        	final byte[] buffer = this.buffer;
-        	final int bufferLength = buffer.length;
-            
-        	int position = this.position;
-            
-            // String chars are in [0x0000, 0x007F]: write them directly as bytes.
-            if (count == length) {
-                if (length <= bufferLength - position) {
-                	for (int i = 0; i < length; i++)
-                		buffer[position++] = (byte)s.charAt(i);
-                	this.position = position;
-                }
-                else {
-    	        	
-    	        	int i = 0;
-    	        	while (position < bufferLength)
-    	        		buffer[position++] = (byte)s.charAt(i++);
-    	        	this.position = position;
-    	        	
-    	        	do {
-    		        	flushBuffer();
-    		        	position = 0;
-
-    		        	int max = Math.min(bufferLength, length - i);
-    		        	while (position < max)
-    		        		buffer[position++] = (byte)s.charAt(i++);
-    		        	this.position = position;
-    	        	}
-    	        	while (i < length);
-                }
-            }
-            // We have at least one char > 0x007F but enough buffer to write them all.
-            else if (count <= bufferLength - position) {
-            	
-            	for (int i = 0; i < length; i++) {
-                	char c = s.charAt(i);
-                	if (c <= 0x007F)
-                    	buffer[position++] = (byte)c;
-                    else if (c > 0x07FF) {
-                    	buffer[position++] = (byte)(0xE0 | (c >>> 12));
-                    	buffer[position++] = (byte)(0x80 | ((c >>> 6) & 0x3F));
-                    	buffer[position++] = (byte)(0x80 | (c & 0x3F));
-                    }
-                    else {
-                    	buffer[position++] = (byte)(0xC0 | ((c >>> 6) & 0x1F));
-                    	buffer[position++] = (byte)(0x80 | (c & 0x3F));
-                    }
-                }
-                
-                this.position = position;
-            }
-            // We have at least one char > 0x007F and not enough buffer to write them all.
-            else {
-	        	final int bufferLengthMinus3 = buffer.length - 3;
-            	
-            	int i = 0, total = 0;
-	        	do {
-	            	flushBuffer();
-
-	            	position = 0;
-	            	final int max = Math.min(count - total, bufferLengthMinus3);
-	            	
-	            	while (position < max) {
-	            		char c = s.charAt(i++);
-		            	if (c <= 0x007F)
-		                	buffer[position++] = (byte)c;
-		                else if (c > 0x07FF) {
-		                	buffer[position++] = (byte)(0xE0 | (c >>> 12));
-		                	buffer[position++] = (byte)(0x80 | ((c >>> 6) & 0x3F));
-		                	buffer[position++] = (byte)(0x80 | (c & 0x3F));
-		                }
-		                else {
-		                	buffer[position++] = (byte)(0xC0 | ((c >>> 6) & 0x1F));
-		                	buffer[position++] = (byte)(0x80 | (c & 0x3F));
-		                }
-	            	}
-	            	
-	            	total += position;
-	            	this.position = position;
-	        	}
-	        	while (total < count);
-            }
-        }
-    }
 
 	@Override
 	public void writeByteArray(byte[] value) throws IOException {
@@ -529,6 +412,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 	@Override
 	public void writeArray(Object value) throws IOException {
 		// TODO
+		throw new UnsupportedOperationException("Not implemented");
 	}
 
 	@Override
@@ -655,6 +539,116 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 		
 		return new ClassDescriptor(sb.toString(), selectedProperties);
 	}
+    
+    private void writeStringData(String s) throws IOException {
+    	final int length = s.length();
+
+    	if (length == 0) {
+    		position++;
+        	ensureCapacity(1);
+        	buffer[position++] = 0;
+            return;
+        }
+
+        int index = storedStrings.putIfAbsent(s);
+
+        if (index >= 0) {
+        	int length0 = unsignedIntLength0(index);
+        	buffer[position++] |= (byte)(0x04 | length0);
+        	ensureCapacity(length0 + 1);
+        	writeUnsignedIntValue(index, length0);
+        }
+        else {
+            final int count = utfByteCount(s);
+            int length0 = unsignedIntLength0(count);
+            buffer[position++] |= (byte)length0;
+            ensureCapacity(length0 + 1);
+        	writeUnsignedIntValue(count, length0);
+            
+        	final byte[] buffer = this.buffer;
+        	final int bufferLength = buffer.length;
+            
+        	int position = this.position;
+            
+            // String chars are in [0x0000, 0x007F]: write them directly as bytes.
+            if (count == length) {
+                if (length <= bufferLength - position) {
+                	for (int i = 0; i < length; i++)
+                		buffer[position++] = (byte)s.charAt(i);
+                	this.position = position;
+                }
+                else {
+    	        	
+    	        	int i = 0;
+    	        	while (position < bufferLength)
+    	        		buffer[position++] = (byte)s.charAt(i++);
+    	        	this.position = position;
+    	        	
+    	        	do {
+    		        	flushBuffer();
+    		        	position = 0;
+
+    		        	int max = Math.min(bufferLength, length - i);
+    		        	while (position < max)
+    		        		buffer[position++] = (byte)s.charAt(i++);
+    		        	this.position = position;
+    	        	}
+    	        	while (i < length);
+                }
+            }
+            // We have at least one char > 0x007F but enough buffer to write them all.
+            else if (count <= bufferLength - position) {
+            	
+            	for (int i = 0; i < length; i++) {
+                	char c = s.charAt(i);
+                	if (c <= 0x007F)
+                    	buffer[position++] = (byte)c;
+                    else if (c > 0x07FF) {
+                    	buffer[position++] = (byte)(0xE0 | (c >>> 12));
+                    	buffer[position++] = (byte)(0x80 | ((c >>> 6) & 0x3F));
+                    	buffer[position++] = (byte)(0x80 | (c & 0x3F));
+                    }
+                    else {
+                    	buffer[position++] = (byte)(0xC0 | ((c >>> 6) & 0x1F));
+                    	buffer[position++] = (byte)(0x80 | (c & 0x3F));
+                    }
+                }
+                
+                this.position = position;
+            }
+            // We have at least one char > 0x007F and not enough buffer to write them all.
+            else {
+	        	final int bufferLengthMinus3 = buffer.length - 3;
+            	
+            	int i = 0, total = 0;
+	        	do {
+	            	flushBuffer();
+
+	            	position = 0;
+	            	final int max = Math.min(count - total, bufferLengthMinus3);
+	            	
+	            	while (position < max) {
+	            		char c = s.charAt(i++);
+		            	if (c <= 0x007F)
+		                	buffer[position++] = (byte)c;
+		                else if (c > 0x07FF) {
+		                	buffer[position++] = (byte)(0xE0 | (c >>> 12));
+		                	buffer[position++] = (byte)(0x80 | ((c >>> 6) & 0x3F));
+		                	buffer[position++] = (byte)(0x80 | (c & 0x3F));
+		                }
+		                else {
+		                	buffer[position++] = (byte)(0xC0 | ((c >>> 6) & 0x1F));
+		                	buffer[position++] = (byte)(0x80 | (c & 0x3F));
+		                }
+	            	}
+	            	
+	            	total += position;
+	            	this.position = position;
+	        	}
+	        	while (total < count);
+            }
+        }
+    }
 
 	private static int unsignedLongLength0(long value) {
 		if (value <= 0xffffffffL) {
