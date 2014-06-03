@@ -95,8 +95,16 @@ public class IntProperty extends AbstractProperty {
 			field.setInt(obj, (int)in.readIntegral(parameterizedType));
 			return true;
 			
+		case BIG_INTEGRAL:
+			field.setInt(obj, in.readBigIntegral(parameterizedType).intValue());
+			return true;
+			
 		case FLOATING:
 			field.setInt(obj, (int)in.readFloating(parameterizedType));
+			return true;
+			
+		case BIG_FLOATING:
+			field.setInt(obj, in.readBigFloating(parameterizedType).intValue());
 			return true;
 		
 		default:
@@ -118,8 +126,16 @@ public class IntProperty extends AbstractProperty {
 			field.set(obj, Integer.valueOf((int)in.readIntegral(parameterizedType)));
 			return true;
 			
+		case BIG_INTEGRAL:
+			field.set(obj, Integer.valueOf(in.readBigIntegral(parameterizedType).intValue()));
+			return true;
+			
 		case FLOATING:
 			field.set(obj, Integer.valueOf((int)in.readFloating(parameterizedType)));
+			return true;
+			
+		case BIG_FLOATING:
+			field.set(obj, Integer.valueOf(in.readBigFloating(parameterizedType).intValue()));
 			return true;
 		
 		default:
@@ -141,8 +157,16 @@ public class IntProperty extends AbstractProperty {
 			setter.invoke(obj, Integer.valueOf((int)in.readIntegral(parameterizedType)));
 			return true;
 			
+		case BIG_INTEGRAL:
+			setter.invoke(obj, Integer.valueOf(in.readBigIntegral(parameterizedType).intValue()));
+			return true;
+			
 		case FLOATING:
 			setter.invoke(obj, Integer.valueOf((int)in.readFloating(parameterizedType)));
+			return true;
+			
+		case BIG_FLOATING:
+			setter.invoke(obj, Integer.valueOf(in.readBigFloating(parameterizedType).intValue()));
 			return true;
 		
 		default:
@@ -164,8 +188,16 @@ public class IntProperty extends AbstractProperty {
 			setter.invoke(obj, Integer.valueOf((int)in.readIntegral(parameterizedType)));
 			return true;
 			
+		case BIG_INTEGRAL:
+			setter.invoke(obj, Integer.valueOf(in.readBigIntegral(parameterizedType).intValue()));
+			return true;
+			
 		case FLOATING:
 			setter.invoke(obj, Integer.valueOf((int)in.readFloating(parameterizedType)));
+			return true;
+			
+		case BIG_FLOATING:
+			setter.invoke(obj, Integer.valueOf(in.readBigFloating(parameterizedType).intValue()));
 			return true;
 		
 		default:

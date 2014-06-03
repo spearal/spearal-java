@@ -95,8 +95,16 @@ public class ByteProperty extends AbstractProperty {
 			field.setByte(obj, (byte)in.readIntegral(parameterizedType));
 			return true;
 			
+		case BIG_INTEGRAL:
+			field.setByte(obj, in.readBigIntegral(parameterizedType).byteValue());
+			return true;
+			
 		case FLOATING:
 			field.setByte(obj, (byte)in.readFloating(parameterizedType));
+			return true;
+		
+		case BIG_FLOATING:
+			field.setByte(obj, in.readBigFloating(parameterizedType).byteValue());
 			return true;
 		
 		default:
@@ -118,10 +126,18 @@ public class ByteProperty extends AbstractProperty {
 			field.set(obj, Byte.valueOf((byte)in.readIntegral(parameterizedType)));
 			return true;
 			
+		case BIG_INTEGRAL:
+			field.set(obj, Byte.valueOf(in.readBigIntegral(parameterizedType).byteValue()));
+			return true;
+			
 		case FLOATING:
 			field.set(obj, Byte.valueOf((byte)in.readFloating(parameterizedType)));
 			return true;
 		
+		case BIG_FLOATING:
+			field.set(obj, Byte.valueOf(in.readBigFloating(parameterizedType).byteValue()));
+			return true;
+
 		default:
 			return false;
 		}
@@ -141,8 +157,16 @@ public class ByteProperty extends AbstractProperty {
 			setter.invoke(obj, Byte.valueOf((byte)in.readIntegral(parameterizedType)));
 			return true;
 			
+		case BIG_INTEGRAL:
+			setter.invoke(obj, Byte.valueOf(in.readBigIntegral(parameterizedType).byteValue()));
+			return true;
+			
 		case FLOATING:
 			setter.invoke(obj, Byte.valueOf((byte)in.readFloating(parameterizedType)));
+			return true;
+			
+		case BIG_FLOATING:
+			setter.invoke(obj, Byte.valueOf(in.readBigFloating(parameterizedType).byteValue()));
 			return true;
 		
 		default:
@@ -164,8 +188,16 @@ public class ByteProperty extends AbstractProperty {
 			setter.invoke(obj, Byte.valueOf((byte)in.readIntegral(parameterizedType)));
 			return true;
 			
+		case BIG_INTEGRAL:
+			setter.invoke(obj, Byte.valueOf(in.readBigIntegral(parameterizedType).byteValue()));
+			return true;
+			
 		case FLOATING:
 			setter.invoke(obj, Byte.valueOf((byte)in.readFloating(parameterizedType)));
+			return true;
+			
+		case BIG_FLOATING:
+			setter.invoke(obj, Byte.valueOf(in.readBigFloating(parameterizedType).byteValue()));
 			return true;
 		
 		default:

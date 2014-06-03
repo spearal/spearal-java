@@ -95,8 +95,16 @@ public class FloatProperty extends AbstractProperty {
 			field.setFloat(obj, (float)in.readFloating(parameterizedType));
 			return true;
 			
+		case BIG_FLOATING:
+			field.setFloat(obj, in.readBigFloating(parameterizedType).floatValue());
+			return true;
+			
 		case INTEGRAL:
 			field.setFloat(obj, in.readIntegral(parameterizedType));
+			return true;
+			
+		case BIG_INTEGRAL:
+			field.setFloat(obj, in.readBigIntegral(parameterizedType).floatValue());
 			return true;
 		
 		default:
@@ -118,8 +126,16 @@ public class FloatProperty extends AbstractProperty {
 			field.set(obj, Float.valueOf((float)in.readFloating(parameterizedType)));
 			return true;
 			
+		case BIG_FLOATING:
+			field.set(obj, Float.valueOf(in.readBigFloating(parameterizedType).floatValue()));
+			return true;
+			
 		case INTEGRAL:
 			field.set(obj, Float.valueOf(in.readIntegral(parameterizedType)));
+			return true;
+			
+		case BIG_INTEGRAL:
+			field.set(obj, Float.valueOf(in.readBigIntegral(parameterizedType).floatValue()));
 			return true;
 		
 		default:
@@ -136,13 +152,21 @@ public class FloatProperty extends AbstractProperty {
 		case NULL:
 			setter.invoke(obj, Float.valueOf(0.0f));
 			return true;
-		
+			
 		case FLOATING:
 			setter.invoke(obj, Float.valueOf((float)in.readFloating(parameterizedType)));
 			return true;
 			
+		case BIG_FLOATING:
+			setter.invoke(obj, Float.valueOf(in.readBigFloating(parameterizedType).floatValue()));
+			return true;
+			
 		case INTEGRAL:
 			setter.invoke(obj, Float.valueOf(in.readIntegral(parameterizedType)));
+			return true;
+			
+		case BIG_INTEGRAL:
+			setter.invoke(obj, Float.valueOf(in.readBigIntegral(parameterizedType).floatValue()));
 			return true;
 		
 		default:
@@ -164,8 +188,16 @@ public class FloatProperty extends AbstractProperty {
 			setter.invoke(obj, Float.valueOf((float)in.readFloating(parameterizedType)));
 			return true;
 			
+		case BIG_FLOATING:
+			setter.invoke(obj, Float.valueOf(in.readBigFloating(parameterizedType).floatValue()));
+			return true;
+			
 		case INTEGRAL:
 			setter.invoke(obj, Float.valueOf(in.readIntegral(parameterizedType)));
+			return true;
+			
+		case BIG_INTEGRAL:
+			setter.invoke(obj, Float.valueOf(in.readBigIntegral(parameterizedType).floatValue()));
 			return true;
 		
 		default:

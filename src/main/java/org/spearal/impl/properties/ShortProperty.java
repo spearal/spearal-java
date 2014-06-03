@@ -95,8 +95,16 @@ public class ShortProperty extends AbstractProperty {
 			field.setShort(obj, (short)in.readIntegral(parameterizedType));
 			return true;
 			
+		case BIG_INTEGRAL:
+			field.setShort(obj, in.readBigIntegral(parameterizedType).shortValue());
+			return true;
+			
 		case FLOATING:
 			field.setShort(obj, (short)in.readFloating(parameterizedType));
+			return true;
+			
+		case BIG_FLOATING:
+			field.setShort(obj, in.readBigFloating(parameterizedType).shortValue());
 			return true;
 		
 		default:
@@ -118,8 +126,16 @@ public class ShortProperty extends AbstractProperty {
 			field.set(obj, Short.valueOf((short)in.readIntegral(parameterizedType)));
 			return true;
 			
+		case BIG_INTEGRAL:
+			field.set(obj, Short.valueOf(in.readBigIntegral(parameterizedType).shortValue()));
+			return true;
+			
 		case FLOATING:
 			field.set(obj, Short.valueOf((short)in.readFloating(parameterizedType)));
+			return true;
+			
+		case BIG_FLOATING:
+			field.set(obj, Short.valueOf(in.readBigFloating(parameterizedType).shortValue()));
 			return true;
 		
 		default:
@@ -141,8 +157,16 @@ public class ShortProperty extends AbstractProperty {
 			setter.invoke(obj, Short.valueOf((short)in.readIntegral(parameterizedType)));
 			return true;
 			
+		case BIG_INTEGRAL:
+			setter.invoke(obj, Short.valueOf(in.readBigIntegral(parameterizedType).shortValue()));
+			return true;
+			
 		case FLOATING:
 			setter.invoke(obj, Short.valueOf((short)in.readFloating(parameterizedType)));
+			return true;
+			
+		case BIG_FLOATING:
+			setter.invoke(obj, Short.valueOf(in.readBigFloating(parameterizedType).shortValue()));
 			return true;
 		
 		default:
@@ -164,8 +188,16 @@ public class ShortProperty extends AbstractProperty {
 			setter.invoke(obj, Short.valueOf((short)in.readIntegral(parameterizedType)));
 			return true;
 			
+		case BIG_INTEGRAL:
+			setter.invoke(obj, Short.valueOf(in.readBigIntegral(parameterizedType).shortValue()));
+			return true;
+			
 		case FLOATING:
 			setter.invoke(obj, Short.valueOf((short)in.readFloating(parameterizedType)));
+			return true;
+			
+		case BIG_FLOATING:
+			setter.invoke(obj, Short.valueOf(in.readBigFloating(parameterizedType).shortValue()));
 			return true;
 		
 		default:

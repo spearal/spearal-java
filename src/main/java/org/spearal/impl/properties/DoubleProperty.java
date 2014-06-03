@@ -95,8 +95,16 @@ public class DoubleProperty extends AbstractProperty {
 			field.setDouble(obj, in.readFloating(parameterizedType));
 			return true;
 			
+		case BIG_FLOATING:
+			field.setDouble(obj, in.readBigFloating(parameterizedType).doubleValue());
+			return true;
+			
 		case INTEGRAL:
 			field.setDouble(obj, in.readIntegral(parameterizedType));
+			return true;
+			
+		case BIG_INTEGRAL:
+			field.setDouble(obj, in.readBigIntegral(parameterizedType).doubleValue());
 			return true;
 		
 		default:
@@ -118,8 +126,16 @@ public class DoubleProperty extends AbstractProperty {
 			field.set(obj, Double.valueOf(in.readFloating(parameterizedType)));
 			return true;
 			
+		case BIG_FLOATING:
+			field.set(obj, Double.valueOf(in.readBigFloating(parameterizedType).doubleValue()));
+			return true;
+			
 		case INTEGRAL:
 			field.set(obj, Double.valueOf(in.readIntegral(parameterizedType)));
+			return true;
+			
+		case BIG_INTEGRAL:
+			field.set(obj, Double.valueOf(in.readBigIntegral(parameterizedType).doubleValue()));
 			return true;
 		
 		default:
@@ -136,13 +152,21 @@ public class DoubleProperty extends AbstractProperty {
 		case NULL:
 			setter.invoke(obj, Double.valueOf(0.0));
 			return true;
-		
+			
 		case FLOATING:
 			setter.invoke(obj, Double.valueOf(in.readFloating(parameterizedType)));
 			return true;
 			
+		case BIG_FLOATING:
+			setter.invoke(obj, Double.valueOf(in.readBigFloating(parameterizedType).doubleValue()));
+			return true;
+			
 		case INTEGRAL:
 			setter.invoke(obj, Double.valueOf(in.readIntegral(parameterizedType)));
+			return true;
+			
+		case BIG_INTEGRAL:
+			setter.invoke(obj, Double.valueOf(in.readBigIntegral(parameterizedType).doubleValue()));
 			return true;
 		
 		default:
@@ -164,8 +188,16 @@ public class DoubleProperty extends AbstractProperty {
 			setter.invoke(obj, Double.valueOf(in.readFloating(parameterizedType)));
 			return true;
 			
+		case BIG_FLOATING:
+			setter.invoke(obj, Double.valueOf(in.readBigFloating(parameterizedType).doubleValue()));
+			return true;
+			
 		case INTEGRAL:
 			setter.invoke(obj, Double.valueOf(in.readIntegral(parameterizedType)));
+			return true;
+			
+		case BIG_INTEGRAL:
+			setter.invoke(obj, Double.valueOf(in.readBigIntegral(parameterizedType).doubleValue()));
 			return true;
 		
 		default:

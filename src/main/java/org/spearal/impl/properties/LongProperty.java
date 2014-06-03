@@ -95,8 +95,16 @@ public class LongProperty extends AbstractProperty {
 			field.setLong(obj, in.readIntegral(parameterizedType));
 			return true;
 			
+		case BIG_INTEGRAL:
+			field.setLong(obj, in.readBigIntegral(parameterizedType).longValue());
+			return true;
+			
 		case FLOATING:
 			field.setLong(obj, (long)in.readFloating(parameterizedType));
+			return true;
+			
+		case BIG_FLOATING:
+			field.setLong(obj, in.readBigFloating(parameterizedType).longValue());
 			return true;
 		
 		default:
@@ -118,8 +126,16 @@ public class LongProperty extends AbstractProperty {
 			field.set(obj, Long.valueOf(in.readIntegral(parameterizedType)));
 			return true;
 			
+		case BIG_INTEGRAL:
+			field.set(obj, Long.valueOf(in.readBigIntegral(parameterizedType).longValue()));
+			return true;
+			
 		case FLOATING:
 			field.set(obj, Long.valueOf((long)in.readFloating(parameterizedType)));
+			return true;
+			
+		case BIG_FLOATING:
+			field.set(obj, Long.valueOf(in.readBigFloating(parameterizedType).longValue()));
 			return true;
 		
 		default:
@@ -136,13 +152,21 @@ public class LongProperty extends AbstractProperty {
 		case NULL:
 			setter.invoke(obj, Long.valueOf(0L));
 			return true;
-		
+			
 		case INTEGRAL:
 			setter.invoke(obj, Long.valueOf(in.readIntegral(parameterizedType)));
 			return true;
 			
+		case BIG_INTEGRAL:
+			setter.invoke(obj, Long.valueOf(in.readBigIntegral(parameterizedType).longValue()));
+			return true;
+			
 		case FLOATING:
 			setter.invoke(obj, Long.valueOf((long)in.readFloating(parameterizedType)));
+			return true;
+			
+		case BIG_FLOATING:
+			setter.invoke(obj, Long.valueOf(in.readBigFloating(parameterizedType).longValue()));
 			return true;
 		
 		default:
@@ -164,8 +188,16 @@ public class LongProperty extends AbstractProperty {
 			setter.invoke(obj, Long.valueOf(in.readIntegral(parameterizedType)));
 			return true;
 			
+		case BIG_INTEGRAL:
+			setter.invoke(obj, Long.valueOf(in.readBigIntegral(parameterizedType).longValue()));
+			return true;
+			
 		case FLOATING:
 			setter.invoke(obj, Long.valueOf((long)in.readFloating(parameterizedType)));
+			return true;
+			
+		case BIG_FLOATING:
+			setter.invoke(obj, Long.valueOf(in.readBigFloating(parameterizedType).longValue()));
 			return true;
 		
 		default:
