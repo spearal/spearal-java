@@ -29,13 +29,14 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.spearal.SpearalContext;
 import org.spearal.configurable.PropertyFactory.Property;
+import org.spearal.impl.util.StringCache;
+import org.spearal.impl.util.StringCache.ValueProvider;
 import org.spearal.impl.util.TypeUtil;
 import org.spearal.impl.util.UnmodifiableArray;
 
@@ -48,7 +49,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	
 	private final List<String> storedStrings;
 	private final List<Object> storedObjects;
-	private final Map<String, ClassDescriptor> descriptors;
+	private final StringCache<ClassDescriptor> descriptors;
 
     private final SpearalContext context;
 	
@@ -62,10 +63,15 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 		this(context, in, 1024);
 	}
 
-	public SpearalDecoderImpl(SpearalContext context, InputStream in, int capacity) {
+	public SpearalDecoderImpl(final SpearalContext context, InputStream in, int capacity) {
         this.storedStrings = new ArrayList<String>(64);
         this.storedObjects = new ArrayList<Object>(64);
-        this.descriptors = new HashMap<String, ClassDescriptor>();
+        this.descriptors = new StringCache<ClassDescriptor>(new ValueProvider<ClassDescriptor>() {
+			@Override
+			public ClassDescriptor createValue(String key) {
+				return ClassDescriptor.forDescription(context, key);
+			}
+		});
 
         this.context = context;
         this.in = in;
@@ -85,6 +91,11 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	ensureAvailable(1);
         return readAny(buffer[position++] & 0xff);
     }
+	
+	private void skipAny()  throws IOException {
+    	ensureAvailable(1);
+        skipAny(buffer[position++] & 0xff);
+	}
 
 	@Override
     public Object readAny(int parameterizedType) throws IOException {
@@ -118,8 +129,6 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
         
         case BYTE_ARRAY:
         	return readByteArray(parameterizedType);
-//        case ARRAY:
-//        	return readArray(parameterizedType);
             
         case COLLECTION:
         	return readCollection(parameterizedType);
@@ -139,8 +148,61 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
     @Override
 	public void skipAny(int parameterizedType) throws IOException {
-    	// TODO
-		readAny(parameterizedType);
+        switch (SpearalType.valueOf(parameterizedType)) {
+        
+        case NULL:
+        case TRUE:
+        case FALSE:
+        	return;
+
+        case DATE:
+        	skipDate(parameterizedType);
+        	return;
+        case TIMESTAMP:
+        	skipTimestamp(parameterizedType);
+        	return;
+
+        case INTEGRAL:
+        	skipIntegral(parameterizedType);
+        	return;
+        case BIG_INTEGRAL:
+        	skipBigIntegral(parameterizedType);
+        	return;
+        	
+        case FLOATING:
+        	skipFloating(parameterizedType);
+        	return;
+        case BIG_FLOATING:
+        	skipBigFloating(parameterizedType);
+        	return;
+        	
+        case STRING:
+        	skipString(parameterizedType);
+        	return;
+        
+        case BYTE_ARRAY:
+        	skipByteArray(parameterizedType);
+        	return;
+            
+        case COLLECTION:
+        	skipCollection(parameterizedType);
+        	return;
+        case MAP:
+        	skipMap(parameterizedType);
+        	return;
+            
+        case ENUM:
+        	skipEnum(parameterizedType);
+        	return;
+        case CLASS:
+        	skipClass(parameterizedType);
+        	return;
+        case BEAN:
+        	skipBean(parameterizedType);
+        	return;
+        }
+        
+        throw new RuntimeException("Unexpected type: " + parameterizedType);
 	}
     
     @Override
@@ -148,12 +210,22 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	ensureAvailable(8);
     	return new Date(readLongData());
     }
+    
+    private void skipDate(int parameterizedType) throws IOException {
+    	ensureAvailable(8);
+    	position += 8;
+    }
 
     public Timestamp readTimestamp(int parameterizedType) throws IOException {
     	ensureAvailable(12);
     	Timestamp timestamp = new Timestamp(readLongData());
     	timestamp.setNanos(readIntData());
     	return timestamp;
+    }
+    
+    private void skipTimestamp(int parameterizedType) throws IOException {
+    	ensureAvailable(12);
+    	position += 12;
     }
     
     @Override
@@ -193,10 +265,16 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 		
 		return v;
     }
+
+    private void skipIntegral(int parameterizedType) throws IOException {
+    	final int length = (parameterizedType & 0x07) + 1;
+    	ensureAvailable(length);
+    	position += length;
+    }
     
     @Override
 	public BigInteger readBigIntegral(int parameterizedType) throws IOException {
-    	int length0 = (parameterizedType & 0x03);
+    	final int length0 = (parameterizedType & 0x03);
     	
     	ensureAvailable(length0 + 1);
     	int length = readUnsignedIntegerValue(length0);
@@ -205,6 +283,12 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	readFully(bytes, 0, length);
     	return new BigInteger(bytes);
 	}
+
+    private void skipBigIntegral(int parameterizedType) throws IOException {
+    	int length0 = (parameterizedType & 0x03);
+    	ensureAvailable(length0 + 1);
+    	skipFully(readUnsignedIntegerValue(length0));
+    }
 
 	@Override
     public double readFloating(int parameterizedType) throws IOException {
@@ -240,6 +324,18 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	ensureAvailable(8);
     	return Double.longBitsToDouble(readLongData());
     }
+	
+	private void skipFloating(int parameterizedType) throws IOException {
+		if ((parameterizedType & 0x08) != 0) {
+			int length = (parameterizedType & 0x03) + 1;
+			ensureAvailable(length);
+			position += length;
+		}
+		else {
+			ensureAvailable(8);
+			position += 8;
+		}
+	}
 
 	@Override
 	public BigDecimal readBigFloating(int parameterizedType) throws IOException {
@@ -258,6 +354,12 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	
     	return new BigDecimal(new BigInteger(bytes), scale);
 	}
+	
+	private void skipBigFloating(int parameterizedType) throws IOException {
+		int bytesLength0 = (parameterizedType & 0x03);
+		ensureAvailable(bytesLength0 + 2);
+		skipFully(readUnsignedIntegerValue(bytesLength0) + 1);
+	}
 
 	@Override
     public String readString(int parameterizedType) throws IOException {
@@ -269,6 +371,16 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	
     	return readStringData(indexOrLength, reference);
     }
+	
+	private void skipString(int parameterizedType) throws IOException {
+    	boolean reference = (parameterizedType & 0x04) != 0;
+    	int length0 = (parameterizedType & 0x03);
+    	
+    	ensureAvailable(length0 + 1);
+    	int indexOrLength = readUnsignedIntegerValue(length0);
+    	
+    	skipStringData(indexOrLength, reference);
+	}
     
     @Override
 	public byte[] readByteArray(int parameterizedType) throws IOException {
@@ -282,9 +394,23 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     		return (byte[])storedObjects.get(indexOrLength);
     	
     	byte[] bytes = new byte[indexOrLength];
+    	storedObjects.add(bytes);
     	readFully(bytes, 0, indexOrLength);
 		return bytes;
 	}
+    
+    private void skipByteArray(int parameterizedType) throws IOException {
+    	boolean reference = (parameterizedType & 0x08) != 0;
+    	int length0 = (parameterizedType & 0x03);
+    	
+    	ensureAvailable(length0 + 1);
+    	int indexOrLength = readUnsignedIntegerValue(length0);
+    	
+    	if (!reference) {
+    		storedObjects.add(null);
+    		skipFully(indexOrLength);
+    	}
+    }
 
 	@Override
 	public Collection<?> readCollection(int parameterizedType) throws IOException {
@@ -304,6 +430,20 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     		value.add(readAny());
     	
     	return value;
+	}
+	
+	private void skipCollection(int parameterizedType) throws IOException {
+		boolean reference = (parameterizedType & 0x08) != 0;
+    	int length0 = (parameterizedType & 0x03);
+    	
+    	ensureAvailable(length0 + 1);
+    	int indexOrLength = readUnsignedIntegerValue(length0);
+    	
+    	if (!reference) {
+			storedObjects.add(null);
+    		for (int i = 0; i < indexOrLength; i++)
+    			skipAny();
+    	}
 	}
     
     @Override
@@ -370,6 +510,22 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	}
     	
     	return value;
+	}
+	
+	private void skipMap(int parameterizedType) throws IOException {
+		boolean reference = (parameterizedType & 0x08) != 0;
+    	int length0 = (parameterizedType & 0x03);
+    	
+    	ensureAvailable(length0 + 1);
+    	int indexOrLength = readUnsignedIntegerValue(length0);
+    	
+    	if (!reference) {
+			storedObjects.add(null);
+    		for (int i = 0; i < indexOrLength; i++) {
+    			skipAny();
+    			skipAny();
+    		}
+    	}
 	}
 
 	@Override
@@ -445,6 +601,19 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	
     	return Enum.valueOf(cls, value);
 	}
+    
+    private void skipEnum(int parameterizedType) throws IOException {
+    	boolean reference = (parameterizedType & 0x04) != 0;
+    	int length0 = (parameterizedType & 0x03);
+    	
+		ensureAvailable(length0 + 1);
+    	int indexOrLength = readUnsignedIntegerValue(length0);
+    	
+    	skipStringData(indexOrLength, reference);
+    	
+    	ensureAvailable(1);
+    	skipString(buffer[position++] & 0xff);
+    }
 
 	@Override
 	public Class<?> readClass(int parameterizedType) throws IOException {
@@ -456,6 +625,16 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	
     	String className = readStringData(indexOrLength, reference);
 		return context.loadClass(context.getClassNameAlias(className));
+	}
+	
+	private void skipClass(int parameterizedType) throws IOException {
+		boolean reference = (parameterizedType & 0x04) != 0;
+		int length0 = (parameterizedType & 0x03);
+    	
+		ensureAvailable(length0 + 1);
+    	int indexOrLength = readUnsignedIntegerValue(length0);
+    	
+    	skipStringData(indexOrLength, reference);
 	}
 
 	@Override
@@ -471,12 +650,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	
     	boolean classDescReference = (parameterizedType & 0x04) != 0;
     	String classDescription = readStringData(indexOrLength, classDescReference);
-    	
-    	ClassDescriptor descriptor = descriptors.get(classDescription);
-    	if (descriptor == null) {
-    		descriptor = ClassDescriptor.forDescription(context, classDescription);
-    		descriptors.put(classDescription, descriptor);
-    	}
+    	ClassDescriptor descriptor = descriptors.putIfAbsent(classDescription);
 
     	try {
 	    	Class<?> cls = descriptor.cls;
@@ -504,6 +678,24 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     		throw new IOException(e);
     	}
     }
+	
+	private void skipBean(int parameterizedType) throws IOException {
+    	boolean reference = (parameterizedType & 0x08) != 0;
+    	int length0 = (parameterizedType & 0x03);
+    	
+    	ensureAvailable(length0 + 1);
+    	int indexOrLength = readUnsignedIntegerValue(length0);
+    	
+    	if (!reference) {
+    		boolean classDescReference = (parameterizedType & 0x04) != 0;
+    		String classDescription = readStringData(indexOrLength, classDescReference);
+    		storedObjects.add(null);
+    		
+    		int propertiesCount = ClassDescriptor.propertiesCount(classDescription);
+    		for (int i = 0; i < propertiesCount; i++)
+    			skipAny();
+    	}
+	}
     
     private int readUnsignedIntegerValue(int length0) {
 		int v = 0;
@@ -549,6 +741,13 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	storedStrings.add(value);
         
         return value;
+    }
+    
+    private void skipStringData(int indexOrLength, boolean reference) throws IOException {
+    	if (!reference) {
+    		storedStrings.add(null);
+    		skipFully(indexOrLength);
+    	}
     }
 
 	private long readLongData() {
@@ -613,6 +812,32 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	            if (count <= 0)
 	                throw new EOFException();
 	            off += count;
+	            len -= count;
+			}
+		}
+	}
+
+	private void skipFully(int len) throws IOException {
+		if (len < 0)
+			throw new IndexOutOfBoundsException();
+        if (len == 0)
+        	return;
+
+        final int left = size - position;
+		if (len <= left)
+			position += len;
+		else {
+			if (left > 0) {
+				len -= left;
+				position = size;
+			}
+			
+			while (len > 0) {
+				int count = (int)in.skip(len);
+				if (count == len)
+					return;
+	            if (count <= 0)
+	                throw new EOFException();
 	            len -= count;
 			}
 		}
@@ -697,6 +922,19 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 			boolean partial = serializedProperties.length < properties.size();
 			
 			return new ClassDescriptor(cls, new UnmodifiableArray<Property>(serializedProperties), partial);
+		}
+		
+		public static int propertiesCount(String description) {
+			int iLastColon = description.lastIndexOf(':');
+			if (iLastColon == -1)
+				return 0;
+			
+			int count = 1;
+			for (int i = iLastColon + 1; i < description.length(); i++) {
+				if (description.charAt(i) == ',')
+					count++;
+			}
+			return count;
 		}
 		
 		public ClassDescriptor(Class<?> cls, Collection<Property> properties, boolean partial) {

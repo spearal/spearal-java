@@ -330,7 +330,7 @@ public class SpearalContextImpl implements SpearalContext {
 		return factory;
 	}
 
-	private static class InputConverterKey {
+	private static final class InputConverterKey {
 		
 		public final Class<?> cls;
 		public final Type target;
@@ -339,7 +339,7 @@ public class SpearalContextImpl implements SpearalContext {
 		public InputConverterKey(Class<?> cls, Type target) {
 			this.cls = cls;
 			this.target = target;
-			this.hash = (31 * target.hashCode()) + (cls == null ? 0 : cls.hashCode());
+			this.hash = (cls == null ? 0 : cls.hashCode()) + target.hashCode();
 		}
 
 		@Override

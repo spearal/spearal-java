@@ -17,22 +17,6 @@
  */
 package org.spearal.impl;
 
-import static org.spearal.impl.SpearalType.BEAN;
-import static org.spearal.impl.SpearalType.BIG_FLOATING;
-import static org.spearal.impl.SpearalType.BIG_INTEGRAL;
-import static org.spearal.impl.SpearalType.BYTE_ARRAY;
-import static org.spearal.impl.SpearalType.CLASS;
-import static org.spearal.impl.SpearalType.COLLECTION;
-import static org.spearal.impl.SpearalType.DATE;
-import static org.spearal.impl.SpearalType.ENUM;
-import static org.spearal.impl.SpearalType.FALSE;
-import static org.spearal.impl.SpearalType.FLOATING;
-import static org.spearal.impl.SpearalType.INTEGRAL;
-import static org.spearal.impl.SpearalType.MAP;
-import static org.spearal.impl.SpearalType.STRING;
-import static org.spearal.impl.SpearalType.TIMESTAMP;
-import static org.spearal.impl.SpearalType.TRUE;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Array;
@@ -42,20 +26,21 @@ import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.Date;
-import java.util.IdentityHashMap;
 import java.util.Map;
 
 import org.spearal.SpearalContext;
 import org.spearal.SpearalRequest;
 import org.spearal.configurable.ObjectWriterProvider.ObjectWriter;
 import org.spearal.configurable.PropertyFactory.Property;
+import org.spearal.impl.util.ClassCache;
+import org.spearal.impl.util.ClassCache.ValueProvider;
 import org.spearal.impl.util.ObjectIndexedCache;
 import org.spearal.impl.util.StringIndexedCache;
 
 /**
  * @author Franck WOLFF
  */
-public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
+public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType {
 
 	private final SpearalContext context;
 	private final SpearalRequest request;
@@ -63,7 +48,9 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 	
 	private final StringIndexedCache storedStrings;
 	private final ObjectIndexedCache storedObjects;
-	private final Map<Class<?>, ClassDescriptor> descriptors;
+	private final ClassCache<ClassDescriptor> descriptors;
+	
+	private final ClassCache<ObjectWriter> writers;
 	
 	private final byte[] buffer;
 	private int position;
@@ -82,14 +69,26 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 		this(context, request, out, 1024);
 	}
 	
-	public SpearalEncoderImpl(SpearalContext context, SpearalRequest request, OutputStream out, int capacity) {
+	public SpearalEncoderImpl(final SpearalContext context, SpearalRequest request, OutputStream out, int capacity) {
 		this.context = context;
 		this.request = (request != null ? request : new SpearalRequestImpl(context));
 		this.out = out;
 		
 		this.storedStrings = new StringIndexedCache();
 		this.storedObjects = new ObjectIndexedCache();
-		this.descriptors = new IdentityHashMap<Class<?>, ClassDescriptor>();
+		this.descriptors = new ClassCache<ClassDescriptor>(new ValueProvider<ClassDescriptor>() {
+			@Override
+			public ClassDescriptor createValue(Class<?> key) {
+				return createDescriptor(key);
+			}
+		});
+		
+		this.writers = new ClassCache<ObjectWriter>(new ValueProvider<ObjectWriter>() {
+			@Override
+			public ObjectWriter createValue(Class<?> key) {
+				return context.getWriter(key);
+			}
+		});
 
 		this.buffer = new byte[capacity];
         this.position = 0;
@@ -109,40 +108,34 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 
 	@Override
 	public void writeAny(Object o) throws IOException {
-		depth++;
+		++depth;
 		
 		if (o == null)
 			writeNull();
-		else {
-			Class<?> cls = o.getClass();
-			
-			ObjectWriter writer = context.getWriter(cls);
-			writer.write(this, o);
-		}
+		else
+			writers.putIfAbsent(o.getClass()).write(this, o);
 		
-		depth--;
-		
-		if (depth == 0)
+		if ((--depth) == 0)
 			flushBuffer();
 	}
 
 	@Override
 	public void writeNull() throws IOException {
 		ensureCapacity(1);
-		buffer[position++] = (byte)SpearalType.NULL.id();
+		buffer[position++] = ITYPE_NULL;
 	}
 	
 	@Override
 	public void writeBoolean(boolean value) throws IOException {
 		ensureCapacity(1);
-		buffer[position++] = (byte)(value ? TRUE.id() : FALSE.id());
+		buffer[position++] = (value ? (byte)ITYPE_TRUE : (byte)ITYPE_FALSE);
 	}
 	
 	@Override
 	public void writeDate(Date value) throws IOException {
 		ensureCapacity(9);
 
-		buffer[position++] = (byte)DATE.id();
+		buffer[position++] = ITYPE_DATE;
 		writeLongData(value.getTime());
 	}
 	
@@ -150,7 +143,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 	public void writeTimestamp(Timestamp value) throws IOException {
 		ensureCapacity(13);
 
-		buffer[position++] = (byte)TIMESTAMP.id();
+		buffer[position++] = ITYPE_TIMESTAMP;
 		writeLongData(value.getTime());
 		writeIntData(value.getNanos());
 	}
@@ -165,7 +158,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 		}
 		
 		ensureCapacity(2);
-		buffer[position++] = (byte)(INTEGRAL.id() | inverse);
+		buffer[position++] = (byte)(ITYPE_INTEGRAL | inverse);
 		buffer[position++] = value;
 	}
 	
@@ -188,7 +181,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 		}
 		
 		ensureCapacity(length0 + 2);
-		buffer[position++] = (byte)(INTEGRAL.id() | inverse | length0);
+		buffer[position++] = (byte)(ITYPE_INTEGRAL | inverse | length0);
 		
 		if (length0 == 1)
 			buffer[position++] = (byte)(value >>> 8);
@@ -214,7 +207,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 		}
 		
 		ensureCapacity(length0 + 2);
-		buffer[position++] = (byte)(INTEGRAL.id() | inverse | length0);
+		buffer[position++] = (byte)(ITYPE_INTEGRAL | inverse | length0);
 		writeUnsignedIntValue(value, length0);
 	}
 	
@@ -239,7 +232,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 		final byte[] buffer = this.buffer;
 		int position = this.position;
 		
-		buffer[position++] = (byte)(INTEGRAL.id() | inverse | length0);
+		buffer[position++] = (byte)(ITYPE_INTEGRAL | inverse | length0);
 		
 		switch (length0) {
 		case 7:
@@ -280,7 +273,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 		int length0 = unsignedIntLength0(bytes.length);
 		
 		ensureCapacity(length0 + 2);
-		buffer[position++] = (byte)(BIG_INTEGRAL.id() | length0);
+		buffer[position++] = (byte)(ITYPE_BIG_INTEGRAL | length0);
 		writeUnsignedIntValue(bytes.length, length0);
 		
 		writeBytes(bytes);
@@ -332,7 +325,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 						final byte[] buffer = this.buffer;
 						int position = this.position;
 						
-						buffer[position++] = (byte)(FLOATING.id() | 0x08 | inverse | length0);
+						buffer[position++] = (byte)(ITYPE_FLOATING | 0x08 | inverse | length0);
 						
 						switch (length0) {
 						case 3:
@@ -357,7 +350,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 		}
 		
 		ensureCapacity(9);
-		buffer[position++] = (byte)FLOATING.id();
+		buffer[position++] = ITYPE_FLOATING;
 		writeLongData(bits);
 	}
 
@@ -367,7 +360,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 		int length0 = unsignedIntLength0(bytes.length);
 
 		ensureCapacity(length0 + 2);
-		buffer[position++] = (byte)(BIG_FLOATING.id() | length0);
+		buffer[position++] = (byte)(ITYPE_BIG_FLOATING | length0);
 		writeUnsignedIntValue(bytes.length, length0);
 		
 		writeBytes(bytes);
@@ -383,7 +376,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 	@Override
 	public void writeString(String value) throws IOException {
 		ensureCapacity(1);
-		buffer[position] = (byte)(STRING.id());
+		buffer[position] = ITYPE_STRING;
 		
 		writeStringData(value);
 	}
@@ -396,14 +389,14 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 		if (reference != -1) {
 			int length0 = unsignedIntLength0(reference);
 			ensureCapacity(length0 + 2);
-			buffer[position++] = (byte)(BYTE_ARRAY.id() | 0x08 | length0);
+			buffer[position++] = (byte)(ITYPE_BYTE_ARRAY | 0x08 | length0);
 			writeUnsignedIntValue(reference, length0);
 		}
 		else {
 			int length0 = unsignedIntLength0(value.length);
 			
 			ensureCapacity(length0 + 2);
-			buffer[position++] = (byte)(BYTE_ARRAY.id() | length0);
+			buffer[position++] = (byte)(ITYPE_BYTE_ARRAY | length0);
 			writeUnsignedIntValue(value.length, length0);
 	
 			writeBytes(value);
@@ -417,14 +410,14 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 		if (reference != -1) {
 			int length0 = unsignedIntLength0(reference);
 			ensureCapacity(length0 + 2);
-			buffer[position++] = (byte)(COLLECTION.id() | 0x08 | length0);
+			buffer[position++] = (byte)(ITYPE_COLLECTION | 0x08 | length0);
 			writeUnsignedIntValue(reference, length0);
 		}
 		else {
 			int size = Array.getLength(value);
 			int length0 = unsignedIntLength0(size);
 			ensureCapacity(length0 + 2);
-			buffer[position++] = (byte)(COLLECTION.id() | length0);
+			buffer[position++] = (byte)(ITYPE_COLLECTION | length0);
 			writeUnsignedIntValue(size, length0);
 			for (int i = 0; i < size; i++)
 				writeAny(Array.get(value, i));
@@ -438,15 +431,16 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 		if (reference != -1) {
 			int length0 = unsignedIntLength0(reference);
 			ensureCapacity(length0 + 2);
-			buffer[position++] = (byte)(COLLECTION.id() | 0x08 | length0);
+			buffer[position++] = (byte)(ITYPE_COLLECTION | 0x08 | length0);
 			writeUnsignedIntValue(reference, length0);
 		}
 		else {
 			int size = value.size();
 			int length0 = unsignedIntLength0(size);
 			ensureCapacity(length0 + 2);
-			buffer[position++] = (byte)(COLLECTION.id() | length0);
+			buffer[position++] = (byte)(ITYPE_COLLECTION | length0);
 			writeUnsignedIntValue(size, length0);
+			
 			for (Object item : value)
 				writeAny(item);
 		}
@@ -459,14 +453,14 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 		if (reference != -1) {
 			int length0 = unsignedIntLength0(reference);
 			ensureCapacity(length0 + 2);
-			buffer[position++] = (byte)(MAP.id() | 0x08 | length0);
+			buffer[position++] = (byte)(ITYPE_MAP | 0x08 | length0);
 			writeUnsignedIntValue(reference, length0);
 		}
 		else {
 			int size = value.size();
 			int length0 = unsignedIntLength0(size);
 			ensureCapacity(length0 + 2);
-			buffer[position++] = (byte)(MAP.id() | length0);
+			buffer[position++] = (byte)(ITYPE_MAP | length0);
 			writeUnsignedIntValue(size, length0);
 			for (Map.Entry<?, ?> entry : value.entrySet()) {
 				writeAny(entry.getKey());
@@ -478,7 +472,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 	@Override
 	public void writeEnum(Enum<?> value) throws IOException {
 		ensureCapacity(1);
-		buffer[position] = (byte)ENUM.id();
+		buffer[position] = (byte)ITYPE_ENUM;
 		writeStringData(value.getClass().getName());
 		
 		writeString(value.name());
@@ -487,7 +481,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 	@Override
 	public void writeClass(Class<?> value) throws IOException {
 		ensureCapacity(1);
-		buffer[position] = (byte)CLASS.id();
+		buffer[position] = (byte)ITYPE_CLASS;
 		writeStringData(value.getName());
 	}
 
@@ -498,14 +492,14 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 		if (reference != -1) {
 			int length0 = unsignedIntLength0(reference);
 			ensureCapacity(length0 + 2);
-			buffer[position++] = (byte)(BEAN.id() | 0x08 | length0);
+			buffer[position++] = (byte)(ITYPE_BEAN | 0x08 | length0);
 			writeUnsignedIntValue(reference, length0);
 		}
 		else {
-			ClassDescriptor descriptor = getDescriptor(value.getClass());
+			ClassDescriptor descriptor = descriptors.putIfAbsent(value.getClass());
 			
 			ensureCapacity(1);
-			buffer[position] = (byte)BEAN.id();
+			buffer[position] = (byte)ITYPE_BEAN;
 			writeStringData(descriptor.description);
 			
 			for (Property property : descriptor.properties) {
@@ -520,17 +514,6 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 				}
 			}
 		}
-	}
-	
-	private ClassDescriptor getDescriptor(Class<?> cls) {
-		ClassDescriptor descriptor = descriptors.get(cls);
-		
-		if (descriptor == null) {
-			descriptor = createDescriptor(cls);
-			descriptors.put(cls, descriptor);
-		}
-		
-		return descriptor;
 	}
 	
 	private ClassDescriptor createDescriptor(Class<?> cls) {
@@ -570,14 +553,17 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 
         if (index >= 0) {
         	int length0 = unsignedIntLength0(index);
-        	buffer[position++] |= (byte)(0x04 | length0);
+        	buffer[position++] |= (0x04 | length0);
         	ensureCapacity(length0 + 1);
         	writeUnsignedIntValue(index, length0);
         }
         else {
             final int count = utfByteCount(s);
             int length0 = unsignedIntLength0(count);
-            buffer[position++] |= (byte)length0;
+            if (length0 > 0)
+            	buffer[position++] |= length0;
+            else
+            	position++;
             ensureCapacity(length0 + 1);
         	writeUnsignedIntValue(count, length0);
             
@@ -705,16 +691,42 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 		this.position = position;
 	}
 	
+//	private static int unsignedIntLength0(int value) {
+//		if (value <= 0xffff)
+//			return (value <= 0xff ? 0 : 1);
+//		return (value <= 0xffffff ? 2 : 3);
+//	}
+//	
+//	private void writeUnsignedIntValue(int value, int length0) {
+//		final byte[] buffer = this.buffer;
+//		int position = this.position;
+//		
+//		switch (length0) {
+//		case 3:
+//			buffer[position++] = (byte)(value >>> 24);
+//		case 2:
+//			buffer[position++] = (byte)(value >>> 16);
+//		case 1:
+//			buffer[position++] = (byte)(value >>> 8);
+//		case 0:
+//			buffer[position++] = (byte)value;
+//			break;
+//		default:
+//			throw new RuntimeException("Internal error: length0=" + length0);
+//		}
+//		
+//		this.position = position;
+//	}
+	
 	private static int unsignedIntLength0(int value) {
+		if (value <= 0xff)
+			return 0;
 		if (value <= 0xffff)
-			return (value <= 0xff ? 0 : 1);
+			return 1;
 		return (value <= 0xffffff ? 2 : 3);
 	}
 	
 	private void writeUnsignedIntValue(int value, int length0) {
-		final byte[] buffer = this.buffer;
-		int position = this.position;
-		
 		switch (length0) {
 		case 3:
 			buffer[position++] = (byte)(value >>> 24);
@@ -728,8 +740,6 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 		default:
 			throw new RuntimeException("Internal error: length0=" + length0);
 		}
-		
-		this.position = position;
 	}
 
     private void ensureCapacity(int capacity) throws IOException {

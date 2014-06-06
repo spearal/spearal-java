@@ -20,36 +20,36 @@ package org.spearal.impl;
 /**
  * @author Franck WOLFF
  */
-public enum SpearalType {
+public enum SpearalType implements SpearalIType {
 
 	// No parameters (0x00...0x0f).
 	
-	NULL(0x00),
+	NULL(ITYPE_NULL),
 
-	TRUE(0x01),
-	FALSE(0x02),
+	TRUE(ITYPE_TRUE),
+	FALSE(ITYPE_FALSE),
 	
-	DATE(0x03),
-	TIMESTAMP(0x04),
+	DATE(ITYPE_DATE),
+	TIMESTAMP(ITYPE_TIMESTAMP),
 	
 	// 4 bits of parameters (0x10...0xf0).
 
-	INTEGRAL(0x10),
-	BIG_INTEGRAL(0x20),
+	INTEGRAL(ITYPE_INTEGRAL),
+	BIG_INTEGRAL(ITYPE_BIG_INTEGRAL),
 	
-	FLOATING(0x30),
-	BIG_FLOATING(0x40),
+	FLOATING(ITYPE_FLOATING),
+	BIG_FLOATING(ITYPE_BIG_FLOATING),
 
-	STRING(0x50),
+	STRING(ITYPE_STRING),
 	
-	BYTE_ARRAY(0x60),
+	BYTE_ARRAY(ITYPE_BYTE_ARRAY),
 	
-	COLLECTION(0x70),
-	MAP(0x80),
+	COLLECTION(ITYPE_COLLECTION),
+	MAP(ITYPE_MAP),
 	
-	ENUM(0x90),
-	CLASS(0xa0),
-	BEAN(0xb0);
+	ENUM(ITYPE_ENUM),
+	CLASS(ITYPE_CLASS),
+	BEAN(ITYPE_BEAN);
 	
 	private static final SpearalType[] SIO_TYPES;
 	static {
