@@ -52,9 +52,13 @@ import org.junit.runners.Suite.SuiteClasses;
 	TestCollection.class,
 	TestArray.class,
 	
+	TestMap.class,
+	
 	TestEnum.class,
 	TestClass.class,
 	TestProxy.class,
+	TestBean.class,
+	TestPartialBean.class
 })
 public class AllTests {
 }
