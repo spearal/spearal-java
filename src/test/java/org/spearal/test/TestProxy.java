@@ -25,25 +25,22 @@ import java.lang.reflect.Proxy;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.spearal.test.model.Nameable;
 
 /**
  * @author Franck WOLFF
  */
 public class TestProxy extends AbstractSpearalTestUnit {
 	
-	public static interface Nameable {
-		
-		String getName();
-		void setName(String name);
-	}
-	
-	public static class NameableInvocationHandler implements InvocationHandler {
+	private static class NameableInvocationHandler implements InvocationHandler {
 
 		@Override
 		public Object invoke(Object proxy, Method method, Object[] args)
 			throws Throwable {
-			if ("getName".equals(method.getName()))
-				return "John Doo";
+			if ("getFirstName".equals(method.getName()))
+				return "John";
+			if ("getLastName".equals(method.getName()))
+				return "Doo";
 			return null;
 		}
 	}
@@ -61,7 +58,8 @@ public class TestProxy extends AbstractSpearalTestUnit {
 			Assert.fail("Not a Nameable: " + clone);
 		
 		Nameable nameable = (Nameable)clone;
-		Assert.assertEquals("John Doo", nameable.getName());
+		Assert.assertEquals("John", nameable.getFirstName());
+		Assert.assertEquals("Doo", nameable.getLastName());
 	}
 	
 	private Object encodeDecode(Object value, int expectedSize) throws IOException {

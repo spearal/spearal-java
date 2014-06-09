@@ -18,18 +18,20 @@
 package org.spearal.test;
 
 import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.spearal.test.model.SimpleBean;
 
 /**
  * @author Franck WOLFF
  */
-public class TestTimestamp extends AbstractSpearalTestUnit {
+public class TestMap extends AbstractSpearalTestUnit {
 
 	@Before
 	public void setUp() throws Exception {
@@ -40,22 +42,37 @@ public class TestTimestamp extends AbstractSpearalTestUnit {
 	public void tearDown() throws Exception {
 		printStream = NULL_PRINT_STREAM;
 	}
-
+	
 	@Test
 	public void test() throws IOException {
-		encodeDecode(new Timestamp(new Date().getTime()), 13);
-		encodeDecode(new Timestamp(0L), 13);
-		encodeDecode(new Timestamp(Long.MAX_VALUE), 13);
+		
+		encodeDecode(new HashMap<String, Object>(), -1);
+
+		Map<String, SimpleBean> map = new HashMap<String, SimpleBean>();
+		map.put("abc", new SimpleBean(true, 3, -0.1, "abc"));
+		encodeDecode(map, -1);
+		
+		map = new HashMap<String, SimpleBean>();
+		Random random = new Random();
+		for (int i = 0; i < 20; i++) {
+			map.put("key" + i, new SimpleBean(
+				random.nextBoolean(),
+				random.nextInt(),
+				random.nextDouble(),
+				"string" + i
+			));
+		}
+		encodeDecode(map, -1);
 	}
 	
-	private void encodeDecode(Timestamp value, int expectedSize) throws IOException {
+	private void encodeDecode(Map<?, ?> value, int expectedSize) throws IOException {
 		byte[] data = encode(value);
 		Object clone = decode(data);
 		
 		if (expectedSize >= 0)
 			Assert.assertEquals(expectedSize, data.length);
-		if (!(clone instanceof Timestamp))
-			Assert.fail("Not a Timestamp: " + clone);
+		if (!(clone instanceof Map))
+			Assert.fail("Not a Map: " + clone);
 		Assert.assertEquals(value, clone);
 	}
 }

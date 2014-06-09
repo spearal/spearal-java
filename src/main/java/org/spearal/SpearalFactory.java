@@ -19,10 +19,12 @@ package org.spearal;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintStream;
 
 import org.spearal.impl.SpearalContextImpl;
 import org.spearal.impl.SpearalDecoderImpl;
 import org.spearal.impl.SpearalEncoderImpl;
+import org.spearal.impl.SpearalPrinterImpl;
 import org.spearal.impl.introspector.IntrospectorImpl;
 import org.spearal.introspect.Introspector;
 import org.spearal.partial.PartialObjectFactory;
@@ -74,5 +76,9 @@ public class SpearalFactory {
 	
 	public SpearalDecoder newDecoder(InputStream in) {
 		return new SpearalDecoderImpl(context, in);
+	}
+	
+	public SpearalPrinter newPrinter(PrintStream out) {
+		return new SpearalPrinterImpl(out);
 	}
 }

@@ -22,13 +22,25 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
  * @author Franck WOLFF
  */
 public class TestBigDecimal extends AbstractSpearalTestUnit {
+
+	@Before
+	public void setUp() throws Exception {
+		// printStream = System.out;
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		printStream = NULL_PRINT_STREAM;
+	}
 
 	@Test
 	public void test() throws IOException {

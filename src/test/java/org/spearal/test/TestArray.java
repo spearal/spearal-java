@@ -21,13 +21,25 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Date;
 
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
  * @author Franck WOLFF
  */
 public class TestArray extends AbstractSpearalTestUnit {
+
+	@Before
+	public void setUp() throws Exception {
+		// printStream = System.out;
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		printStream = NULL_PRINT_STREAM;
+	}
 
 	@Test
 	public void testBooleans() throws IOException {

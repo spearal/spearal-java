@@ -27,4 +27,8 @@ public interface SpearalDecoder {
 	SpearalContext getContext();
 	
 	Object readAny() throws IOException;
+	
+	void skipAny() throws IOException;
+	
+	void printAny(SpearalPrinter printer) throws IOException;
 }

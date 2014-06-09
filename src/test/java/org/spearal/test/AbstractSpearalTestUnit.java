@@ -20,6 +20,8 @@ package org.spearal.test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 
 import org.spearal.SpearalFactory;
 import org.spearal.SpearalDecoder;
@@ -31,7 +33,16 @@ import org.spearal.SpearalRequest;
  */
 public abstract class AbstractSpearalTestUnit {
 
+	protected static final PrintStream NULL_PRINT_STREAM = new PrintStream(new OutputStream() {
+		@Override
+		public void write(int b) throws IOException {
+		}
+	});
+	
+	protected PrintStream printStream;
+	
 	public AbstractSpearalTestUnit() {
+		printStream = NULL_PRINT_STREAM;
 	}
 
 	protected byte[] encode(Object o) throws IOException {
@@ -60,6 +71,14 @@ public abstract class AbstractSpearalTestUnit {
 	protected Object decode(SpearalFactory factory, byte[] bytes) throws IOException {
 		ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
 		SpearalDecoder in = factory.newDecoder(bais);
+		in.skipAny();
+		
+		bais.reset();
+		in = factory.newDecoder(bais);
+		in.printAny(factory.newPrinter(printStream));
+		
+		bais.reset();
+		in = factory.newDecoder(bais);
 		return in.readAny();
 	}
 }

@@ -18,18 +18,18 @@
 package org.spearal.test;
 
 import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.Date;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.spearal.test.model.ChildBean;
+import org.spearal.test.model.SimpleBean;
 
 /**
  * @author Franck WOLFF
  */
-public class TestTimestamp extends AbstractSpearalTestUnit {
+public class TestBean extends AbstractSpearalTestUnit {
 
 	@Before
 	public void setUp() throws Exception {
@@ -40,22 +40,26 @@ public class TestTimestamp extends AbstractSpearalTestUnit {
 	public void tearDown() throws Exception {
 		printStream = NULL_PRINT_STREAM;
 	}
-
+	
 	@Test
 	public void test() throws IOException {
-		encodeDecode(new Timestamp(new Date().getTime()), 13);
-		encodeDecode(new Timestamp(0L), 13);
-		encodeDecode(new Timestamp(Long.MAX_VALUE), 13);
+		encodeDecode(new ChildBean(), -1);
+		
+		encodeDecode(new ChildBean(-3, "parent", true, 0.001), -1);
+		
+		ChildBean bean = new ChildBean(56, "parent", false, 3.001);
+		bean.getSimpleBeans().add(new SimpleBean(true, 3, 5.09, "abc"));
+		bean.getSimpleBeans().add(new SimpleBean(false, -5, -10.09, "abc"));
+		
+		encodeDecode(bean, -1);
 	}
 	
-	private void encodeDecode(Timestamp value, int expectedSize) throws IOException {
+	private void encodeDecode(Object value, int expectedSize) throws IOException {
 		byte[] data = encode(value);
 		Object clone = decode(data);
 		
 		if (expectedSize >= 0)
 			Assert.assertEquals(expectedSize, data.length);
-		if (!(clone instanceof Timestamp))
-			Assert.fail("Not a Timestamp: " + clone);
 		Assert.assertEquals(value, clone);
 	}
 }

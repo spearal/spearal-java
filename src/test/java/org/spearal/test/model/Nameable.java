@@ -15,40 +15,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.spearal.test;
-
-import java.io.IOException;
-
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+package org.spearal.test.model;
 
 /**
  * @author Franck WOLFF
  */
-public class TestNull extends AbstractSpearalTestUnit {
+public interface Nameable {
+	
+	String getFirstName();
+	void setFirstName(String value);
 
-	@Before
-	public void setUp() throws Exception {
-		// printStream = System.out;
-	}
-
-	@After
-	public void tearDown() throws Exception {
-		printStream = NULL_PRINT_STREAM;
-	}
-
-	@Test
-	public void test() throws IOException {
-		Object value, clone;
-		byte[] data;
-		
-		value = null;
-		data = encode(value);
-		clone = decode(data);
-		
-		Assert.assertEquals(1, data.length);
-		Assert.assertNull(clone);
-	}
+	String getLastName();
+	void setLastName(String value);
 }

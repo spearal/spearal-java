@@ -49,6 +49,7 @@ import org.junit.runners.Suite.SuiteClasses;
 	
 	TestByteArray.class,
 	
+	TestCollection.class,
 	TestArray.class,
 	
 	TestEnum.class,
