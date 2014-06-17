@@ -64,6 +64,22 @@ public abstract class AbstractSpearalTestUnit {
 		return baos.toByteArray();
 	}
 	
+	protected String toString(byte[] bytes) {
+		final String hex = "0123456789abcdef";
+		StringBuilder sb = new StringBuilder(bytes.length * 6);
+		sb.append('[');
+		boolean first = true;
+		for (byte b : bytes) {
+			if (first)
+				first = false;
+			else
+				sb.append(", ");
+			sb.append("0x").append(hex.charAt((b >>> 4) & 0x0f)).append(hex.charAt(b & 0x0f));
+		}
+		sb.append(']');
+		return sb.toString();
+	}
+	
 	protected Object decode(byte[] bytes) throws IOException {
 		return decode(new SpearalFactory(), bytes);
 	}

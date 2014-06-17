@@ -29,9 +29,6 @@ public interface SpearalIType {
 	static final int ITYPE_TRUE = 0x01;
 	static final int ITYPE_FALSE = 0x02;
 	
-	static final int ITYPE_DATE = 0x03;
-	static final int ITYPE_TIMESTAMP = 0x04;
-	
 	// 4 bits of parameters (0x10...0xf0).
 
 	static final int ITYPE_INTEGRAL = 0x10;
@@ -43,11 +40,13 @@ public interface SpearalIType {
 	static final int ITYPE_STRING = 0x50;
 	
 	static final int ITYPE_BYTE_ARRAY = 0x60;
+
+	static final int ITYPE_DATE_TIME = 0x70;
 	
-	static final int ITYPE_COLLECTION = 0x70;
-	static final int ITYPE_MAP = 0x80;
+	static final int ITYPE_COLLECTION = 0x80;
+	static final int ITYPE_MAP = 0x90;
 	
-	static final int ITYPE_ENUM = 0x90;
-	static final int ITYPE_CLASS = 0xa0;
-	static final int ITYPE_BEAN = 0xb0;
+	static final int ITYPE_ENUM = 0xa0;
+	static final int ITYPE_CLASS = 0xb0;
+	static final int ITYPE_BEAN = 0xc0;
 }

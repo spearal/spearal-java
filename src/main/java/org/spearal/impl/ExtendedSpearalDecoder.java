@@ -21,9 +21,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.sql.Timestamp;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Map;
 
 import org.spearal.SpearalDecoder;
@@ -37,11 +35,8 @@ public interface ExtendedSpearalDecoder extends SpearalDecoder {
 	Object readAny(int parameterizedType) throws IOException;
 	void skipAny(int parameterizedType) throws IOException;
 	
-	Date readDate(int parameterizedType) throws IOException;
-	void skipDate(int parameterizedType) throws IOException;
-	
-	Timestamp readTimestamp(int parameterizedType) throws IOException;
-	void skipTimestamp(int parameterizedType) throws IOException;
+	SpearalDateTime readDateTime(int parameterizedType) throws IOException;
+	void skipDateTime(int parameterizedType) throws IOException;
 	
 	long readIntegral(int parameterizedType) throws IOException;
 	void skipIntegral(int parameterizedType) throws IOException;

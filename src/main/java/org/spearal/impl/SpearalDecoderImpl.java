@@ -20,16 +20,13 @@ package org.spearal.impl;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -119,11 +116,6 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
         case FALSE:
         	return Boolean.FALSE;
 
-        case DATE:
-        	return readDate(parameterizedType);
-        case TIMESTAMP:
-        	return readTimestamp(parameterizedType);
-
         case INTEGRAL:
         	return Long.valueOf(readIntegral(parameterizedType));
         case BIG_INTEGRAL:
@@ -139,6 +131,9 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
         
         case BYTE_ARRAY:
         	return readByteArray(parameterizedType);
+
+        case DATE_TIME:
+        	return readDateTime(parameterizedType).toSQLTimestamp();
             
         case COLLECTION:
         	return readCollection(parameterizedType);
@@ -165,13 +160,6 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
         case FALSE:
         	return;
 
-        case DATE:
-        	skipDate(parameterizedType);
-        	return;
-        case TIMESTAMP:
-        	skipTimestamp(parameterizedType);
-        	return;
-
         case INTEGRAL:
         	skipIntegral(parameterizedType);
         	return;
@@ -192,6 +180,10 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
         
         case BYTE_ARRAY:
         	skipByteArray(parameterizedType);
+        	return;
+
+        case DATE_TIME:
+        	skipDateTime(parameterizedType);
         	return;
             
         case COLLECTION:
@@ -229,13 +221,6 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
         	printer.printBoolean(false);
         	return;
 
-        case DATE:
-        	printer.printDate(readDate(parameterizedType));
-        	return;
-        case TIMESTAMP:
-        	printer.printTimestamp(readTimestamp(parameterizedType));
-        	return;
-
         case INTEGRAL:
         	printer.printIntegral(readIntegral(parameterizedType));
         	return;
@@ -256,6 +241,10 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
         
         case BYTE_ARRAY:
         	printByteArray(printer, parameterizedType);
+        	return;
+
+        case DATE_TIME:
+        	printer.printDateTime(readDateTime(parameterizedType));
         	return;
             
         case COLLECTION:
@@ -278,35 +267,6 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
         
         throw new RuntimeException("Unexpected type: " + parameterizedType);
 	}
-    
-    @Override
-    public Date readDate(int parameterizedType) throws IOException {
-    	ensureAvailable(8);
-    	return new Date(readLongData());
-    }
-    
-    @Override
-    public void skipDate(int parameterizedType) throws IOException {
-    	ensureAvailable(8);
-    	position += 8;
-    }
-    
-    public void printDate(PrintStream out, int parameterizedType) throws IOException {
-    	out.print(readDate(parameterizedType));
-    }
-
-    public Timestamp readTimestamp(int parameterizedType) throws IOException {
-    	ensureAvailable(12);
-    	Timestamp timestamp = new Timestamp(readLongData());
-    	timestamp.setNanos(readIntData());
-    	return timestamp;
-    }
-    
-    @Override
-    public void skipTimestamp(int parameterizedType) throws IOException {
-    	ensureAvailable(12);
-    	position += 12;
-    }
     
     @Override
     public long readIntegral(int parameterizedType) throws IOException {
@@ -530,6 +490,67 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
         	readFully(bytes, 0, indexOrLength);
         	printer.printByteArray(bytes, storedObjects.size() - 1, false);
     	}
+    }
+    
+    @Override
+    public SpearalDateTime readDateTime(int parameterizedType) throws IOException {
+
+    	boolean date = ((parameterizedType & 0x08) != 0);
+    	boolean time = ((parameterizedType & 0x04) != 0);
+    	
+    	int year = 0;
+    	int month = 0;
+    	int day = 0;
+    	int hours = 0;
+    	int minutes = 0;
+    	int seconds = 0;
+    	int nanoseconds = 0;
+    	
+    	if (date) {
+    		ensureAvailable(2);
+    		month = (buffer[position++] & 0xff);
+    		day = (buffer[position++] & 0xff);
+    		
+    		int length0 = ((month >>> 4) & 0x03);
+    		boolean inverse = ((month & 0x80) != 0);
+    		
+    		month &= 0x0f;
+    		
+    		ensureAvailable(length0 + 1);
+    		year = readUnsignedIntegerValue(length0);
+    		if (inverse)
+    			year = -year;
+    		year += 2000;
+    	}
+    	
+    	if (time) {
+    		ensureAvailable(3);
+    		hours = (buffer[position++] & 0xff);
+    		minutes = (buffer[position++] & 0xff);
+    		seconds = (buffer[position++] & 0xff);
+    		
+    		switch (parameterizedType & 0x03) {
+    		case 1:
+    			nanoseconds = readUnsignedIntegerValue(hours >>> 5);
+    			break;
+    		case 2:
+    			nanoseconds = readUnsignedIntegerValue(hours >>> 5) * 1000;
+    			break;
+    		case 3:
+    			nanoseconds = readUnsignedIntegerValue(hours >>> 5) * 1000000;
+    			break;
+    		}
+    		
+    		hours &= 0x1f;
+    	}
+    	
+    	return new SpearalDateTime(year, month, day, hours, minutes, seconds, nanoseconds, date, time);
+    }
+    
+    
+    @Override
+    public void skipDateTime(int parameterizedType) throws IOException {
+    	readDateTime(parameterizedType);
     }
 
 	@Override
@@ -1000,21 +1021,6 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 			(buffer[position++] & 0xffL) << 16 |
 			(buffer[position++] & 0xffL) <<  8 |
 			(buffer[position++] & 0xffL);
-
-		this.position = position;
-		
-		return v;
-    }
-
-	private int readIntData() {
-    	final byte[] buffer = this.buffer;
-    	int position = this.position;
-    	
-		int v =
-			(buffer[position++] & 0xff) << 24 |
-			(buffer[position++] & 0xff) << 16 |
-			(buffer[position++] & 0xff) <<  8 |
-			(buffer[position++] & 0xff);
 
 		this.position = position;
 		

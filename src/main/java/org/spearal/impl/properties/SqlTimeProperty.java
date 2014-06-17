@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Date;
+import java.sql.Time;
 
 import org.spearal.configurable.ObjectWriterProvider.ObjectWriter;
 import org.spearal.impl.ExtendedSpearalDecoder;
@@ -32,7 +32,7 @@ import org.spearal.impl.SpearalType;
 /**
  * @author Franck WOLFF
  */
-public class DateProperty extends AbstractNonPrimitiveProperty {
+public class SqlTimeProperty extends AbstractNonPrimitiveProperty {
 	
 	public static boolean canCreateWriter(Class<?> type) {
 		return canCreateProperty(type);
@@ -42,16 +42,16 @@ public class DateProperty extends AbstractNonPrimitiveProperty {
 		return new ObjectWriter() {
 			@Override
 			public void write(ExtendedSpearalEncoder out, Object o) throws IOException {
-				out.writeDateTime(SpearalDateTime.forDate((Date)o));
+				out.writeDateTime(SpearalDateTime.forSQLTime((Time)o));
 			}
 		};
 	}
 	
 	public static boolean canCreateProperty(Class<?> type) {
-		return Date.class.isAssignableFrom(type);
+		return Time.class == type;
 	}
 
-	public DateProperty(String name, Field field, Method getter, Method setter) {
+	public SqlTimeProperty(String name, Field field, Method getter, Method setter) {
 		super(name, field, getter, setter);
 	}
 
@@ -59,14 +59,14 @@ public class DateProperty extends AbstractNonPrimitiveProperty {
 	protected void writeObjectField(ExtendedSpearalEncoder out, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 		
-		writeDate(out, (Date)field.get(obj));
+		writeTime(out, (Time)field.get(obj));
 	}
 
 	@Override
 	protected void writeObjectMethod(ExtendedSpearalEncoder out, Object obj, Method getter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 
-		writeDate(out, (Date)getter.invoke(obj));
+		writeTime(out, (Time)getter.invoke(obj));
 	}
 	
 	@Override
@@ -80,16 +80,13 @@ public class DateProperty extends AbstractNonPrimitiveProperty {
 			return true;
 			
 		case DATE_TIME:
-			if (getGenericType() == Date.class) {
-				field.set(obj, in.readDateTime(parameterizedType).toDate());
-				return true;
-			}
-			break;
+			field.set(obj, in.readDateTime(parameterizedType).toSQLTime());
+			return true;
 		
 		default:
 			break;
 		}
-
+		
 		return false;
 	}
 
@@ -104,11 +101,8 @@ public class DateProperty extends AbstractNonPrimitiveProperty {
 			return true;
 			
 		case DATE_TIME:
-			if (getGenericType() == Date.class) {
-				setter.invoke(obj, in.readDateTime(parameterizedType).toDate());
-				return true;
-			}
-			break;
+			setter.invoke(obj, in.readDateTime(parameterizedType).toSQLTime());
+			return true;
 		
 		default:
 			break;
@@ -118,10 +112,10 @@ public class DateProperty extends AbstractNonPrimitiveProperty {
 	}
 	
 	
-	private static void writeDate(ExtendedSpearalEncoder out, Date value) throws IOException {
+	private static void writeTime(ExtendedSpearalEncoder out, Time value) throws IOException {
 		if (value == null)
 			out.writeNull();
 		else
-			out.writeDateTime(SpearalDateTime.forDate(value));
+			out.writeDateTime(SpearalDateTime.forSQLTime(value));
 	}
 }

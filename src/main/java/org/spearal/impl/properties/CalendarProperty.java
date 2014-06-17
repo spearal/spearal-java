@@ -21,17 +21,19 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.sql.Timestamp;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 
 import org.spearal.configurable.ObjectWriterProvider.ObjectWriter;
 import org.spearal.impl.ExtendedSpearalDecoder;
 import org.spearal.impl.ExtendedSpearalEncoder;
+import org.spearal.impl.SpearalDateTime;
 import org.spearal.impl.SpearalType;
 
 /**
  * @author Franck WOLFF
  */
-public class TimestampProperty extends AbstractNonPrimitiveProperty {
+public class CalendarProperty extends AbstractNonPrimitiveProperty {
 	
 	public static boolean canCreateWriter(Class<?> type) {
 		return canCreateProperty(type);
@@ -41,16 +43,16 @@ public class TimestampProperty extends AbstractNonPrimitiveProperty {
 		return new ObjectWriter() {
 			@Override
 			public void write(ExtendedSpearalEncoder out, Object o) throws IOException {
-				out.writeTimestamp((Timestamp)o);
+				out.writeDateTime(SpearalDateTime.forCalendar((Calendar)o));
 			}
 		};
 	}
 	
 	public static boolean canCreateProperty(Class<?> type) {
-		return Timestamp.class.isAssignableFrom(type);
+		return Calendar.class.isAssignableFrom(type);
 	}
 
-	public TimestampProperty(String name, Field field, Method getter, Method setter) {
+	public CalendarProperty(String name, Field field, Method getter, Method setter) {
 		super(name, field, getter, setter);
 	}
 
@@ -58,14 +60,14 @@ public class TimestampProperty extends AbstractNonPrimitiveProperty {
 	protected void writeObjectField(ExtendedSpearalEncoder out, Object obj, Field field)
 		throws IOException, IllegalAccessException {
 		
-		writeTimestamp(out, (Timestamp)field.get(obj));
+		writeCalendar(out, (Calendar)field.get(obj));
 	}
 
 	@Override
 	protected void writeObjectMethod(ExtendedSpearalEncoder out, Object obj, Method getter)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 
-		writeTimestamp(out, (Timestamp)getter.invoke(obj));
+		writeCalendar(out, (Calendar)getter.invoke(obj));
 	}
 	
 	@Override
@@ -78,16 +80,9 @@ public class TimestampProperty extends AbstractNonPrimitiveProperty {
 			field.set(obj, null);
 			return true;
 			
-		case DATE:
-			if (getGenericType() == Timestamp.class) {
-				field.set(obj, new Timestamp(in.readDate(parameterizedType).getTime()));
-				return true;
-			}
-			break;
-			
-		case TIMESTAMP:
-			if (getGenericType() == Timestamp.class) {
-				field.set(obj, in.readTimestamp(parameterizedType));
+		case DATE_TIME:
+			if (getGenericType() == Calendar.class || getGenericType() == GregorianCalendar.class) {
+				field.set(obj, in.readDateTime(parameterizedType).toGregorianCalendar());
 				return true;
 			}
 			break;
@@ -95,7 +90,7 @@ public class TimestampProperty extends AbstractNonPrimitiveProperty {
 		default:
 			break;
 		}
-		
+
 		return false;
 	}
 
@@ -109,16 +104,9 @@ public class TimestampProperty extends AbstractNonPrimitiveProperty {
 			setter.invoke(obj, (Object)null);
 			return true;
 			
-		case DATE:
-			if (getGenericType() == Timestamp.class) {
-				setter.invoke(obj, new Timestamp(in.readDate(parameterizedType).getTime()));
-				return true;
-			}
-			break;
-			
-		case TIMESTAMP:
-			if (getGenericType() == Timestamp.class) {
-				setter.invoke(obj, in.readTimestamp(parameterizedType));
+		case DATE_TIME:
+			if (getGenericType() == Calendar.class || getGenericType() == GregorianCalendar.class) {
+				setter.invoke(obj, in.readDateTime(parameterizedType).toGregorianCalendar());
 				return true;
 			}
 			break;
@@ -131,10 +119,10 @@ public class TimestampProperty extends AbstractNonPrimitiveProperty {
 	}
 	
 	
-	private static void writeTimestamp(ExtendedSpearalEncoder out, Timestamp value) throws IOException {
+	private static void writeCalendar(ExtendedSpearalEncoder out, Calendar value) throws IOException {
 		if (value == null)
 			out.writeNull();
 		else
-			out.writeTimestamp(value);
+			out.writeDateTime(SpearalDateTime.forCalendar(value));
 	}
 }

@@ -20,9 +20,7 @@ package org.spearal.impl;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.sql.Timestamp;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Map;
 
 import org.spearal.SpearalEncoder;
@@ -36,8 +34,7 @@ public interface ExtendedSpearalEncoder extends SpearalEncoder {
 	
 	void writeBoolean(boolean value) throws IOException;
 
-	void writeDate(Date value) throws IOException;
-	void writeTimestamp(Timestamp value) throws IOException;
+	void writeDateTime(SpearalDateTime value) throws IOException;
 
 	void writeByte(byte value) throws IOException;
 	void writeShort(short value) throws IOException;

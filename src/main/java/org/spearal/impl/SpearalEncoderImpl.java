@@ -23,9 +23,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Proxy;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.sql.Timestamp;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Map;
 
 import org.spearal.SpearalContext;
@@ -132,20 +130,70 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 	}
 	
 	@Override
-	public void writeDate(Date value) throws IOException {
-		ensureCapacity(9);
-
-		buffer[position++] = ITYPE_DATE;
-		writeLongData(value.getTime());
-	}
-	
-	@Override
-	public void writeTimestamp(Timestamp value) throws IOException {
-		ensureCapacity(13);
-
-		buffer[position++] = ITYPE_TIMESTAMP;
-		writeLongData(value.getTime());
-		writeIntData(value.getNanos());
+	public void writeDateTime(SpearalDateTime date) throws IOException {
+		
+		int parameters = 0x00;
+		int subsecs = date.nanoseconds;
+		
+		if (date.hasDate)
+			parameters |= 0x08;
+		
+		if (date.hasTime) {
+			parameters |= 0x04;
+			if (subsecs != 0) {
+				if (subsecs % 1000 == 0) {
+					if (subsecs % 1000000 == 0) {
+						subsecs /= 1000000;
+						parameters |= 0x03;
+					}
+					else {
+						subsecs /= 1000;
+						parameters |= 0x02;
+					}
+				}
+				else
+					parameters |= 0x01;
+			}
+		}
+		
+		ensureCapacity(1);
+		buffer[position++] = (byte)(ITYPE_DATE_TIME | parameters);
+		
+		if (date.hasDate) {
+			int year = date.year - 2000;
+			
+			int inverse;
+			if (year < 0) {
+				inverse = 0x80;
+				year = -year;
+			}
+			else
+				inverse = 0x00;
+			
+			int length0 = unsignedIntLength0(year);
+			
+			ensureCapacity(length0 + 3);
+			buffer[position++] = (byte)(inverse | (length0 << 4) | date.month);
+			buffer[position++] = (byte)date.day;
+			writeUnsignedIntValue(year, length0);
+		}
+		
+		if (date.hasTime) {
+			if (subsecs == 0) {
+				ensureCapacity(3);
+				buffer[position++] = (byte)date.hours;
+				buffer[position++] = (byte)date.minutes;
+				buffer[position++] = (byte)date.seconds;
+			}
+			else {
+				int length0 = unsignedIntLength0(subsecs);
+				ensureCapacity(length0 + 4);
+				buffer[position++] = (byte)((length0 << 5) | date.hours);
+				buffer[position++] = (byte)date.minutes;
+				buffer[position++] = (byte)date.seconds;
+				writeUnsignedIntValue(subsecs, length0);				
+			}
+		}
 	}
 	
 	@Override
@@ -678,7 +726,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 		
 		this.position = position;
 	}
-	
+/*	
 	private void writeIntData(int value) {
 		final byte[] buffer = this.buffer;
 		int position = this.position;
@@ -690,39 +738,10 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 		
 		this.position = position;
 	}
-	
-//	private static int unsignedIntLength0(int value) {
-//		if (value <= 0xffff)
-//			return (value <= 0xff ? 0 : 1);
-//		return (value <= 0xffffff ? 2 : 3);
-//	}
-//	
-//	private void writeUnsignedIntValue(int value, int length0) {
-//		final byte[] buffer = this.buffer;
-//		int position = this.position;
-//		
-//		switch (length0) {
-//		case 3:
-//			buffer[position++] = (byte)(value >>> 24);
-//		case 2:
-//			buffer[position++] = (byte)(value >>> 16);
-//		case 1:
-//			buffer[position++] = (byte)(value >>> 8);
-//		case 0:
-//			buffer[position++] = (byte)value;
-//			break;
-//		default:
-//			throw new RuntimeException("Internal error: length0=" + length0);
-//		}
-//		
-//		this.position = position;
-//	}
-	
+*/	
 	private static int unsignedIntLength0(int value) {
-		if (value <= 0xff)
-			return 0;
 		if (value <= 0xffff)
-			return 1;
+			return (value <= 0xff ? 0 : 1);
 		return (value <= 0xffffff ? 2 : 3);
 	}
 	
@@ -741,7 +760,91 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 			throw new RuntimeException("Internal error: length0=" + length0);
 		}
 	}
-
+/*	
+	private void writeVariableUnsignedIntValue(int value) throws IOException {
+		int length;
+		if (value <= 0x3fff)
+			length = (value <= 0x7f ? 1 : 2);
+		else if (value <= 0xfffffff)
+			length = (value <= 0x1fffff ? 3 : 4);
+		else
+			length = 5;
+		
+		ensureCapacity(length);
+		
+		switch (length) {
+		case 5:
+			buffer[position++] = (byte)0xf0;
+			break;
+		case 4:
+			buffer[position] = (byte)0xe0;
+			break;
+		case 3:
+			buffer[position] = (byte)0xc0;
+			break;
+		case 2:
+			buffer[position] = (byte)0x80;
+			break;
+		}
+		
+		switch (length) {
+		case 5:
+		case 4:
+			buffer[position++] = (byte)(value >>> 24);
+		case 3:
+			buffer[position++] = (byte)(value >>> 16);
+		case 2:
+			buffer[position++] = (byte)(value >>> 8);
+		case 1:
+			buffer[position++] = (byte)value;
+		}
+	}
+	
+	private void writeVariableIntValue(int value) throws IOException {
+		int inverse = 0x00;
+		if (value < 0 && value != Integer.MIN_VALUE) {
+			inverse = 0x80;
+			value = -value;
+		}
+		
+		int length;
+		if (value <= 0x1fff)
+			length = (value <= 0x3f ? 1 : 2);
+		else if (value <= 0x7ffffff)
+			length = (value <= 0xfffff ? 3 : 4);
+		else
+			length = 5;
+		
+		ensureCapacity(length);
+		
+		switch (length) {
+		case 5:
+			buffer[position++] = (byte)(inverse | 0x78);
+			break;
+		case 4:
+			buffer[position] = (byte)(inverse | 0x70);
+			break;
+		case 3:
+			buffer[position] = (byte)(inverse | 0x60);
+			break;
+		case 2:
+			buffer[position] = (byte)(inverse | 0x40);
+			break;
+		}
+		
+		switch (length) {
+		case 5:
+		case 4:
+			buffer[position++] = (byte)(value >>> 24);
+		case 3:
+			buffer[position++] = (byte)(value >>> 16);
+		case 2:
+			buffer[position++] = (byte)(value >>> 8);
+		case 1:
+			buffer[position++] = (byte)value;
+		}
+	}
+*/
     private void ensureCapacity(int capacity) throws IOException {
 		if (buffer.length - position < capacity)
 			flushBuffer();

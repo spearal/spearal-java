@@ -21,8 +21,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.sql.Timestamp;
-import java.util.Date;
 
 import org.spearal.SpearalPrinter;
 
@@ -68,18 +66,10 @@ public class SpearalPrinterImpl implements SpearalPrinter {
 	}
 
 	@Override
-	public void printDate(Date value) throws IOException {
+	public void printDateTime(SpearalDateTime value) throws IOException {
 		indent();
 		
-		out.print("(date) ");
-		out.print(value);
-	}
-
-	@Override
-	public void printTimestamp(Timestamp value) throws IOException {
-		indent();
-		
-		out.print("(timestamp) ");
+		out.print("(date time) ");
 		out.print(value);
 	}
 

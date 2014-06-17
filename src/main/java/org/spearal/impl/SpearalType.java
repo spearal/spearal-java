@@ -29,9 +29,6 @@ public enum SpearalType implements SpearalIType {
 	TRUE(ITYPE_TRUE),
 	FALSE(ITYPE_FALSE),
 	
-	DATE(ITYPE_DATE),
-	TIMESTAMP(ITYPE_TIMESTAMP),
-	
 	// 4 bits of parameters (0x10...0xf0).
 
 	INTEGRAL(ITYPE_INTEGRAL),
@@ -43,6 +40,8 @@ public enum SpearalType implements SpearalIType {
 	STRING(ITYPE_STRING),
 	
 	BYTE_ARRAY(ITYPE_BYTE_ARRAY),
+	
+	DATE_TIME(ITYPE_DATE_TIME),
 	
 	COLLECTION(ITYPE_COLLECTION),
 	MAP(ITYPE_MAP),

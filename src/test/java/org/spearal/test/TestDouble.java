@@ -41,7 +41,7 @@ public class TestDouble extends AbstractSpearalTestUnit {
 
 	@Test
 	public void test() throws IOException {
-		
+
 		// -- Various double values --
 		
 		encodeDecode(Double.NEGATIVE_INFINITY, 9, Double.class);

@@ -53,7 +53,7 @@ import org.spearal.impl.properties.BooleanPropertyFactory;
 import org.spearal.impl.properties.ByteArrayPropertyFactory;
 import org.spearal.impl.properties.ClassPropertyFactory;
 import org.spearal.impl.properties.CollectionPropertyFactory;
-import org.spearal.impl.properties.DateTimestampPropertyFactory;
+import org.spearal.impl.properties.DateTimePropertyFactory;
 import org.spearal.impl.properties.EnumPropertyFactory;
 import org.spearal.impl.properties.FloatingPropertyFactory;
 import org.spearal.impl.properties.IntegralPropertyFactory;
@@ -140,7 +140,7 @@ public class SpearalContextImpl implements SpearalContext {
 
 		addConfigurableItem(new CollectionPropertyFactory(), false);
 		addConfigurableItem(new MapPropertyFactory(), false);
-		addConfigurableItem(new DateTimestampPropertyFactory(), false);
+		addConfigurableItem(new DateTimePropertyFactory(), false);
 		addConfigurableItem(new ByteArrayPropertyFactory(), false);
 
 		addConfigurableItem(new BigNumberPropertyFactory(), false);

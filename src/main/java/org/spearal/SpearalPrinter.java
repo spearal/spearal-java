@@ -20,8 +20,8 @@ package org.spearal;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.sql.Timestamp;
-import java.util.Date;
+
+import org.spearal.impl.SpearalDateTime;
 
 /**
  * @author Franck WOLFF
@@ -30,15 +30,16 @@ public interface SpearalPrinter {
 
 	void printNull() throws IOException;
 	void printBoolean(boolean value) throws IOException;
-	void printDate(Date value) throws IOException;
-	void printTimestamp(Timestamp value) throws IOException;
+	
 	void printIntegral(long value) throws IOException;
 	void printBigIntegral(BigInteger value) throws IOException;
 	void printFloating(double value) throws IOException;
 	void printBigFloating(BigDecimal value) throws IOException;
-	
+
 	void printString(StringData value) throws IOException;
 	void printByteArray(byte[] value, int index, boolean reference) throws IOException;
+
+	void printDateTime(SpearalDateTime value) throws IOException;
 	
 	void printCollectionStart(int index, int length) throws IOException;
 	void printCollectionEnd() throws IOException;
