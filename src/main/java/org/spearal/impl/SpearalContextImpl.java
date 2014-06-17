@@ -46,7 +46,6 @@ import org.spearal.impl.instantiator.ClassInstantiator;
 import org.spearal.impl.instantiator.CollectionInstantiator;
 import org.spearal.impl.instantiator.MapInstantiator;
 import org.spearal.impl.instantiator.ProxyInstantiator;
-import org.spearal.impl.loader.TypeLoaderImpl;
 import org.spearal.impl.properties.BeanPropertyFactory;
 import org.spearal.impl.properties.BigNumberPropertyFactory;
 import org.spearal.impl.properties.BooleanPropertyFactory;
@@ -62,6 +61,7 @@ import org.spearal.impl.properties.StringPropertyFactory;
 import org.spearal.introspect.Introspector;
 import org.spearal.loader.TypeLoader;
 import org.spearal.partial.PartialObjectFactory;
+import org.spearal.security.Securizer;
 
 /**
  * @author Franck WOLFF
@@ -70,6 +70,7 @@ public class SpearalContextImpl implements SpearalContext {
 	
 	private final Introspector introspector;
 	private final TypeLoader loader;
+	private final Securizer securizer;
 	private final PartialObjectFactory partialObjectFactory;
 	
 	private final Map<String, String> classAliases;
@@ -89,9 +90,18 @@ public class SpearalContextImpl implements SpearalContext {
 	private final List<PropertyFactory> propertyFactories;
 	private final ConcurrentMap<Class<?>, PropertyFactory> propertyFactoriesCache;
 	
-	public SpearalContextImpl(Introspector introspector, PartialObjectFactory partialObjectFactory) {
+	public SpearalContextImpl(
+		Introspector introspector,
+		TypeLoader loader,
+		Securizer securizer,
+		PartialObjectFactory partialObjectFactory) {
+		
+		if (introspector == null || loader == null || securizer == null || partialObjectFactory == null)
+			throw new NullPointerException();
+		
 		this.introspector = introspector;
-		this.loader = new TypeLoaderImpl();
+		this.loader = loader;
+		this.securizer = securizer;
 		this.partialObjectFactory = partialObjectFactory;
 		
 		this.classAliases = new HashMap<String, String>();
@@ -111,7 +121,12 @@ public class SpearalContextImpl implements SpearalContext {
 		this.propertyFactories = new ArrayList<PropertyFactory>();
 		this.propertyFactoriesCache = new ConcurrentHashMap<Class<?>, PropertyFactory>();
 	}
-	
+
+	@Override
+	public Securizer getSecurizer() {
+		return securizer;
+	}
+
 	@Override
 	public void initStandardConfigurables() {
 		
@@ -230,6 +245,7 @@ public class SpearalContextImpl implements SpearalContext {
 		TypeInstantiator typeInstantiator = typeInstantiatorsCache.get(type);
 		
 		if (typeInstantiator == null) {
+			securizer.checkDecodable(type);
 			for (TypeInstantiator ti : typeInstantiators) {
 				if (ti.canInstantiate(type)) {
 					typeInstantiatorsCache.putIfAbsent(type, ti);
@@ -250,6 +266,7 @@ public class SpearalContextImpl implements SpearalContext {
 		PropertyInstantiator propertyInstantiator = propertyInstantiatorsCache.get(property);
 		
 		if (propertyInstantiator == null) {
+			securizer.checkDecodable(property.getGenericType());
 			for (PropertyInstantiator ti : propertyInstantiators) {
 				if (ti.canInstantiate(property)) {
 					propertyInstantiatorsCache.putIfAbsent(property, ti);

@@ -26,8 +26,12 @@ import org.spearal.impl.SpearalDecoderImpl;
 import org.spearal.impl.SpearalEncoderImpl;
 import org.spearal.impl.SpearalPrinterImpl;
 import org.spearal.impl.introspector.IntrospectorImpl;
+import org.spearal.impl.loader.TypeLoaderImpl;
+import org.spearal.impl.security.SecurizerImpl;
 import org.spearal.introspect.Introspector;
+import org.spearal.loader.TypeLoader;
 import org.spearal.partial.PartialObjectFactory;
+import org.spearal.security.Securizer;
 
 /**
  * @author Franck WOLFF
@@ -37,18 +41,28 @@ public class SpearalFactory {
 	private final SpearalContextImpl context;
 	
 	public SpearalFactory() {
-		this(null, null);
+		this(null, null, null, null);
 	}
 	
-	public SpearalFactory(Introspector introspector, PartialObjectFactory partialObjectFactory) {
+	public SpearalFactory(
+		Introspector introspector,
+		TypeLoader loader,
+		Securizer securizer,
+		PartialObjectFactory partialObjectFactory) {
 
 		if (introspector == null)
 			introspector = new IntrospectorImpl();
+
+		if (loader == null)
+			loader = new TypeLoaderImpl();
+		
+		if (securizer == null)
+			securizer = new SecurizerImpl();
 		
 		if (partialObjectFactory == null)
 			partialObjectFactory = newDefaultPartialObjectFactory();
 		
-		this.context = new SpearalContextImpl(introspector, partialObjectFactory);
+		this.context = new SpearalContextImpl(introspector, loader, securizer, partialObjectFactory);
 		this.context.initStandardConfigurables();
 	}
 	

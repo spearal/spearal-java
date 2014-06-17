@@ -299,7 +299,7 @@ public class TestArray extends AbstractSpearalTestUnit {
 	public void testObjects() throws IOException {
 		encodeDecode(new Object[0], 2);
 		encodeDecode(new Object[]{ null }, 3);
-		encodeDecode(new Object[]{ Long.valueOf(678), "abcdef", new Date() }, 22);
+		encodeDecode(new Object[]{ Long.valueOf(678), "abcdef", new Date() }, -1);
 	}
 	
 	private void encodeDecode(Object[] value, int expectedSize) throws IOException {

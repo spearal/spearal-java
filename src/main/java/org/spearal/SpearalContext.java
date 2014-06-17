@@ -21,9 +21,10 @@ import java.lang.reflect.Type;
 import java.util.Collection;
 
 import org.spearal.configurable.ConfigurableItem;
-import org.spearal.configurable.PropertyFactory;
 import org.spearal.configurable.ObjectWriterProvider.ObjectWriter;
+import org.spearal.configurable.PropertyFactory;
 import org.spearal.configurable.PropertyFactory.Property;
+import org.spearal.security.Securizer;
 
 /**
  * @author Franck WOLFF
@@ -33,6 +34,8 @@ public interface SpearalContext {
 	void initStandardConfigurables();
 	
 	void prependConfigurableItem(ConfigurableItem item);
+	
+	Securizer getSecurizer();
 	
 	String getClassNameAlias(String className);
 	

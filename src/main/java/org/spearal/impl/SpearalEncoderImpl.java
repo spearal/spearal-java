@@ -77,6 +77,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 		this.descriptors = new ClassCache<ClassDescriptor>(new ValueProvider<ClassDescriptor>() {
 			@Override
 			public ClassDescriptor createValue(Class<?> key) {
+				context.getSecurizer().checkEncodable(key);
 				return createDescriptor(key);
 			}
 		});

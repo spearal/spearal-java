@@ -51,6 +51,8 @@ public class JavassistPartialObjectFactory implements PartialObjectFactory {
 		
 		Class<?> proxyClass = proxyClasses.get(cls);
 		if (proxyClass == null) {
+			ctx.getSecurizer().checkDecodable(cls);
+			
 			ProxyFactory proxyFactory = new ProxyFactory();
 			proxyFactory.setFilter(new PartialObjectFilter(ctx, cls));
 			proxyFactory.setSuperclass(cls);
