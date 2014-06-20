@@ -17,8 +17,6 @@
  */
 package org.spearal.impl.util;
 
-
-
 /**
  * @author Franck WOLFF
  */

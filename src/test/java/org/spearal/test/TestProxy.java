@@ -23,7 +23,9 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.spearal.test.model.Nameable;
 
@@ -43,6 +45,16 @@ public class TestProxy extends AbstractSpearalTestUnit {
 				return "Doo";
 			return null;
 		}
+	}
+
+	@Before
+	public void setUp() throws Exception {
+		// printStream = System.out;
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		printStream = NULL_PRINT_STREAM;
 	}
 	
 	@Test

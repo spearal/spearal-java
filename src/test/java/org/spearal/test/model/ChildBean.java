@@ -20,7 +20,6 @@ package org.spearal.test.model;
 import java.util.HashSet;
 import java.util.Set;
 
-
 /**
  * @author Franck WOLFF
  */
