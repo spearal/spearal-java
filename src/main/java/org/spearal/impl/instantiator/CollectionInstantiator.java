@@ -23,10 +23,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.TreeSet;
 
-import org.spearal.SpearalContext;
+import org.spearal.configurable.PropertyFactory.Property;
 import org.spearal.configurable.PropertyInstantiator;
 import org.spearal.configurable.TypeInstantiator;
-import org.spearal.configurable.PropertyFactory.Property;
+import org.spearal.impl.ExtendedSpearalDecoder;
 import org.spearal.impl.util.TypeUtil;
 
 /**
@@ -40,7 +40,7 @@ public class CollectionInstantiator implements TypeInstantiator, PropertyInstant
 	}
 
 	@Override
-	public Object instantiate(SpearalContext context, Type type) {
+	public Object instantiate(ExtendedSpearalDecoder decoder, Type type) {
 		Class<?> cls = TypeUtil.classOfType(type);
 
 		if (cls.isInterface()) {
@@ -67,7 +67,7 @@ public class CollectionInstantiator implements TypeInstantiator, PropertyInstant
 	}
 
 	@Override
-	public Object instantiate(SpearalContext context, Property property) {
-		return instantiate(context, property.getGenericType());
+	public Object instantiate(ExtendedSpearalDecoder decoder, Property property) {
+		return instantiate(decoder, property.getGenericType());
 	}
 }

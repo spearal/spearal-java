@@ -19,13 +19,13 @@ package org.spearal.configurable;
 
 import java.lang.reflect.Type;
 
-import org.spearal.SpearalContext;
+import org.spearal.impl.ExtendedSpearalDecoder;
 
 /**
  * @author Franck WOLFF
  */
-public interface TypeInstantiator extends ConfigurableItem {
+public interface TypeInstantiator extends Configurable {
 
 	boolean canInstantiate(Type type);
-	Object instantiate(SpearalContext context, Type type);
+	Object instantiate(ExtendedSpearalDecoder decoder, Type type);
 }

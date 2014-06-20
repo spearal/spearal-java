@@ -88,11 +88,9 @@ public class TestLong extends AbstractSpearalTestUnit {
 	private void encodeDecode(long i, int expectedSize) throws IOException {
 		Long value = Long.valueOf(i);
 		byte[] data = encode(value);
-		Object clone = decode(data);
+		Long clone = decode(data, Long.class);
 		
 		Assert.assertEquals(expectedSize, data.length);
-		if (!(clone instanceof Long))
-			Assert.fail("Not a Long: " + clone);
-		Assert.assertEquals(value.longValue(), ((Long)clone).longValue());
+		Assert.assertEquals(value, clone);
 	}
 }

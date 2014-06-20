@@ -43,18 +43,29 @@ public class TestEnum extends AbstractSpearalTestUnit {
 	@Test
 	public void test() throws IOException {
 		int length = SimpleEnum.class.getName().length();
+		
 		for (SimpleEnum e : SimpleEnum.values())
 			encodeDecode(e, length + e.name().length() + 4);
+		
+		for (SimpleEnum e : SimpleEnum.values())
+			encodeDecodeAsString(e, e.name().length() + 2);
 	}
 	
-	private void encodeDecode(Enum<?> value, int expectedSize) throws IOException {
+	private void encodeDecode(SimpleEnum value, int expectedSize) throws IOException {
 		byte[] data = encode(value);
-		Object clone = decode(data);
+		SimpleEnum clone = decode(data, SimpleEnum.class);
 		
 		if (expectedSize >= 0)
 			Assert.assertEquals(expectedSize, data.length);
-		if (!(clone instanceof Enum))
-			Assert.fail("Not an Enum: " + clone);
+		Assert.assertEquals(value, clone);
+	}
+	
+	private void encodeDecodeAsString(SimpleEnum value, int expectedSize) throws IOException {
+		byte[] data = encode(value.name());
+		SimpleEnum clone = decode(data, SimpleEnum.class);
+		
+		if (expectedSize >= 0)
+			Assert.assertEquals(expectedSize, data.length);
 		Assert.assertEquals(value, clone);
 	}
 }

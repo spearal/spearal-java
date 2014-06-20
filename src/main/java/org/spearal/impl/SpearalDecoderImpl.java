@@ -92,6 +92,16 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
         return readAny(buffer[position++] & 0xff);
     }
 
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> T readAny(Type targetType) throws IOException {
+    	ensureAvailable(1);
+    	int parameterizedType = (buffer[position++] & 0xff);
+    	if (targetType == null)
+    		return (T)readAny(parameterizedType);
+        return (T)readAny(parameterizedType, targetType);
+	}
+
 	@Override
 	public void skipAny()  throws IOException {
     	ensureAvailable(1);
@@ -133,7 +143,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
         	return readByteArray(parameterizedType);
 
         case DATE_TIME:
-        	return readDateTime(parameterizedType).toSQLTimestamp();
+        	return readDateTime(parameterizedType).toDate();
             
         case COLLECTION:
         	return readCollection(parameterizedType);
@@ -152,6 +162,104 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     }
 
     @Override
+	public Object readAny(int parameterizedType, Type targetType) throws IOException {
+    	if (targetType == null)
+    		return readAny(parameterizedType);
+        
+    	Object value;
+    	
+    	switch (SpearalType.valueOf(parameterizedType)) {
+        
+        case NULL:
+        	if ((targetType instanceof Class<?>) && ((Class<?>)targetType).isPrimitive())
+        		return context.convert(this, null, targetType);
+        	return null;
+        
+        case TRUE:
+        	if (targetType == boolean.class || targetType == Boolean.class)
+        		return Boolean.TRUE;
+        	return context.convert(this, Boolean.TRUE, targetType);
+
+        case FALSE:
+        	if (targetType == boolean.class || targetType == Boolean.class)
+        		return Boolean.FALSE;
+        	return context.convert(this, Boolean.FALSE, targetType);
+
+        case INTEGRAL:
+        	value = Long.valueOf(readIntegral(parameterizedType));
+        	if (targetType == long.class || targetType == Long.class)
+        		return value;
+        	break;
+
+        case BIG_INTEGRAL:
+        	value = readBigIntegral(parameterizedType);
+        	if (targetType == BigInteger.class)
+        		return value;
+        	break;
+        	
+        case FLOATING:
+        	value = Double.valueOf(readFloating(parameterizedType));
+        	if (targetType == double.class || targetType == Double.class)
+        		return value;
+        	break;
+        
+        case BIG_FLOATING:
+        	value = readBigFloating(parameterizedType);
+        	if (targetType == BigDecimal.class)
+        		return value;
+        	break;
+        	
+        case STRING:
+        	value = readString(parameterizedType);
+        	if (targetType == String.class)
+        		return value;
+        	break;
+        
+        case BYTE_ARRAY:
+        	value = readByteArray(parameterizedType);
+        	if (targetType == byte[].class)
+        		return value;
+        	break;
+
+        case DATE_TIME:
+        	value = readDateTime(parameterizedType);
+        	if (targetType == SpearalDateTime.class)
+        		return value;
+        	break;
+            
+        case COLLECTION:
+        	value = readCollection(parameterizedType);
+        	break;
+        case MAP:
+        	value = readMap(parameterizedType);
+        	break;
+            
+        case ENUM:
+        	value = readEnum(parameterizedType);
+        	if (value.getClass() == targetType)
+        		return value;
+        	break;
+        	
+        case CLASS:
+        	value = readClass(parameterizedType);
+        	if (Class.class == targetType)
+        		return value;
+        	break;
+        	
+        case BEAN:
+        	value = readBean(parameterizedType);
+        	if (value.getClass() == targetType)
+        		return value;
+        	break;
+        
+        default:
+        	throw new RuntimeException("Unexpected parameterized type: " + parameterizedType);
+        }
+    	
+    	return context.convert(this, value, targetType);
+	}
+
+	@Override
 	public void skipAny(int parameterizedType) throws IOException {
         switch (SpearalType.valueOf(parameterizedType)) {
         
@@ -619,15 +727,15 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	int indexOrLength = readUnsignedIntegerValue(length0);
     	
     	if (reference) {
-    		property.setValue(holder, storedObjects.get(indexOrLength));
+    		property.setValue(context, holder, storedObjects.get(indexOrLength));
     		return;
     	}
     	
-    	Collection<Object> value = property.getValue(holder);
+    	Collection<Object> value = property.getValue(context, holder);
     	if (value != null)
     		value.clear();
     	else
-    		value = property.initValue(holder, context);
+    		value = property.initValue(this, holder);
     	storedObjects.add(value);
     	
     	Type elementType = TypeUtil.getElementType(property.getGenericType());
@@ -642,12 +750,12 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	    		if (element == null || elementClass.isAssignableFrom(element.getClass()))
 	    			value.add(element);
 	    		else
-	    			value.add(context.convert(element, elementType));
+	    			value.add(context.convert(this, element, elementType));
 	    	}
     	}
     	else {
 	    	for (int i = 0; i < indexOrLength; i++)
-	    		value.add(context.convert(readAny(), elementType));
+	    		value.add(context.convert(this, readAny(), elementType));
     	}
 	}
 
@@ -724,15 +832,15 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	int indexOrLength = readUnsignedIntegerValue(length0);
     	
     	if (reference) {
-    		property.setValue(holder, storedObjects.get(indexOrLength));
+    		property.setValue(context, holder, storedObjects.get(indexOrLength));
     		return;
     	}
     	
-    	Map<Object, Object> value = property.getValue(holder);
+    	Map<Object, Object> value = property.getValue(context, holder);
     	if (value != null)
     		value.clear();
     	else
-    		value = property.initValue(holder, context);
+    		value = property.initValue(this, holder);
     	storedObjects.add(value);
 
     	Type[] keyValueTypes = TypeUtil.getKeyValueType(property.getGenericType());
@@ -753,17 +861,17 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     		for (int i = 0; i < indexOrLength; i++) {
         		Object key = readAny();
         		if (key != null && !keyClass.isAssignableFrom(key.getClass()))
-        			key = context.convert(key, keyType);
+        			key = context.convert(this, key, keyType);
         		Object val = readAny();
         		if (val != null && !valClass.isAssignableFrom(val.getClass()))
-        			val = context.convert(val, valType);
+        			val = context.convert(this, val, valType);
         		value.put(key, val);
         	}
     	}
     	else {
 	    	for (int i = 0; i < indexOrLength; i++) {
-	    		Object key = context.convert(readAny(), keyType);
-	    		Object val = context.convert(readAny(), valType);
+	    		Object key = context.convert(this, readAny(), keyType);
+	    		Object val = context.convert(this, readAny(), valType);
 	    		value.put(key, val);
 	    	}
     	}
@@ -877,8 +985,8 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
 	    	Object value = (
 	    		descriptor.partial
-	    		? context.instantiatePartial(cls, descriptor.properties)
-	    		: context.instantiate(cls)
+	    		? context.instantiatePartial(this, cls, descriptor.properties)
+	    		: context.instantiate(this, cls)
 	    	);
 	    	storedObjects.add(value);
 	    	

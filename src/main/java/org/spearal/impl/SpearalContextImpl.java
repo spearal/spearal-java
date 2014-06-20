@@ -17,6 +17,8 @@
  */
 package org.spearal.impl;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,37 +29,30 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import org.spearal.SpearalContext;
+import org.spearal.SpearalDecoder;
 import org.spearal.configurable.ClassNameAlias;
-import org.spearal.configurable.ConfigurableItem;
-import org.spearal.configurable.Converter;
-import org.spearal.configurable.ObjectWriterProvider;
-import org.spearal.configurable.ObjectWriterProvider.ObjectWriter;
+import org.spearal.configurable.CoderProvider;
+import org.spearal.configurable.CoderProvider.Coder;
+import org.spearal.configurable.Configurable;
+import org.spearal.configurable.ConverterProvider;
+import org.spearal.configurable.ConverterProvider.Converter;
 import org.spearal.configurable.PropertyFactory;
 import org.spearal.configurable.PropertyFactory.Property;
 import org.spearal.configurable.PropertyInstantiator;
 import org.spearal.configurable.TypeInstantiator;
-import org.spearal.impl.converter.BooleanConverter;
-import org.spearal.impl.converter.ByteConverter;
-import org.spearal.impl.converter.CharConverter;
-import org.spearal.impl.converter.IntConverter;
-import org.spearal.impl.converter.LongConverter;
-import org.spearal.impl.converter.ShortConverter;
+import org.spearal.impl.coder.ArrayCoderProvider;
+import org.spearal.impl.coder.BeanCoderProvider;
+import org.spearal.impl.coder.CollectionCoderProvider;
+import org.spearal.impl.coder.EnumCoderProvider;
+import org.spearal.impl.coder.MapCoderProvider;
+import org.spearal.impl.coder.SimpleCodersProvider;
+import org.spearal.impl.converter.EnumConverterProvider;
+import org.spearal.impl.converter.SimpleConvertersProvider;
 import org.spearal.impl.instantiator.ClassInstantiator;
 import org.spearal.impl.instantiator.CollectionInstantiator;
 import org.spearal.impl.instantiator.MapInstantiator;
 import org.spearal.impl.instantiator.ProxyInstantiator;
-import org.spearal.impl.properties.BeanPropertyFactory;
-import org.spearal.impl.properties.BigNumberPropertyFactory;
-import org.spearal.impl.properties.BooleanPropertyFactory;
-import org.spearal.impl.properties.ByteArrayPropertyFactory;
-import org.spearal.impl.properties.ClassPropertyFactory;
-import org.spearal.impl.properties.CollectionPropertyFactory;
-import org.spearal.impl.properties.DateTimePropertyFactory;
-import org.spearal.impl.properties.EnumPropertyFactory;
-import org.spearal.impl.properties.FloatingPropertyFactory;
-import org.spearal.impl.properties.IntegralPropertyFactory;
-import org.spearal.impl.properties.MapPropertyFactory;
-import org.spearal.impl.properties.StringPropertyFactory;
+import org.spearal.impl.property.SimplePropertiesFactory;
 import org.spearal.introspect.Introspector;
 import org.spearal.loader.TypeLoader;
 import org.spearal.partial.PartialObjectFactory;
@@ -81,14 +76,13 @@ public class SpearalContextImpl implements SpearalContext {
 	private final List<PropertyInstantiator> propertyInstantiators;
 	private final ConcurrentMap<Property, PropertyInstantiator> propertyInstantiatorsCache;
 	
-	private final List<Converter> converters;
-	private final ConcurrentMap<InputConverterKey, Converter> convertersCache;
+	private final List<ConverterProvider> converterProviders;
+	private final ConcurrentMap<ConverterKey, Converter<?>> convertersCache;
 	
-	private final List<ObjectWriterProvider> objectWriterProviders;
-	private final ConcurrentMap<Class<?>, ObjectWriter> objectWriterCache;
+	private final List<CoderProvider> coderProviders;
+	private final ConcurrentMap<Class<?>, Coder> codersCache;
 	
 	private final List<PropertyFactory> propertyFactories;
-	private final ConcurrentMap<Class<?>, PropertyFactory> propertyFactoriesCache;
 	
 	public SpearalContextImpl(
 		Introspector introspector,
@@ -112,14 +106,13 @@ public class SpearalContextImpl implements SpearalContext {
 		this.propertyInstantiators = new ArrayList<PropertyInstantiator>();
 		this.propertyInstantiatorsCache = new ConcurrentHashMap<Property, PropertyInstantiator>();
 		
-		this.converters = new ArrayList<Converter>();
-		this.convertersCache = new ConcurrentHashMap<InputConverterKey, Converter>();
+		this.converterProviders = new ArrayList<ConverterProvider>();
+		this.convertersCache = new ConcurrentHashMap<ConverterKey, Converter<?>>();
 		
-		this.objectWriterProviders = new ArrayList<ObjectWriterProvider>();
-		this.objectWriterCache = new ConcurrentHashMap<Class<?>, ObjectWriter>();
+		this.coderProviders = new ArrayList<CoderProvider>();
+		this.codersCache = new ConcurrentHashMap<Class<?>, Coder>();
 		
 		this.propertyFactories = new ArrayList<PropertyFactory>();
-		this.propertyFactoriesCache = new ConcurrentHashMap<Class<?>, PropertyFactory>();
 	}
 
 	@Override
@@ -132,12 +125,8 @@ public class SpearalContextImpl implements SpearalContext {
 		
 		// Converters.
 		
-		addConfigurableItem(new IntConverter(), false);
-		addConfigurableItem(new BooleanConverter(), false);
-		addConfigurableItem(new LongConverter(), false);
-		addConfigurableItem(new ByteConverter(), false);
-		addConfigurableItem(new CharConverter(), false);
-		addConfigurableItem(new ShortConverter(), false);
+		addConfigurableItem(new SimpleConvertersProvider(), false);
+		addConfigurableItem(new EnumConverterProvider(), false);
 
 		// Instantiators.
 		
@@ -148,29 +137,24 @@ public class SpearalContextImpl implements SpearalContext {
 		
 		// StaticObjectWriterProviders & PropertyFactories.
 
-		addConfigurableItem(new StringPropertyFactory(), false);
-		addConfigurableItem(new IntegralPropertyFactory(), false);
-		addConfigurableItem(new BooleanPropertyFactory(), false);
-		addConfigurableItem(new FloatingPropertyFactory(), false);
-
-		addConfigurableItem(new CollectionPropertyFactory(), false);
-		addConfigurableItem(new MapPropertyFactory(), false);
-		addConfigurableItem(new DateTimePropertyFactory(), false);
-		addConfigurableItem(new ByteArrayPropertyFactory(), false);
-
-		addConfigurableItem(new BigNumberPropertyFactory(), false);
-
-		addConfigurableItem(new EnumPropertyFactory(), false);
-		addConfigurableItem(new ClassPropertyFactory(), false);
-		addConfigurableItem(new BeanPropertyFactory(), false);
+		addConfigurableItem(new SimplePropertiesFactory(), false);
+		
+		// CoderProviders.
+		
+		addConfigurableItem(new SimpleCodersProvider(), false);
+		addConfigurableItem(new CollectionCoderProvider(), false);
+		addConfigurableItem(new MapCoderProvider(), false);
+		addConfigurableItem(new ArrayCoderProvider(), false);
+		addConfigurableItem(new EnumCoderProvider(), false);
+		addConfigurableItem(new BeanCoderProvider(), false);
 	}
 	
 	@Override
-	public void prependConfigurableItem(ConfigurableItem item) {
+	public void prependConfigurableItem(Configurable item) {
 		addConfigurableItem(item, true);
 	}
 	
-	private void addConfigurableItem(ConfigurableItem item, boolean first) {
+	private void addConfigurableItem(Configurable item, boolean first) {
 		boolean added = false;
 		
 		if (item instanceof ClassNameAlias) {
@@ -196,19 +180,19 @@ public class SpearalContextImpl implements SpearalContext {
 			added = true;
 		}
 		
-		if (item instanceof Converter) {
+		if (item instanceof ConverterProvider) {
 			if (first)
-				converters.add(0, (Converter)item);
+				converterProviders.add(0, (ConverterProvider)item);
 			else
-				converters.add((Converter)item);
+				converterProviders.add((ConverterProvider)item);
 			added = true;
 		}
 		
-		if (item instanceof ObjectWriterProvider) {
+		if (item instanceof CoderProvider) {
 			if (first)
-				objectWriterProviders.add(0, (ObjectWriterProvider)item);
+				coderProviders.add(0, (CoderProvider)item);
 			else
-				objectWriterProviders.add((ObjectWriterProvider)item);
+				coderProviders.add((CoderProvider)item);
 			added = true;
 		}
 		
@@ -241,7 +225,7 @@ public class SpearalContextImpl implements SpearalContext {
 	}
 
 	@Override
-	public Object instantiate(Type type) throws InstantiationException {
+	public Object instantiate(SpearalDecoder decoder, Type type) throws InstantiationException {
 		TypeInstantiator typeInstantiator = typeInstantiatorsCache.get(type);
 		
 		if (typeInstantiator == null) {
@@ -258,11 +242,11 @@ public class SpearalContextImpl implements SpearalContext {
 		if (typeInstantiator == null)
 			throw new InstantiationException("Could not find any instantiator for: " + type);
 
-		return typeInstantiator.instantiate(this, type);
+		return typeInstantiator.instantiate((ExtendedSpearalDecoder)decoder, type);
 	}
 
 	@Override
-	public Object instantiate(Property property) throws InstantiationException {
+	public Object instantiate(SpearalDecoder decoder, Property property) throws InstantiationException {
 		PropertyInstantiator propertyInstantiator = propertyInstantiatorsCache.get(property);
 		
 		if (propertyInstantiator == null) {
@@ -279,84 +263,84 @@ public class SpearalContextImpl implements SpearalContext {
 		if (propertyInstantiator == null)
 			throw new InstantiationException("Could not find any instantiator for: " + property);
 
-		return propertyInstantiator.instantiate(this, property);
+		return propertyInstantiator.instantiate((ExtendedSpearalDecoder)decoder, property);
 	}
 
 	@Override
-	public Object instantiatePartial(Class<?> cls, Collection<Property> partialProperties)
+	public Object instantiatePartial(SpearalDecoder decoder, Class<?> cls, Collection<Property> partialProperties)
 		throws InstantiationException, IllegalAccessException {
 
-		return partialObjectFactory.instantiatePartial(this, cls, partialProperties);
+		return partialObjectFactory.instantiatePartial((ExtendedSpearalDecoder)decoder, cls, partialProperties);
 	}
 
 	@Override
-	public Object convert(Object o, Type target) {
-		Class<?> cls = (o != null ? o.getClass() : null);
+	public Object convert(SpearalDecoder decoder, Object value, Type targetType) {
+		Class<?> valueClass = (value != null ? value.getClass() : null);
 		
-		if (cls == target)
-			return o;
+		if (valueClass == targetType)
+			return value;
 		
-		InputConverterKey key = new InputConverterKey(cls, target);
+		ConverterKey converterKey = new ConverterKey(valueClass, targetType);
 		
-		Converter inputConverter = convertersCache.get(key);
-		if (inputConverter == null) {
-			for (Converter ic : converters) {
-				if (ic.canConvert(cls, target)) {
-					convertersCache.put(key, ic);
-					inputConverter = ic;
+		Converter<?> converter = convertersCache.get(converterKey);
+		if (converter == null) {
+			for (ConverterProvider provider : converterProviders) {
+				converter = provider.getConverter(valueClass, targetType);
+				if (converter != null) {
+					convertersCache.put(converterKey, converter);
 					break;
 				}
 			}
-			if (inputConverter == null)
-				throw new UnsupportedOperationException("No converter from: " + cls + " to: " + target);
+			if (converter == null)
+				throw new UnsupportedOperationException("No converter found from: " + valueClass + " to: " + targetType);
 		}
-		return inputConverter.convert(o, target);
+		
+		return converter.convert((ExtendedSpearalDecoder)decoder, value, targetType);
 	}
 	
 	@Override
-	public ObjectWriter getWriter(Class<?> type) {
-		ObjectWriter writer = objectWriterCache.get(type);
-		if (writer == null) {
-			for (ObjectWriterProvider provider : objectWriterProviders) {
-				writer = provider.getWriter(type);
-				if (writer != null) {
-					objectWriterCache.putIfAbsent(type, writer);
+	public Coder getCoder(Class<?> valueClass) {
+		Coder coder = codersCache.get(valueClass);
+		if (coder == null) {
+			for (CoderProvider provider : coderProviders) {
+				coder = provider.getCoder(valueClass);
+				if (coder != null) {
+					codersCache.put(valueClass, coder);
 					break;
 				}
 			}
-			if (writer == null)
-				throw new UnsupportedOperationException("Not writer for type: " + type);
+			if (coder == null)
+				throw new UnsupportedOperationException("Not coder found for type: " + valueClass);
 		}
-		return writer;
+		return coder;
 	}
-
+	
 	@Override
-	public PropertyFactory getPropertyFactory(Class<?> type) {
-		PropertyFactory factory = propertyFactoriesCache.get(type);
-		if (factory == null) {
-			for (PropertyFactory f : propertyFactories) {
-				if (f.canCreateProperty(type)) {
-					factory = f;
-					propertyFactoriesCache.putIfAbsent(type, factory);
-					break;
-				}
-			}
-			if (factory == null)
-				throw new UnsupportedOperationException("Not property factory for type: " + type);
+	public Property createProperty(String name, Field field, Method getter, Method setter) {
+		for (PropertyFactory factory : propertyFactories) {
+			Property property = factory.createProperty(name, field, getter, setter);
+			if (property != null)
+				return property;
 		}
-		return factory;
+		throw new UnsupportedOperationException(
+			"Could not create property for: " + name + " {" +
+				"field=" + field + ", " +
+				"getter=" + getter + ", " +
+				"setter=" + setter +
+			"}"
+		);
 	}
 
-	private static final class InputConverterKey {
+	private static final class ConverterKey {
 		
-		public final Class<?> cls;
-		public final Type target;
+		public final Class<?> valueClass;
+		public final Type targetType;
 		public final int hash;
 
-		public InputConverterKey(Class<?> cls, Type target) {
-			this.cls = cls;
-			this.target = target;
-			this.hash = (cls == null ? 0 : cls.hashCode()) + target.hashCode();
+		public ConverterKey(Class<?> valueClass, Type targetType) {
+			this.valueClass = valueClass;
+			this.targetType = targetType;
+			this.hash = (valueClass == null ? 0 : valueClass.hashCode()) + targetType.hashCode();
 		}
 
 		@Override
@@ -366,8 +350,8 @@ public class SpearalContextImpl implements SpearalContext {
 
 		@Override
 		public boolean equals(Object obj) {
-			InputConverterKey key = (InputConverterKey)obj;
-			return key.cls == cls && key.target == target;
+			ConverterKey key = (ConverterKey)obj;
+			return key.valueClass == valueClass && key.targetType == targetType;
 		}
 	}
 }

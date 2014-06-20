@@ -19,6 +19,7 @@ package org.spearal.impl;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collection;
@@ -33,6 +34,7 @@ import org.spearal.configurable.PropertyFactory.Property;
 public interface ExtendedSpearalDecoder extends SpearalDecoder {
 
 	Object readAny(int parameterizedType) throws IOException;
+	Object readAny(int parameterizedType, Type targetType) throws IOException;
 	void skipAny(int parameterizedType) throws IOException;
 	
 	SpearalDateTime readDateTime(int parameterizedType) throws IOException;

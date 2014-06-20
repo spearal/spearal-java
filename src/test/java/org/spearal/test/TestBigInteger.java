@@ -43,26 +43,26 @@ public class TestBigInteger extends AbstractSpearalTestUnit {
 
 	@Test
 	public void test() throws IOException {
-		encodeDecode(newBigInteger(8000, true), 4004, BigInteger.class);
-		encodeDecode(newBigInteger(256, true), 131, BigInteger.class);
+		encodeDecode(newBigInteger(8000, true), 4004);
+		encodeDecode(newBigInteger(256, true), 131);
 		
-		encodeDecode(BigInteger.valueOf(Long.MIN_VALUE).subtract(BigInteger.ONE), 11, BigInteger.class);
+		encodeDecode(BigInteger.valueOf(Long.MIN_VALUE).subtract(BigInteger.ONE), 11);
 		
-		encodeDecode(BigInteger.valueOf(Long.MIN_VALUE), 9, Long.class);
-		encodeDecode(BigInteger.valueOf(Long.MIN_VALUE + 1), 9, Long.class);
-		encodeDecode(BigInteger.TEN.negate(), 2, Long.class);
-		encodeDecode(BigInteger.ONE.negate(), 2, Long.class);
-		encodeDecode(BigInteger.ZERO.negate(), 2, Long.class);
-		encodeDecode(BigInteger.ZERO, 2, Long.class);
-		encodeDecode(BigInteger.ONE, 2, Long.class);
-		encodeDecode(BigInteger.TEN, 2, Long.class);
-		encodeDecode(BigInteger.valueOf(Long.MAX_VALUE - 1), 9, Long.class);
-		encodeDecode(BigInteger.valueOf(Long.MAX_VALUE), 9, Long.class);
+		encodeDecode(BigInteger.valueOf(Long.MIN_VALUE), 9);
+		encodeDecode(BigInteger.valueOf(Long.MIN_VALUE + 1), 9);
+		encodeDecode(BigInteger.TEN.negate(), 2);
+		encodeDecode(BigInteger.ONE.negate(), 2);
+		encodeDecode(BigInteger.ZERO.negate(), 2);
+		encodeDecode(BigInteger.ZERO, 2);
+		encodeDecode(BigInteger.ONE, 2);
+		encodeDecode(BigInteger.TEN, 2);
+		encodeDecode(BigInteger.valueOf(Long.MAX_VALUE - 1), 9);
+		encodeDecode(BigInteger.valueOf(Long.MAX_VALUE), 9);
 		
-		encodeDecode(BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE), 11, BigInteger.class);
+		encodeDecode(BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE), 11);
 
-		encodeDecode(newBigInteger(256, false), 131, BigInteger.class);
-		encodeDecode(newBigInteger(8000, false), 4004, BigInteger.class);
+		encodeDecode(newBigInteger(256, false), 131);
+		encodeDecode(newBigInteger(8000, false), 4004);
 	}
 	
 	private static BigInteger newBigInteger(int length, boolean negate) {
@@ -72,15 +72,12 @@ public class TestBigInteger extends AbstractSpearalTestUnit {
 		return (negate ? value.negate() : value);
 	}
 	
-	private void encodeDecode(BigInteger value, int expectedSize, Class<?> expectedClass) throws IOException {
+	private void encodeDecode(BigInteger value, int expectedSize) throws IOException {
 		byte[] data = encode(value);
-		Object clone = decode(data);
+		BigInteger clone = decode(data, BigInteger.class);
 		
 		if (expectedSize > 0)
 			Assert.assertEquals(expectedSize, data.length);
-		Assert.assertEquals(expectedClass, clone.getClass());
-		if (clone instanceof Long)
-			clone = BigInteger.valueOf(((Long)clone).longValue());
 		Assert.assertEquals(value, clone);
 	}
 }

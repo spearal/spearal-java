@@ -20,7 +20,7 @@ package org.spearal.configurable;
 /**
  * @author Franck WOLFF
  */
-public class ClassNameAlias implements ConfigurableItem {
+public class ClassNameAlias implements Configurable {
 	
 	private final String className;
 	private final String alias;

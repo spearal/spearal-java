@@ -22,6 +22,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.lang.reflect.Type;
 
 import org.spearal.SpearalFactory;
 import org.spearal.SpearalDecoder;
@@ -81,10 +82,15 @@ public abstract class AbstractSpearalTestUnit {
 	}
 	
 	protected Object decode(byte[] bytes) throws IOException {
-		return decode(new SpearalFactory(), bytes);
+		return decode(new SpearalFactory(), bytes, null);
 	}
 	
-	protected Object decode(SpearalFactory factory, byte[] bytes) throws IOException {
+	@SuppressWarnings("unchecked")
+	protected <T> T decode(byte[] bytes, Type targetType) throws IOException {
+		return (T)decode(new SpearalFactory(), bytes, targetType);
+	}
+	
+	protected Object decode(SpearalFactory factory, byte[] bytes, Type targetType) throws IOException {
 		ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
 		SpearalDecoder in = factory.newDecoder(bais);
 		in.skipAny();
@@ -95,6 +101,6 @@ public abstract class AbstractSpearalTestUnit {
 		
 		bais.reset();
 		in = factory.newDecoder(bais);
-		return in.readAny();
+		return in.readAny(targetType);
 	}
 }

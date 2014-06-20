@@ -41,30 +41,27 @@ public class TestFloat extends AbstractSpearalTestUnit {
 
 	@Test
 	public void test() throws IOException {
-		encodeDecode(Float.NEGATIVE_INFINITY, 9, Double.class);
-		encodeDecode(-Float.MAX_VALUE, 9, Double.class);
-		encodeDecode(-Float.MIN_VALUE, 9, Double.class);
-		encodeDecode(-0.0f, 9, Double.class);
-		encodeDecode(Float.NaN, 9, Double.class);
-		encodeDecode(0.0f, 2, Long.class);
-		encodeDecode(Float.MIN_VALUE, 9, Double.class);
-		encodeDecode(Float.MAX_VALUE, 9, Double.class);
-		encodeDecode(Float.POSITIVE_INFINITY, 9, Double.class);
+		encodeDecode(Float.NEGATIVE_INFINITY, 9);
+		encodeDecode(-Float.MAX_VALUE, 9);
+		encodeDecode(-Float.MIN_VALUE, 9);
+		encodeDecode(-0.0f, 9);
+		encodeDecode(Float.NaN, 9);
+		encodeDecode(0.0f, 2);
+		encodeDecode(Float.MIN_VALUE, 9);
+		encodeDecode(Float.MAX_VALUE, 9);
+		encodeDecode(Float.POSITIVE_INFINITY, 9);
 	}
 	
-	private void encodeDecode(float i, int expectedSize, Class<?> expectedClass) throws IOException {
+	private void encodeDecode(float i, int expectedSize) throws IOException {
 		Float value = Float.valueOf(i);
 		byte[] data = encode(value);
-		Object clone = decode(data);
+		Float clone = decode(data, Float.class);
 		
 		if (expectedSize > 0)
 			Assert.assertEquals(expectedSize, data.length);
-		Assert.assertEquals(expectedClass, clone.getClass());
-		if (clone instanceof Long)
-			clone = Double.valueOf(((Long)clone).doubleValue());
 		Assert.assertEquals(
 			Float.floatToIntBits(value.floatValue()),
-			Float.floatToIntBits(((Double)clone).floatValue())
+			Float.floatToIntBits(clone.floatValue())
 		);
 	}
 }

@@ -60,12 +60,10 @@ public class TestByteArray extends AbstractSpearalTestUnit {
 	
 	private void encodeDecode(byte[] value, int expectedSize) throws IOException {
 		byte[] data = encode(value);
-		Object clone = decode(data);
+		byte[] clone = decode(data, byte[].class);
 		
 		if (expectedSize >= 0)
 			Assert.assertEquals(expectedSize, data.length);
-		if (!(clone instanceof byte[]))
-			Assert.fail("Not a byte[]: " + clone);
-		Assert.assertArrayEquals(value, (byte[])clone);
+		Assert.assertArrayEquals(value, clone);
 	}
 }

@@ -17,12 +17,13 @@
  */
 package org.spearal;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Collection;
 
-import org.spearal.configurable.ConfigurableItem;
-import org.spearal.configurable.ObjectWriterProvider.ObjectWriter;
-import org.spearal.configurable.PropertyFactory;
+import org.spearal.configurable.CoderProvider.Coder;
+import org.spearal.configurable.Configurable;
 import org.spearal.configurable.PropertyFactory.Property;
 import org.spearal.security.Securizer;
 
@@ -33,7 +34,7 @@ public interface SpearalContext {
 
 	void initStandardConfigurables();
 	
-	void prependConfigurableItem(ConfigurableItem item);
+	void prependConfigurableItem(Configurable item);
 	
 	Securizer getSecurizer();
 	
@@ -44,16 +45,16 @@ public interface SpearalContext {
 	
 	Collection<Property> getProperties(Class<?> cls);
 	
-	Object instantiate(Type type)
+	Object instantiate(SpearalDecoder decoder, Type type)
 		throws InstantiationException, IllegalAccessException;
-	Object instantiate(Property property)
+	Object instantiate(SpearalDecoder decoder, Property property)
 		throws InstantiationException, IllegalAccessException;
-	Object instantiatePartial(Class<?> cls, Collection<Property> partialProperties)
+	Object instantiatePartial(SpearalDecoder decoder, Class<?> cls, Collection<Property> partialProperties)
 		throws InstantiationException, IllegalAccessException;
 	
-	Object convert(Object o, Type target);
+	Coder getCoder(Class<?> valueClass);
 	
-	ObjectWriter getWriter(Class<?> type);
+	Object convert(SpearalDecoder decoder, Object value, Type targetType);
 	
-	PropertyFactory getPropertyFactory(Class<?> type);
+	Property createProperty(String name, Field field, Method getter, Method setter);
 }

@@ -19,14 +19,14 @@ package org.spearal.partial;
 
 import java.util.Collection;
 
-import org.spearal.SpearalContext;
 import org.spearal.configurable.PropertyFactory.Property;
+import org.spearal.impl.ExtendedSpearalDecoder;
 
 /**
  * @author Franck WOLFF
  */
 public interface PartialObjectFactory {
 
-	Object instantiatePartial(SpearalContext ctx, Class<?> cls, Collection<Property> partialProperties)
+	Object instantiatePartial(ExtendedSpearalDecoder decoder, Class<?> cls, Collection<Property> partialProperties)
 		throws InstantiationException, IllegalAccessException;
 }

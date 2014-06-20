@@ -73,12 +73,10 @@ public class TestBigDecimal extends AbstractSpearalTestUnit {
 	
 	private void encodeDecode(BigDecimal value, int expectedSize) throws IOException {
 		byte[] data = encode(value);
-		Object clone = decode(data);
+		BigDecimal clone = decode(data, BigDecimal.class);
 		
 		if (expectedSize > 0)
 			Assert.assertEquals(expectedSize, data.length);
-		if (!(clone instanceof BigDecimal))
-			clone = BigInteger.valueOf(((Long)clone).longValue());
 		Assert.assertEquals(value, clone);
 	}
 }

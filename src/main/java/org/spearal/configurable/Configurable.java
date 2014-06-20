@@ -17,14 +17,9 @@
  */
 package org.spearal.configurable;
 
-import org.spearal.configurable.PropertyFactory.Property;
-import org.spearal.impl.ExtendedSpearalDecoder;
-
 /**
  * @author Franck WOLFF
  */
-public interface PropertyInstantiator extends Configurable {
+public interface Configurable {
 
-	boolean canInstantiate(Property property);
-	Object instantiate(ExtendedSpearalDecoder decoder, Property property);
 }

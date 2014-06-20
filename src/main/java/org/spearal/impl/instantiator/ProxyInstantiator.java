@@ -26,10 +26,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.spearal.SpearalContext;
 import org.spearal.configurable.PropertyFactory.Property;
 import org.spearal.configurable.PropertyInstantiator;
 import org.spearal.configurable.TypeInstantiator;
+import org.spearal.impl.ExtendedSpearalDecoder;
 
 /**
  * @author Franck WOLFF
@@ -42,12 +42,12 @@ public class ProxyInstantiator implements TypeInstantiator, PropertyInstantiator
 	}
 
 	@Override
-	public Object instantiate(SpearalContext context, Type type) {
+	public Object instantiate(ExtendedSpearalDecoder decoder, Type type) {
 		Class<?> cls = (Class<?>)type;
         try {
     		Constructor<?> constructor = cls.getConstructor(new Class<?>[]{ InvocationHandler.class });
-    		Collection<Property> properties = context.getProperties(cls);
-    		return constructor.newInstance(new PropertiesInvocationHandler(context, properties));
+    		Collection<Property> properties = decoder.getContext().getProperties(cls);
+    		return constructor.newInstance(new PropertiesInvocationHandler(decoder, properties));
 		}
         catch (Exception e) {
 			throw new RuntimeException("Could not create instance of: " + cls, e);
@@ -60,18 +60,18 @@ public class ProxyInstantiator implements TypeInstantiator, PropertyInstantiator
 	}
 
 	@Override
-	public Object instantiate(SpearalContext context, Property property) {
-		return instantiate(context, property.getGenericType());
+	public Object instantiate(ExtendedSpearalDecoder decoder, Property property) {
+		return instantiate(decoder, property.getGenericType());
 	}
 
 	private static class PropertiesInvocationHandler implements InvocationHandler {
 		
-		private final SpearalContext context;
+		private final ExtendedSpearalDecoder decoder;
 		private final Map<Method, String> methods;
 		private final Map<String, Object> values;
 		
-		public PropertiesInvocationHandler(SpearalContext context, Collection<Property> properties) {
-			this.context = context;
+		public PropertiesInvocationHandler(ExtendedSpearalDecoder decoder, Collection<Property> properties) {
+			this.decoder = decoder;
 			this.methods = new HashMap<Method, String>();
 			this.values = new HashMap<String, Object>();
 			
@@ -91,7 +91,7 @@ public class ProxyInstantiator implements TypeInstantiator, PropertyInstantiator
 				if (method.getName().startsWith("set"))
 					values.put(propertyName, args[0]);
 				else
-					return context.convert(values.get(propertyName), method.getReturnType());
+					return decoder.getContext().convert(decoder, values.get(propertyName), method.getReturnType());
 			}
 			
 			return null;

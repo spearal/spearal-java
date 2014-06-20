@@ -40,7 +40,6 @@ import java.util.logging.Logger;
 import org.spearal.SpearalContext;
 import org.spearal.annotation.Exclude;
 import org.spearal.annotation.Include;
-import org.spearal.configurable.PropertyFactory;
 import org.spearal.configurable.PropertyFactory.Property;
 import org.spearal.impl.util.UnmodifiableArray;
 import org.spearal.introspect.Introspector;
@@ -96,8 +95,7 @@ public class IntrospectorImpl implements Introspector {
 				Method getter = findGetter(declaredMethods, type, name);
 				Method setter = findSetter(declaredMethods, type, name);
 
-				PropertyFactory factory = context.getPropertyFactory(type);
-				Property property = factory.createProperty(name, field, getter, setter);
+				Property property = context.createProperty(name, field, getter, setter);
 				
 				propertiesMap.put(name, property);
 			}
@@ -127,8 +125,7 @@ public class IntrospectorImpl implements Introspector {
 				Class<?> type = getter.getReturnType();
 				Method setter = findSetter(declaredMethods, type, name);
 
-				PropertyFactory factory = context.getPropertyFactory(type);
-				Property property = factory.createProperty(name, null, getter, setter);
+				Property property = context.createProperty(name, null, getter, setter);
 				
 				propertiesMap.put(name, property);
 			}
@@ -234,11 +231,8 @@ public class IntrospectorImpl implements Introspector {
 					? decapitalize(getter.getName().substring(2))
 					: decapitalize(getter.getName().substring(3))
 				);
-				Class<?> type = getter.getReturnType();
 				
-				PropertyFactory factory = context.getPropertyFactory(type);
-				Property property = factory.createProperty(name, null, getter, setter);
-				
+				Property property = context.createProperty(name, null, getter, setter);
 				propertiesMap.put(name, property);
 			}
 			

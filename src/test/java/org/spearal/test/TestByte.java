@@ -44,12 +44,10 @@ public class TestByte extends AbstractSpearalTestUnit {
 		for (int i = Byte.MIN_VALUE; i <= Byte.MAX_VALUE; i++) {
 			Byte value = Byte.valueOf((byte)i);
 			byte[] data = encode(value);
-			Object clone = decode(data);
+			Byte clone = decode(data, Byte.class);
 
 			Assert.assertEquals(2, data.length);
-			if (!(clone instanceof Long))
-				Assert.fail("Not a Long: " + clone);
-			Assert.assertEquals(value.longValue(), ((Long)clone).longValue());
+			Assert.assertEquals(value, clone);
 		}
 	}
 }

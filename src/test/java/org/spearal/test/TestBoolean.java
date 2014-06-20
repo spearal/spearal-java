@@ -43,18 +43,18 @@ public class TestBoolean extends AbstractSpearalTestUnit {
 	public void test() throws IOException {
 		Boolean value;
 		byte[] data;
-		Object clone;
+		Boolean clone;
 		
 		value = Boolean.FALSE;
 		data = encode(value);
-		clone = decode(data);
+		clone = decode(data, Boolean.class);
 		
 		Assert.assertEquals(1, data.length);
 		Assert.assertSame(value, clone);
 		
 		value = Boolean.TRUE;
 		data = encode(value);
-		clone = decode(data);
+		clone = decode(data, Boolean.class);
 		
 		Assert.assertEquals(1, data.length);
 		Assert.assertSame(value, clone);

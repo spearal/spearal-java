@@ -44,12 +44,10 @@ public class TestShort extends AbstractSpearalTestUnit {
 		for (int i = Short.MIN_VALUE; i <= Short.MAX_VALUE; i++) {
 			Short value = Short.valueOf((short)i);
 			byte[] data = encode(value);
-			Object clone = decode(data);
+			Short clone = decode(data, Short.class);
 
 			Assert.assertEquals((Math.abs(i) <= 0xFF ? 2 : 3), data.length);
-			if (!(clone instanceof Long))
-				Assert.fail("Not a Long: " + clone);
-			Assert.assertEquals(value.longValue(), ((Long)clone).longValue());
+			Assert.assertEquals(value, clone);
 		}
 	}
 }

@@ -23,12 +23,13 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Proxy;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Map;
 
 import org.spearal.SpearalContext;
 import org.spearal.SpearalRequest;
-import org.spearal.configurable.ObjectWriterProvider.ObjectWriter;
+import org.spearal.configurable.CoderProvider.Coder;
 import org.spearal.configurable.PropertyFactory.Property;
 import org.spearal.impl.util.ClassCache;
 import org.spearal.impl.util.ClassCache.ValueProvider;
@@ -40,6 +41,8 @@ import org.spearal.impl.util.StringIndexedCache;
  */
 public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType {
 
+	private static final Charset UTF8 = Charset.forName("UTF-8");
+
 	private final SpearalContext context;
 	private final SpearalRequest request;
 	private final OutputStream out;
@@ -48,7 +51,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 	private final ObjectIndexedCache storedObjects;
 	private final ClassCache<ClassDescriptor> descriptors;
 	
-	private final ClassCache<ObjectWriter> writers;
+	private final ClassCache<Coder> writers;
 	
 	private final byte[] buffer;
 	private int position;
@@ -82,10 +85,10 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 			}
 		});
 		
-		this.writers = new ClassCache<ObjectWriter>(new ValueProvider<ObjectWriter>() {
+		this.writers = new ClassCache<Coder>(new ValueProvider<Coder>() {
 			@Override
-			public ObjectWriter createValue(Class<?> key) {
-				return context.getWriter(key);
+			public Coder createValue(Class<?> valueClass) {
+				return context.getCoder(valueClass);
 			}
 		});
 
@@ -112,7 +115,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 		if (o == null)
 			writeNull();
 		else
-			writers.putIfAbsent(o.getClass()).write(this, o);
+			writers.putIfAbsent(o.getClass()).writeObject(this, o);
 		
 		if ((--depth) == 0)
 			flushBuffer();
@@ -607,97 +610,17 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
         	writeUnsignedIntValue(index, length0);
         }
         else {
-            final int count = utfByteCount(s);
-            int length0 = unsignedIntLength0(count);
+        	byte[] bytes = s.getBytes(UTF8);
+        	
+        	int length0 = unsignedIntLength0(bytes.length);
             if (length0 > 0)
             	buffer[position++] |= length0;
             else
             	position++;
             ensureCapacity(length0 + 1);
-        	writeUnsignedIntValue(count, length0);
-            
-        	final byte[] buffer = this.buffer;
-        	final int bufferLength = buffer.length;
-            
-        	int position = this.position;
-            
-            // String chars are in [0x0000, 0x007F]: write them directly as bytes.
-            if (count == length) {
-                if (length <= bufferLength - position) {
-                	for (int i = 0; i < length; i++)
-                		buffer[position++] = (byte)s.charAt(i);
-                	this.position = position;
-                }
-                else {
-    	        	
-    	        	int i = 0;
-    	        	while (position < bufferLength)
-    	        		buffer[position++] = (byte)s.charAt(i++);
-    	        	this.position = position;
-    	        	
-    	        	do {
-    		        	flushBuffer();
-    		        	position = 0;
-
-    		        	int max = Math.min(bufferLength, length - i);
-    		        	while (position < max)
-    		        		buffer[position++] = (byte)s.charAt(i++);
-    		        	this.position = position;
-    	        	}
-    	        	while (i < length);
-                }
-            }
-            // We have at least one char > 0x007F but enough buffer to write them all.
-            else if (count <= bufferLength - position) {
-            	
-            	for (int i = 0; i < length; i++) {
-                	char c = s.charAt(i);
-                	if (c <= 0x007F)
-                    	buffer[position++] = (byte)c;
-                    else if (c > 0x07FF) {
-                    	buffer[position++] = (byte)(0xE0 | (c >>> 12));
-                    	buffer[position++] = (byte)(0x80 | ((c >>> 6) & 0x3F));
-                    	buffer[position++] = (byte)(0x80 | (c & 0x3F));
-                    }
-                    else {
-                    	buffer[position++] = (byte)(0xC0 | ((c >>> 6) & 0x1F));
-                    	buffer[position++] = (byte)(0x80 | (c & 0x3F));
-                    }
-                }
-                
-                this.position = position;
-            }
-            // We have at least one char > 0x007F and not enough buffer to write them all.
-            else {
-	        	final int bufferLengthMinus3 = buffer.length - 3;
-            	
-            	int i = 0, total = 0;
-	        	do {
-	            	flushBuffer();
-
-	            	position = 0;
-	            	final int max = Math.min(count - total, bufferLengthMinus3);
-	            	
-	            	while (position < max) {
-	            		char c = s.charAt(i++);
-		            	if (c <= 0x007F)
-		                	buffer[position++] = (byte)c;
-		                else if (c > 0x07FF) {
-		                	buffer[position++] = (byte)(0xE0 | (c >>> 12));
-		                	buffer[position++] = (byte)(0x80 | ((c >>> 6) & 0x3F));
-		                	buffer[position++] = (byte)(0x80 | (c & 0x3F));
-		                }
-		                else {
-		                	buffer[position++] = (byte)(0xC0 | ((c >>> 6) & 0x1F));
-		                	buffer[position++] = (byte)(0x80 | (c & 0x3F));
-		                }
-	            	}
-	            	
-	            	total += position;
-	            	this.position = position;
-	        	}
-	        	while (total < count);
-            }
+        	writeUnsignedIntValue(bytes.length, length0);
+        	
+        	writeBytes(bytes);
         }
     }
 
@@ -869,22 +792,6 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 	    		out.write(bytes, 0, bytes.length);
 	    	}
     	}
-    }
-    
-    private static int utfByteCount(String s) {
-    	final int length = s.length();
-    	
-    	int count = length;
-        for (int i = 0; i < length; i++) {
-        	char c = s.charAt(i);
-        	if (c > 0x007F) {
-        		if (c > 0x07FF)
-        			count += 2;
-        		else
-        			count++;
-        	}
-        }
-        return count;
     }
 	
 	private static class ClassDescriptor {

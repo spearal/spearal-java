@@ -31,6 +31,7 @@ import javassist.util.proxy.ProxyObject;
 
 import org.spearal.SpearalContext;
 import org.spearal.configurable.PropertyFactory.Property;
+import org.spearal.impl.ExtendedSpearalDecoder;
 import org.spearal.partial.PartialObjectFactory;
 import org.spearal.partial.PartialObjectProxy;
 import org.spearal.partial.UndefinedPropertyException;
@@ -46,11 +47,12 @@ public class JavassistPartialObjectFactory implements PartialObjectFactory {
 	}
 
 	@Override
-	public Object instantiatePartial(SpearalContext ctx, Class<?> cls, Collection<Property> partialProperties)
+	public Object instantiatePartial(ExtendedSpearalDecoder decoder, Class<?> cls, Collection<Property> partialProperties)
 		throws InstantiationException, IllegalAccessException {
 		
 		Class<?> proxyClass = proxyClasses.get(cls);
 		if (proxyClass == null) {
+			SpearalContext ctx = decoder.getContext();
 			ctx.getSecurizer().checkDecodable(cls);
 			
 			ProxyFactory proxyFactory = new ProxyFactory();

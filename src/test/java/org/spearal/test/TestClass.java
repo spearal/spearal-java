@@ -44,16 +44,26 @@ public class TestClass extends AbstractSpearalTestUnit {
 	public void test() throws IOException {
 		encodeDecode(TestClass.class, TestClass.class.getName().length() + 2);
 		encodeDecode(ArrayList.class, ArrayList.class.getName().length() + 2);
+		
+		encodeDecodeAsString(TestClass.class, TestClass.class.getName().length() + 2);
+		encodeDecodeAsString(ArrayList.class, ArrayList.class.getName().length() + 2);
 	}
 	
 	private void encodeDecode(Class<?> value, int expectedSize) throws IOException {
 		byte[] data = encode(value);
-		Object clone = decode(data);
+		Class<?> clone = decode(data, Class.class);
 		
 		if (expectedSize >= 0)
 			Assert.assertEquals(expectedSize, data.length);
-		if (!(clone instanceof Class))
-			Assert.fail("Not a Class: " + clone);
+		Assert.assertEquals(value, clone);
+	}
+	
+	private void encodeDecodeAsString(Class<?> value, int expectedSize) throws IOException {
+		byte[] data = encode(value.getName());
+		Class<?> clone = decode(data, Class.class);
+		
+		if (expectedSize >= 0)
+			Assert.assertEquals(expectedSize, data.length);
 		Assert.assertEquals(value, clone);
 	}
 }

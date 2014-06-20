@@ -18,7 +18,6 @@
 package org.spearal.test;
 
 import java.io.IOException;
-import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
@@ -71,31 +70,25 @@ public class TestDateTime extends AbstractSpearalTestUnit {
 	
 	private void encodeDecode(Date value, int expectedSize) throws IOException {
 		byte[] data = encode(value);
-		Object clone = decode(data);
+		Date clone = decode(data, value.getClass());
 		
 		if (expectedSize >= 0)
 			Assert.assertEquals(expectedSize, data.length);
-		if (!(clone instanceof Timestamp))
-			Assert.fail("Not a Timestamp: " + clone);
-		
-		Timestamp dateTime = (Timestamp)clone;
+
 		if (value instanceof java.sql.Timestamp)
-			Assert.assertEquals(value, dateTime);
+			Assert.assertEquals(value, clone);
 		else {
-			Assert.assertEquals(toCalendar(value).getTime(), toCalendar(dateTime).getTime());
+			Assert.assertEquals(toCalendar(value).getTime(), toCalendar(clone).getTime());
 		}
 	}
 	
 	private void encodeDecode(Calendar value, int expectedSize) throws IOException {
 		byte[] data = encode(value);
-		Object clone = decode(data);
+		Calendar clone = decode(data, Calendar.class);
 		
 		if (expectedSize >= 0)
 			Assert.assertEquals(expectedSize, data.length);
-		if (!(clone instanceof Timestamp))
-			Assert.fail("Not a Timestamp: " + clone);
-		
-		Assert.assertEquals(value.getTime(), clone);
+		Assert.assertEquals(value, clone);
 	}
 	
 	private static Calendar toCalendar(Date date) {
