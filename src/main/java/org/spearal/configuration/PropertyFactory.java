@@ -33,7 +33,7 @@ import org.spearal.impl.ExtendedSpearalEncoder;
  */
 public interface PropertyFactory extends Repeatable {
 	
-	public static interface Property {
+	public interface Property {
 		
 		String getName();
 		Class<?> getType();
