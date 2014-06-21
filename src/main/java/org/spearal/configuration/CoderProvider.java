@@ -24,7 +24,7 @@ import org.spearal.impl.ExtendedSpearalEncoder;
 /**
  * @author Franck WOLFF
  */
-public interface CoderProvider extends Configurable {
+public interface CoderProvider extends Repeatable {
 
 	public interface Coder {
 		

@@ -17,15 +17,9 @@
  */
 package org.spearal.configuration;
 
-import java.util.Collection;
-
-import org.spearal.SpearalContext;
-import org.spearal.configuration.PropertyFactory.Property;
-
 /**
  * @author Franck WOLFF
  */
-public interface Introspector extends Configurable {
+public interface Repeatable extends Configurable {
 
-	Collection<Property> getProperties(SpearalContext context, Class<?> cls);
 }

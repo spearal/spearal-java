@@ -20,7 +20,7 @@ package org.spearal.configuration;
 /**
  * @author Franck WOLFF
  */
-public class ClassNameAlias implements Configurable {
+public class ClassNameAlias implements Repeatable {
 	
 	private final String className;
 	private final String alias;

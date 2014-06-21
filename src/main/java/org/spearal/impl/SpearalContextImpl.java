@@ -32,41 +32,29 @@ import org.spearal.SpearalContext;
 import org.spearal.SpearalDecoder;
 import org.spearal.configuration.ClassNameAlias;
 import org.spearal.configuration.CoderProvider;
+import org.spearal.configuration.CoderProvider.Coder;
 import org.spearal.configuration.Configurable;
 import org.spearal.configuration.ConverterProvider;
+import org.spearal.configuration.ConverterProvider.Converter;
 import org.spearal.configuration.Introspector;
 import org.spearal.configuration.PartialObjectFactory;
 import org.spearal.configuration.PropertyFactory;
+import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.configuration.PropertyInstantiator;
+import org.spearal.configuration.Repeatable;
 import org.spearal.configuration.Securizer;
 import org.spearal.configuration.TypeInstantiator;
 import org.spearal.configuration.TypeLoader;
-import org.spearal.configuration.CoderProvider.Coder;
-import org.spearal.configuration.ConverterProvider.Converter;
-import org.spearal.configuration.PropertyFactory.Property;
-import org.spearal.impl.coder.ArrayCoderProvider;
-import org.spearal.impl.coder.BeanCoderProvider;
-import org.spearal.impl.coder.CollectionCoderProvider;
-import org.spearal.impl.coder.EnumCoderProvider;
-import org.spearal.impl.coder.MapCoderProvider;
-import org.spearal.impl.coder.SimpleCodersProvider;
-import org.spearal.impl.converter.EnumConverterProvider;
-import org.spearal.impl.converter.SimpleConvertersProvider;
-import org.spearal.impl.instantiator.ClassInstantiator;
-import org.spearal.impl.instantiator.CollectionInstantiator;
-import org.spearal.impl.instantiator.MapInstantiator;
-import org.spearal.impl.instantiator.ProxyInstantiator;
-import org.spearal.impl.property.SimplePropertiesFactory;
 
 /**
  * @author Franck WOLFF
  */
 public class SpearalContextImpl implements SpearalContext {
 	
-	private final Introspector introspector;
-	private final TypeLoader loader;
-	private final Securizer securizer;
-	private final PartialObjectFactory partialObjectFactory;
+	private Introspector introspector;
+	private TypeLoader loader;
+	private Securizer securizer;
+	private PartialObjectFactory partialObjectFactory;
 	
 	private final Map<String, String> classAliases;
 	
@@ -84,20 +72,7 @@ public class SpearalContextImpl implements SpearalContext {
 	
 	private final List<PropertyFactory> propertyFactories;
 	
-	public SpearalContextImpl(
-		Introspector introspector,
-		TypeLoader loader,
-		Securizer securizer,
-		PartialObjectFactory partialObjectFactory) {
-		
-		if (introspector == null || loader == null || securizer == null || partialObjectFactory == null)
-			throw new NullPointerException();
-		
-		this.introspector = introspector;
-		this.loader = loader;
-		this.securizer = securizer;
-		this.partialObjectFactory = partialObjectFactory;
-		
+	public SpearalContextImpl() {
 		this.classAliases = new HashMap<String, String>();
 
 		this.typeInstantiators = new ArrayList<TypeInstantiator>();
@@ -119,93 +94,73 @@ public class SpearalContextImpl implements SpearalContext {
 	public Securizer getSecurizer() {
 		return securizer;
 	}
-
+	
 	@Override
-	public void initStandardConfigurables() {
-		
-		// Converters.
-		
-		addConfigurableItem(new SimpleConvertersProvider(), false);
-		addConfigurableItem(new EnumConverterProvider(), false);
-
-		// Instantiators.
-		
-		addConfigurableItem(new CollectionInstantiator(), false);
-		addConfigurableItem(new MapInstantiator(), false);
-		addConfigurableItem(new ProxyInstantiator(), false);
-		addConfigurableItem(new ClassInstantiator(), false);
-		
-		// StaticObjectWriterProviders & PropertyFactories.
-
-		addConfigurableItem(new SimplePropertiesFactory(), false);
-		
-		// CoderProviders.
-		
-		addConfigurableItem(new SimpleCodersProvider(), false);
-		addConfigurableItem(new CollectionCoderProvider(), false);
-		addConfigurableItem(new MapCoderProvider(), false);
-		addConfigurableItem(new ArrayCoderProvider(), false);
-		addConfigurableItem(new EnumCoderProvider(), false);
-		addConfigurableItem(new BeanCoderProvider(), false);
+	public void configure(Configurable configurable) {
+		configure(configurable, false);
 	}
 	
 	@Override
-	public void configure(Configurable item) {
-		addConfigurableItem(item, true);
-	}
-	
-	private void addConfigurableItem(Configurable item, boolean first) {
+	public void configure(Configurable configurable, boolean append) {
 		boolean added = false;
 		
-		if (item instanceof ClassNameAlias) {
-			ClassNameAlias classAlias = (ClassNameAlias)item;
-			classAliases.put(classAlias.getClassName(), classAlias.getAlias());
-			classAliases.put(classAlias.getAlias(), classAlias.getClassName());
-			added = true;
+		if (configurable instanceof Repeatable) {
+			if (configurable instanceof ClassNameAlias) {
+				ClassNameAlias classAlias = (ClassNameAlias)configurable;
+				classAliases.put(classAlias.getClassName(), classAlias.getAlias());
+				classAliases.put(classAlias.getAlias(), classAlias.getClassName());
+				added = true;
+			}
+			
+			if (configurable instanceof TypeInstantiator) {
+				typeInstantiators.add((append ? typeInstantiators.size() : 0), (TypeInstantiator)configurable);
+				added = true;
+			}
+			
+			if (configurable instanceof PropertyInstantiator) {
+				propertyInstantiators.add((append ? propertyInstantiators.size() : 0), (PropertyInstantiator)configurable);
+				added = true;
+			}
+			
+			if (configurable instanceof ConverterProvider) {
+				converterProviders.add((append ? converterProviders.size() : 0), (ConverterProvider)configurable);
+				added = true;
+			}
+			
+			if (configurable instanceof CoderProvider) {
+				coderProviders.add((append ? coderProviders.size() : 0), (CoderProvider)configurable);
+				added = true;
+			}
+			
+			if (configurable instanceof PropertyFactory) {
+				propertyFactories.add((append ? propertyFactories.size() : 0), (PropertyFactory)configurable);
+				added = true;
+			}
 		}
-		
-		if (item instanceof TypeInstantiator) {
-			if (first)
-				typeInstantiators.add(0, (TypeInstantiator)item);
-			else
-				typeInstantiators.add((TypeInstantiator)item);
-			added = true;
-		}
-		
-		if (item instanceof PropertyInstantiator) {
-			if (first)
-				propertyInstantiators.add(0, (PropertyInstantiator)item);
-			else
-				propertyInstantiators.add((PropertyInstantiator)item);
-			added = true;
-		}
-		
-		if (item instanceof ConverterProvider) {
-			if (first)
-				converterProviders.add(0, (ConverterProvider)item);
-			else
-				converterProviders.add((ConverterProvider)item);
-			added = true;
-		}
-		
-		if (item instanceof CoderProvider) {
-			if (first)
-				coderProviders.add(0, (CoderProvider)item);
-			else
-				coderProviders.add((CoderProvider)item);
-			added = true;
-		}
-		
-		if (item instanceof PropertyFactory) {
-			if (first)
-				propertyFactories.add(0, (PropertyFactory)item);
-			else
-				propertyFactories.add((PropertyFactory)item);
-			added = true;
+		else {
+			if (configurable instanceof Introspector) {
+				introspector = (Introspector)configurable;
+				added = true;
+			}
+			
+			if (configurable instanceof TypeLoader) {
+				loader = (TypeLoader)configurable;
+				added = true;
+			}
+			
+			if (configurable instanceof Securizer) {
+				securizer = (Securizer)configurable;
+				added = true;
+			}
+			
+			if (configurable instanceof PartialObjectFactory) {
+				partialObjectFactory = (PartialObjectFactory)configurable;
+				added = true;
+			}
 		}
 		
 		if (!added)
-			throw new RuntimeException("Unsupported configuration item: " + item);
+			throw new RuntimeException("Unsupported configurable: " + configurable);
 	}
 
 	@Override

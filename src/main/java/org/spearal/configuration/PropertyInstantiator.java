@@ -23,7 +23,7 @@ import org.spearal.impl.ExtendedSpearalDecoder;
 /**
  * @author Franck WOLFF
  */
-public interface PropertyInstantiator extends Configurable {
+public interface PropertyInstantiator extends Repeatable {
 
 	boolean canInstantiate(Property property);
 	Object instantiate(ExtendedSpearalDecoder decoder, Property property);

@@ -22,7 +22,7 @@ import java.io.Serializable;
 /**
  * @author Franck WOLFF
  */
-public interface TypeLoader {
+public interface TypeLoader extends Configurable {
 	
 	public interface ClassNotFound extends Serializable {
 	}

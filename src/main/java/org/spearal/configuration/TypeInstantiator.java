@@ -24,7 +24,7 @@ import org.spearal.impl.ExtendedSpearalDecoder;
 /**
  * @author Franck WOLFF
  */
-public interface TypeInstantiator extends Configurable {
+public interface TypeInstantiator extends Repeatable {
 
 	boolean canInstantiate(Type type);
 	Object instantiate(ExtendedSpearalDecoder decoder, Type type);

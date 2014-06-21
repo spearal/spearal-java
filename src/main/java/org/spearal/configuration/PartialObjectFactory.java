@@ -25,7 +25,7 @@ import org.spearal.impl.ExtendedSpearalDecoder;
 /**
  * @author Franck WOLFF
  */
-public interface PartialObjectFactory {
+public interface PartialObjectFactory extends Configurable {
 
 	public interface PartialObjectProxy {
 

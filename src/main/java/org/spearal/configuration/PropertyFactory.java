@@ -31,7 +31,7 @@ import org.spearal.impl.ExtendedSpearalEncoder;
 /**
  * @author Franck WOLFF
  */
-public interface PropertyFactory extends Configurable {
+public interface PropertyFactory extends Repeatable {
 	
 	public static interface Property {
 		

@@ -21,16 +21,26 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 
-import org.spearal.configuration.Introspector;
 import org.spearal.configuration.PartialObjectFactory;
-import org.spearal.configuration.Securizer;
-import org.spearal.configuration.TypeLoader;
 import org.spearal.impl.SpearalContextImpl;
 import org.spearal.impl.SpearalDecoderImpl;
 import org.spearal.impl.SpearalEncoderImpl;
 import org.spearal.impl.SpearalPrinterImpl;
+import org.spearal.impl.coder.ArrayCoderProvider;
+import org.spearal.impl.coder.BeanCoderProvider;
+import org.spearal.impl.coder.CollectionCoderProvider;
+import org.spearal.impl.coder.EnumCoderProvider;
+import org.spearal.impl.coder.MapCoderProvider;
+import org.spearal.impl.coder.SimpleCodersProvider;
+import org.spearal.impl.converter.EnumConverterProvider;
+import org.spearal.impl.converter.SimpleConvertersProvider;
+import org.spearal.impl.instantiator.ClassInstantiator;
+import org.spearal.impl.instantiator.CollectionInstantiator;
+import org.spearal.impl.instantiator.MapInstantiator;
+import org.spearal.impl.instantiator.ProxyInstantiator;
 import org.spearal.impl.introspector.IntrospectorImpl;
 import org.spearal.impl.loader.TypeLoaderImpl;
+import org.spearal.impl.property.SimplePropertiesFactory;
 import org.spearal.impl.security.SecurizerImpl;
 
 /**
@@ -41,29 +51,40 @@ public class SpearalFactory {
 	private final SpearalContextImpl context;
 	
 	public SpearalFactory() {
-		this(null, null, null, null);
-	}
-	
-	public SpearalFactory(
-		Introspector introspector,
-		TypeLoader loader,
-		Securizer securizer,
-		PartialObjectFactory partialObjectFactory) {
+		
+		context = new SpearalContextImpl();
+		
+		// Reflection / Security.
+		
+		context.configure(new IntrospectorImpl());
+		context.configure(new TypeLoaderImpl());
+		context.configure(new SecurizerImpl());
+		context.configure(newDefaultPartialObjectFactory());
+		
+		// Converters.
+		
+		context.configure(new SimpleConvertersProvider(), true);
+		context.configure(new EnumConverterProvider(), true);
 
-		if (introspector == null)
-			introspector = new IntrospectorImpl();
+		// Instantiators.
+		
+		context.configure(new CollectionInstantiator(), true);
+		context.configure(new MapInstantiator(), true);
+		context.configure(new ProxyInstantiator(), true);
+		context.configure(new ClassInstantiator(), true);
+		
+		// StaticObjectWriterProviders & PropertyFactories.
 
-		if (loader == null)
-			loader = new TypeLoaderImpl();
+		context.configure(new SimplePropertiesFactory(), true);
 		
-		if (securizer == null)
-			securizer = new SecurizerImpl();
+		// CoderProviders.
 		
-		if (partialObjectFactory == null)
-			partialObjectFactory = newDefaultPartialObjectFactory();
-		
-		this.context = new SpearalContextImpl(introspector, loader, securizer, partialObjectFactory);
-		this.context.initStandardConfigurables();
+		context.configure(new SimpleCodersProvider(), true);
+		context.configure(new CollectionCoderProvider(), true);
+		context.configure(new MapCoderProvider(), true);
+		context.configure(new ArrayCoderProvider(), true);
+		context.configure(new EnumCoderProvider(), true);
+		context.configure(new BeanCoderProvider(), true);
 	}
 	
 	protected static final PartialObjectFactory newDefaultPartialObjectFactory() {

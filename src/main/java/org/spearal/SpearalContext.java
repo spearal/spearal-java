@@ -32,9 +32,8 @@ import org.spearal.configuration.PropertyFactory.Property;
  */
 public interface SpearalContext {
 
-	void initStandardConfigurables();
-	
 	void configure(Configurable configurable);
+	void configure(Configurable configurable, boolean append);
 	
 	Securizer getSecurizer();
 	

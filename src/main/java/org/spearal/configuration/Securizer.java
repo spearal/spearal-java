@@ -22,7 +22,7 @@ import java.lang.reflect.Type;
 /**
  * @author Franck WOLFF
  */
-public interface Securizer {
+public interface Securizer extends Configurable {
 
 	void checkDecodable(Type type) throws SecurityException;
 	void checkEncodable(Class<?> cls) throws SecurityException;

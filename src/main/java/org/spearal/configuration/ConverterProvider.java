@@ -24,7 +24,7 @@ import org.spearal.impl.ExtendedSpearalDecoder;
 /**
  * @author Franck WOLFF
  */
-public interface ConverterProvider extends Configurable {
+public interface ConverterProvider extends Repeatable {
 
 	public interface Converter<T> {
 		
