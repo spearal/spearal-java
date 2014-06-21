@@ -18,29 +18,23 @@
 package org.spearal.impl.coder;
 
 import java.io.IOException;
-import java.util.Collection;
 
 import org.spearal.configuration.CoderProvider;
+import org.spearal.configuration.CoderProvider.Coder;
 import org.spearal.impl.ExtendedSpearalEncoder;
 
 /**
  * @author Franck WOLFF
  */
-public class CollectionCoderProvider implements CoderProvider {
-
-	private final Coder coder;
-	
-	public CollectionCoderProvider() {
-		this.coder = new Coder() {
-			@Override
-			public void encode(ExtendedSpearalEncoder encoder, Object value) throws IOException {
-				encoder.writeCollection((Collection<?>)value);
-			}
-		};
-	}
+public class BeanCoder implements CoderProvider, Coder {
 
 	@Override
 	public Coder getCoder(Class<?> valueClass) {
-		return (Collection.class.isAssignableFrom(valueClass) ? coder : null);
+		return this;
+	}
+
+	@Override
+	public void encode(ExtendedSpearalEncoder encoder, Object value) throws IOException {
+		encoder.writeBean(value);
 	}
 }

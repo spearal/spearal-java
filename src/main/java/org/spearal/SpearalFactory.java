@@ -26,13 +26,13 @@ import org.spearal.impl.SpearalContextImpl;
 import org.spearal.impl.SpearalDecoderImpl;
 import org.spearal.impl.SpearalEncoderImpl;
 import org.spearal.impl.SpearalPrinterImpl;
-import org.spearal.impl.coder.ArrayCoderProvider;
-import org.spearal.impl.coder.BeanCoderProvider;
-import org.spearal.impl.coder.CollectionCoderProvider;
-import org.spearal.impl.coder.EnumCoderProvider;
-import org.spearal.impl.coder.MapCoderProvider;
+import org.spearal.impl.coder.ArrayCoder;
+import org.spearal.impl.coder.BeanCoder;
+import org.spearal.impl.coder.CollectionCoder;
+import org.spearal.impl.coder.EnumCoder;
+import org.spearal.impl.coder.MapCoder;
 import org.spearal.impl.coder.SimpleCodersProvider;
-import org.spearal.impl.converter.EnumConverterProvider;
+import org.spearal.impl.converter.EnumConverter;
 import org.spearal.impl.converter.SimpleConvertersProvider;
 import org.spearal.impl.instantiator.ClassInstantiator;
 import org.spearal.impl.instantiator.CollectionInstantiator;
@@ -64,7 +64,7 @@ public class SpearalFactory {
 		// Converters.
 		
 		context.configure(new SimpleConvertersProvider(), true);
-		context.configure(new EnumConverterProvider(), true);
+		context.configure(new EnumConverter(), true);
 
 		// Instantiators.
 		
@@ -80,11 +80,11 @@ public class SpearalFactory {
 		// CoderProviders.
 		
 		context.configure(new SimpleCodersProvider(), true);
-		context.configure(new CollectionCoderProvider(), true);
-		context.configure(new MapCoderProvider(), true);
-		context.configure(new ArrayCoderProvider(), true);
-		context.configure(new EnumCoderProvider(), true);
-		context.configure(new BeanCoderProvider(), true);
+		context.configure(new CollectionCoder(), true);
+		context.configure(new MapCoder(), true);
+		context.configure(new ArrayCoder(), true);
+		context.configure(new EnumCoder(), true);
+		context.configure(new BeanCoder(), true);
 	}
 	
 	protected static final PartialObjectFactory newDefaultPartialObjectFactory() {
