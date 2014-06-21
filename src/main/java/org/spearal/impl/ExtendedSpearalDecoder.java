@@ -26,7 +26,7 @@ import java.util.Collection;
 import java.util.Map;
 
 import org.spearal.SpearalDecoder;
-import org.spearal.configurable.PropertyFactory.Property;
+import org.spearal.configuration.PropertyFactory.Property;
 
 /**
  * @author Franck WOLFF

@@ -30,16 +30,20 @@ import java.util.concurrent.ConcurrentMap;
 
 import org.spearal.SpearalContext;
 import org.spearal.SpearalDecoder;
-import org.spearal.configurable.ClassNameAlias;
-import org.spearal.configurable.CoderProvider;
-import org.spearal.configurable.CoderProvider.Coder;
-import org.spearal.configurable.Configurable;
-import org.spearal.configurable.ConverterProvider;
-import org.spearal.configurable.ConverterProvider.Converter;
-import org.spearal.configurable.PropertyFactory;
-import org.spearal.configurable.PropertyFactory.Property;
-import org.spearal.configurable.PropertyInstantiator;
-import org.spearal.configurable.TypeInstantiator;
+import org.spearal.configuration.ClassNameAlias;
+import org.spearal.configuration.CoderProvider;
+import org.spearal.configuration.Configurable;
+import org.spearal.configuration.ConverterProvider;
+import org.spearal.configuration.Introspector;
+import org.spearal.configuration.PartialObjectFactory;
+import org.spearal.configuration.PropertyFactory;
+import org.spearal.configuration.PropertyInstantiator;
+import org.spearal.configuration.Securizer;
+import org.spearal.configuration.TypeInstantiator;
+import org.spearal.configuration.TypeLoader;
+import org.spearal.configuration.CoderProvider.Coder;
+import org.spearal.configuration.ConverterProvider.Converter;
+import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.coder.ArrayCoderProvider;
 import org.spearal.impl.coder.BeanCoderProvider;
 import org.spearal.impl.coder.CollectionCoderProvider;
@@ -53,10 +57,6 @@ import org.spearal.impl.instantiator.CollectionInstantiator;
 import org.spearal.impl.instantiator.MapInstantiator;
 import org.spearal.impl.instantiator.ProxyInstantiator;
 import org.spearal.impl.property.SimplePropertiesFactory;
-import org.spearal.introspect.Introspector;
-import org.spearal.loader.TypeLoader;
-import org.spearal.partial.PartialObjectFactory;
-import org.spearal.security.Securizer;
 
 /**
  * @author Franck WOLFF
@@ -150,7 +150,7 @@ public class SpearalContextImpl implements SpearalContext {
 	}
 	
 	@Override
-	public void prependConfigurableItem(Configurable item) {
+	public void configure(Configurable item) {
 		addConfigurableItem(item, true);
 	}
 	

@@ -34,7 +34,7 @@ import java.util.Map;
 import org.spearal.SpearalContext;
 import org.spearal.SpearalPrinter;
 import org.spearal.SpearalPrinter.StringData;
-import org.spearal.configurable.PropertyFactory.Property;
+import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.util.StringCache;
 import org.spearal.impl.util.StringCache.ValueProvider;
 import org.spearal.impl.util.TypeUtil;

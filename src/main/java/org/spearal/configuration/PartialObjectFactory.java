@@ -15,17 +15,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.spearal.partial;
+package org.spearal.configuration;
 
 import java.util.Collection;
 
-import org.spearal.configurable.PropertyFactory.Property;
+import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.ExtendedSpearalDecoder;
 
 /**
  * @author Franck WOLFF
  */
 public interface PartialObjectFactory {
+
+	public interface PartialObjectProxy {
+
+		boolean $isDefined(String propertyName);
+		Collection<Property> $getDefinedProperties();
+	}
+
+	public static class UndefinedPropertyException extends RuntimeException {
+
+		private static final long serialVersionUID = 1L;
+
+		public UndefinedPropertyException(String propertyName) {
+			super("Property '" + propertyName + "' is undefined");
+		}
+	}
 
 	Object instantiatePartial(ExtendedSpearalDecoder decoder, Class<?> cls, Collection<Property> partialProperties)
 		throws InstantiationException, IllegalAccessException;

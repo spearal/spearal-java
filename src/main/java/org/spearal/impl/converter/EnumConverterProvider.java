@@ -19,7 +19,7 @@ package org.spearal.impl.converter;
 
 import java.lang.reflect.Type;
 
-import org.spearal.configurable.ConverterProvider;
+import org.spearal.configuration.ConverterProvider;
 import org.spearal.impl.ExtendedSpearalDecoder;
 import org.spearal.impl.util.TypeUtil;
 

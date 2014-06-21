@@ -21,6 +21,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 
+import org.spearal.configuration.Introspector;
+import org.spearal.configuration.PartialObjectFactory;
+import org.spearal.configuration.Securizer;
+import org.spearal.configuration.TypeLoader;
 import org.spearal.impl.SpearalContextImpl;
 import org.spearal.impl.SpearalDecoderImpl;
 import org.spearal.impl.SpearalEncoderImpl;
@@ -28,10 +32,6 @@ import org.spearal.impl.SpearalPrinterImpl;
 import org.spearal.impl.introspector.IntrospectorImpl;
 import org.spearal.impl.loader.TypeLoaderImpl;
 import org.spearal.impl.security.SecurizerImpl;
-import org.spearal.introspect.Introspector;
-import org.spearal.loader.TypeLoader;
-import org.spearal.partial.PartialObjectFactory;
-import org.spearal.security.Securizer;
 
 /**
  * @author Franck WOLFF

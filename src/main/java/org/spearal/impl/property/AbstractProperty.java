@@ -24,7 +24,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
 import org.spearal.SpearalContext;
-import org.spearal.configurable.PropertyFactory.Property;
+import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.ExtendedSpearalDecoder;
 
 /**

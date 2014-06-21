@@ -40,9 +40,9 @@ import java.util.logging.Logger;
 import org.spearal.SpearalContext;
 import org.spearal.annotation.Exclude;
 import org.spearal.annotation.Include;
-import org.spearal.configurable.PropertyFactory.Property;
+import org.spearal.configuration.Introspector;
+import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.util.UnmodifiableArray;
-import org.spearal.introspect.Introspector;
 
 /**
  * @author Franck WOLFF

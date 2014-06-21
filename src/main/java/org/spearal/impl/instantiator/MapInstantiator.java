@@ -22,9 +22,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.spearal.configurable.PropertyFactory.Property;
-import org.spearal.configurable.PropertyInstantiator;
-import org.spearal.configurable.TypeInstantiator;
+import org.spearal.configuration.PropertyInstantiator;
+import org.spearal.configuration.TypeInstantiator;
+import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.ExtendedSpearalDecoder;
 import org.spearal.impl.util.TypeUtil;
 

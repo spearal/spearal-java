@@ -26,9 +26,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.spearal.configurable.PropertyFactory.Property;
-import org.spearal.configurable.PropertyInstantiator;
-import org.spearal.configurable.TypeInstantiator;
+import org.spearal.configuration.PropertyInstantiator;
+import org.spearal.configuration.TypeInstantiator;
+import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.ExtendedSpearalDecoder;
 
 /**

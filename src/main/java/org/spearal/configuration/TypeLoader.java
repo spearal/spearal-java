@@ -15,14 +15,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.spearal.loader;
+package org.spearal.configuration;
 
 import java.io.Serializable;
 
 /**
  * @author Franck WOLFF
  */
-public interface ClassNotFoundProxy extends Serializable {
+public interface TypeLoader {
+	
+	public interface ClassNotFound extends Serializable {
+	}
 
-	String $encodedClassName();
+	Class<?> loadClass(String... classNames) throws SecurityException;
 }

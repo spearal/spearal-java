@@ -15,17 +15,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.spearal.partial;
+package org.spearal.configuration;
 
-import java.util.Collection;
+import java.lang.reflect.Type;
 
-import org.spearal.configurable.PropertyFactory.Property;
+import org.spearal.impl.ExtendedSpearalDecoder;
 
 /**
  * @author Franck WOLFF
  */
-public interface PartialObjectProxy {
+public interface ConverterProvider extends Configurable {
 
-	boolean $isDefined(String propertyName);
-	Collection<Property> $getDefinedProperties();
+	public interface Converter<T> {
+		
+		T convert(ExtendedSpearalDecoder decoder, Object value, Type targetType);
+	}
+	
+	Converter<?> getConverter(Class<?> valueClass, Type targetType);
 }

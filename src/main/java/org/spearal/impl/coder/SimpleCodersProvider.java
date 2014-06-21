@@ -27,7 +27,7 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.spearal.configurable.CoderProvider;
+import org.spearal.configuration.CoderProvider;
 import org.spearal.impl.ExtendedSpearalEncoder;
 import org.spearal.impl.SpearalDateTime;
 
@@ -45,7 +45,7 @@ public class SimpleCodersProvider implements CoderProvider {
 		
 		coders.put(Boolean.class, new Coder() {
 			@Override
-			public void writeObject(ExtendedSpearalEncoder encoder, Object value) throws IOException {
+			public void encode(ExtendedSpearalEncoder encoder, Object value) throws IOException {
 				encoder.writeBoolean(((Boolean)value).booleanValue());
 			}
 		});
@@ -54,56 +54,56 @@ public class SimpleCodersProvider implements CoderProvider {
 		
 		coders.put(Byte.class, new Coder() {
 			@Override
-			public void writeObject(ExtendedSpearalEncoder encoder, Object value) throws IOException {
+			public void encode(ExtendedSpearalEncoder encoder, Object value) throws IOException {
 				encoder.writeByte(((Byte)value).byteValue());
 			}
 		});
 		
 		coders.put(Short.class, new Coder() {
 			@Override
-			public void writeObject(ExtendedSpearalEncoder encoder, Object value) throws IOException {
+			public void encode(ExtendedSpearalEncoder encoder, Object value) throws IOException {
 				encoder.writeShort(((Short)value).shortValue());
 			}
 		});
 		
 		coders.put(Integer.class, new Coder() {
 			@Override
-			public void writeObject(ExtendedSpearalEncoder encoder, Object value) throws IOException {
+			public void encode(ExtendedSpearalEncoder encoder, Object value) throws IOException {
 				encoder.writeInt(((Integer)value).intValue());
 			}
 		});
 		
 		coders.put(Long.class, new Coder() {
 			@Override
-			public void writeObject(ExtendedSpearalEncoder encoder, Object value) throws IOException {
+			public void encode(ExtendedSpearalEncoder encoder, Object value) throws IOException {
 				encoder.writeLong(((Long)value).longValue());
 			}
 		});
 		
 		coders.put(BigInteger.class, new Coder() {
 			@Override
-			public void writeObject(ExtendedSpearalEncoder encoder, Object value) throws IOException {
+			public void encode(ExtendedSpearalEncoder encoder, Object value) throws IOException {
 				encoder.writeBigInteger(((BigInteger)value));
 			}
 		});
 		
 		coders.put(Float.class, new Coder() {
 			@Override
-			public void writeObject(ExtendedSpearalEncoder encoder, Object value) throws IOException {
+			public void encode(ExtendedSpearalEncoder encoder, Object value) throws IOException {
 				encoder.writeFloat(((Float)value).floatValue());
 			}
 		});
 		
 		coders.put(Double.class, new Coder() {
 			@Override
-			public void writeObject(ExtendedSpearalEncoder encoder, Object value) throws IOException {
+			public void encode(ExtendedSpearalEncoder encoder, Object value) throws IOException {
 				encoder.writeDouble(((Double)value).doubleValue());
 			}
 		});
 		
 		coders.put(BigDecimal.class, new Coder() {
 			@Override
-			public void writeObject(ExtendedSpearalEncoder encoder, Object value) throws IOException {
+			public void encode(ExtendedSpearalEncoder encoder, Object value) throws IOException {
 				encoder.writeBigDecimal(((BigDecimal)value));
 			}
 		});
@@ -112,21 +112,21 @@ public class SimpleCodersProvider implements CoderProvider {
 		
 		coders.put(String.class, new Coder() {
 			@Override
-			public void writeObject(ExtendedSpearalEncoder encoder, Object value) throws IOException {
+			public void encode(ExtendedSpearalEncoder encoder, Object value) throws IOException {
 				encoder.writeString((String)value);
 			}
 		});
 		
 		coders.put(char[].class, new Coder() {
 			@Override
-			public void writeObject(ExtendedSpearalEncoder encoder, Object value) throws IOException {
+			public void encode(ExtendedSpearalEncoder encoder, Object value) throws IOException {
 				encoder.writeString(String.valueOf((char[])value));
 			}
 		});
 		
 		coders.put(Character.class, new Coder() {
 			@Override
-			public void writeObject(ExtendedSpearalEncoder encoder, Object value) throws IOException {
+			public void encode(ExtendedSpearalEncoder encoder, Object value) throws IOException {
 				encoder.writeString(String.valueOf(((Character)value).charValue()));
 			}
 		});
@@ -135,7 +135,7 @@ public class SimpleCodersProvider implements CoderProvider {
 		
 		coders.put(byte[].class, new Coder() {
 			@Override
-			public void writeObject(ExtendedSpearalEncoder encoder, Object value) throws IOException {
+			public void encode(ExtendedSpearalEncoder encoder, Object value) throws IOException {
 				encoder.writeByteArray(((byte[])value));
 			}
 		});
@@ -144,35 +144,35 @@ public class SimpleCodersProvider implements CoderProvider {
 		
 		coders.put(GregorianCalendar.class, new Coder() {
 			@Override
-			public void writeObject(ExtendedSpearalEncoder encoder, Object value) throws IOException {
+			public void encode(ExtendedSpearalEncoder encoder, Object value) throws IOException {
 				encoder.writeDateTime(SpearalDateTime.forGregorianCalendar((GregorianCalendar)value));
 			}
 		});
 		
 		coders.put(Date.class, new Coder() {
 			@Override
-			public void writeObject(ExtendedSpearalEncoder encoder, Object value) throws IOException {
+			public void encode(ExtendedSpearalEncoder encoder, Object value) throws IOException {
 				encoder.writeDateTime(SpearalDateTime.forDate((Date)value));
 			}
 		});
 		
 		coders.put(java.sql.Date.class, new Coder() {
 			@Override
-			public void writeObject(ExtendedSpearalEncoder encoder, Object value) throws IOException {
+			public void encode(ExtendedSpearalEncoder encoder, Object value) throws IOException {
 				encoder.writeDateTime(SpearalDateTime.forSQLDate((java.sql.Date)value));
 			}
 		});
 		
 		coders.put(Time.class, new Coder() {
 			@Override
-			public void writeObject(ExtendedSpearalEncoder encoder, Object value) throws IOException {
+			public void encode(ExtendedSpearalEncoder encoder, Object value) throws IOException {
 				encoder.writeDateTime(SpearalDateTime.forSQLTime((Time)value));
 			}
 		});
 		
 		coders.put(Timestamp.class, new Coder() {
 			@Override
-			public void writeObject(ExtendedSpearalEncoder encoder, Object value) throws IOException {
+			public void encode(ExtendedSpearalEncoder encoder, Object value) throws IOException {
 				encoder.writeDateTime(SpearalDateTime.forSQLTimestamp((Timestamp)value));
 			}
 		});
@@ -181,7 +181,7 @@ public class SimpleCodersProvider implements CoderProvider {
 		
 		coders.put(Class.class, new Coder() {
 			@Override
-			public void writeObject(ExtendedSpearalEncoder encoder, Object value) throws IOException {
+			public void encode(ExtendedSpearalEncoder encoder, Object value) throws IOException {
 				encoder.writeClass((Class<?>)value);
 			}
 		});

@@ -25,8 +25,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import org.spearal.loader.ClassNotFoundProxy;
-import org.spearal.loader.TypeLoader;
+import org.spearal.configuration.TypeLoader;
 
 /**
  * @author Franck WOLFF
@@ -34,8 +33,6 @@ import org.spearal.loader.TypeLoader;
 public class TypeLoaderImpl implements TypeLoader {
 
 	private final ClassLoader classLoader;
-	private final Class<?> classNotFoundProxyClass;
-	
 	private final ConcurrentMap<String, Class<?>> classesCache;
 	
 	public TypeLoaderImpl() {
@@ -44,19 +41,13 @@ public class TypeLoaderImpl implements TypeLoader {
 	
 	public TypeLoaderImpl(ClassLoader classLoader) {
 		this.classLoader = classLoader;
-		
-		this.classNotFoundProxyClass = Proxy.getProxyClass(
-			TypeLoaderImpl.class.getClassLoader(),
-			new Class<?>[]{ ClassNotFoundProxy.class }
-		);
-		
 		this.classesCache = new ConcurrentHashMap<String, Class<?>>();
 	}
 
 	@Override
 	public Class<?> loadClass(String... classNames) throws SecurityException {
 		if (classNames == null || classNames.length == 0)
-			return classNotFoundProxyClass;
+			return ClassNotFound.class;
 		return (classNames.length == 1 ? loadClass(classNames[0]) : loadClasses(classNames));
 	}
 	
@@ -74,7 +65,7 @@ public class TypeLoaderImpl implements TypeLoader {
 				}
 			}
 			catch (ClassNotFoundException e) {
-				cls = classNotFoundProxyClass;
+				cls = ClassNotFound.class;
 			}
 			
 			Class<?> previous = classesCache.putIfAbsent(className, cls);
@@ -105,7 +96,7 @@ public class TypeLoaderImpl implements TypeLoader {
 						serializable = true;
 				}
 				catch (ClassNotFoundException e) {
-					inter = ClassNotFoundProxy.class;
+					inter = ClassNotFound.class;
 					serializable = true;
 				}
 

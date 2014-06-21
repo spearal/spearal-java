@@ -29,8 +29,8 @@ import java.util.Map;
 
 import org.spearal.SpearalContext;
 import org.spearal.SpearalRequest;
-import org.spearal.configurable.CoderProvider.Coder;
-import org.spearal.configurable.PropertyFactory.Property;
+import org.spearal.configuration.CoderProvider.Coder;
+import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.util.ClassCache;
 import org.spearal.impl.util.ClassCache.ValueProvider;
 import org.spearal.impl.util.ObjectIndexedCache;
@@ -115,7 +115,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 		if (o == null)
 			writeNull();
 		else
-			writers.putIfAbsent(o.getClass()).writeObject(this, o);
+			writers.putIfAbsent(o.getClass()).encode(this, o);
 		
 		if ((--depth) == 0)
 			flushBuffer();

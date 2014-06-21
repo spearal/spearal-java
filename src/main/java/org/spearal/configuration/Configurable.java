@@ -15,21 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.spearal.configurable;
-
-import java.io.IOException;
-
-import org.spearal.impl.ExtendedSpearalEncoder;
+package org.spearal.configuration;
 
 /**
  * @author Franck WOLFF
  */
-public interface CoderProvider extends Configurable {
+public interface Configurable {
 
-	public interface Coder {
-		
-		void writeObject(ExtendedSpearalEncoder encoder, Object value) throws IOException;
-	}
-	
-	Coder getCoder(Class<?> valueClass);
 }

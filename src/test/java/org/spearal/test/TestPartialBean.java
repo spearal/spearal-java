@@ -26,8 +26,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.spearal.SpearalEncoder;
 import org.spearal.SpearalFactory;
-import org.spearal.partial.PartialObjectProxy;
-import org.spearal.partial.UndefinedPropertyException;
+import org.spearal.configuration.PartialObjectFactory.PartialObjectProxy;
+import org.spearal.configuration.PartialObjectFactory.UndefinedPropertyException;
 import org.spearal.test.model.ChildBean;
 import org.spearal.test.model.SimpleBean;
 

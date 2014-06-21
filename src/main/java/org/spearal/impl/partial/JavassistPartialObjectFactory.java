@@ -30,11 +30,9 @@ import javassist.util.proxy.ProxyFactory;
 import javassist.util.proxy.ProxyObject;
 
 import org.spearal.SpearalContext;
-import org.spearal.configurable.PropertyFactory.Property;
+import org.spearal.configuration.PartialObjectFactory;
+import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.ExtendedSpearalDecoder;
-import org.spearal.partial.PartialObjectFactory;
-import org.spearal.partial.PartialObjectProxy;
-import org.spearal.partial.UndefinedPropertyException;
 
 /**
  * @author Franck WOLFF

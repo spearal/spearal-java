@@ -15,21 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.spearal.configurable;
+package org.spearal.configuration;
 
 import java.lang.reflect.Type;
-
-import org.spearal.impl.ExtendedSpearalDecoder;
 
 /**
  * @author Franck WOLFF
  */
-public interface ConverterProvider extends Configurable {
+public interface Securizer {
 
-	public interface Converter<T> {
-		
-		T convert(ExtendedSpearalDecoder decoder, Object value, Type targetType);
-	}
-	
-	Converter<?> getConverter(Class<?> valueClass, Type targetType);
+	void checkDecodable(Type type) throws SecurityException;
+	void checkEncodable(Class<?> cls) throws SecurityException;
 }

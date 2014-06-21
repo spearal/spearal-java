@@ -15,16 +15,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.spearal.partial;
+package org.spearal.configuration;
+
+import java.lang.reflect.Type;
+
+import org.spearal.impl.ExtendedSpearalDecoder;
 
 /**
  * @author Franck WOLFF
  */
-public class UndefinedPropertyException extends RuntimeException {
+public interface TypeInstantiator extends Configurable {
 
-	private static final long serialVersionUID = 1L;
-
-	public UndefinedPropertyException(String propertyName) {
-		super("Property '" + propertyName + "' is undefined");
-	}
+	boolean canInstantiate(Type type);
+	Object instantiate(ExtendedSpearalDecoder decoder, Type type);
 }

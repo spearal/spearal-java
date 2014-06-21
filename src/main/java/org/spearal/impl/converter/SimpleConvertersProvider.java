@@ -31,7 +31,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
-import org.spearal.configurable.ConverterProvider;
+import org.spearal.configuration.ConverterProvider;
 import org.spearal.impl.ExtendedSpearalDecoder;
 import org.spearal.impl.SpearalDateTime;
 

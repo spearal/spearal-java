@@ -20,7 +20,7 @@ package org.spearal.impl.coder;
 import java.io.IOException;
 import java.util.Collection;
 
-import org.spearal.configurable.CoderProvider;
+import org.spearal.configuration.CoderProvider;
 import org.spearal.impl.ExtendedSpearalEncoder;
 
 /**
@@ -33,7 +33,7 @@ public class CollectionCoderProvider implements CoderProvider {
 	public CollectionCoderProvider() {
 		this.coder = new Coder() {
 			@Override
-			public void writeObject(ExtendedSpearalEncoder encoder, Object value) throws IOException {
+			public void encode(ExtendedSpearalEncoder encoder, Object value) throws IOException {
 				encoder.writeCollection((Collection<?>)value);
 			}
 		};

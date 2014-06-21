@@ -22,10 +22,10 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Collection;
 
-import org.spearal.configurable.CoderProvider.Coder;
-import org.spearal.configurable.Configurable;
-import org.spearal.configurable.PropertyFactory.Property;
-import org.spearal.security.Securizer;
+import org.spearal.configuration.Configurable;
+import org.spearal.configuration.Securizer;
+import org.spearal.configuration.CoderProvider.Coder;
+import org.spearal.configuration.PropertyFactory.Property;
 
 /**
  * @author Franck WOLFF
@@ -34,7 +34,7 @@ public interface SpearalContext {
 
 	void initStandardConfigurables();
 	
-	void prependConfigurableItem(Configurable item);
+	void configure(Configurable configurable);
 	
 	Securizer getSecurizer();
 	

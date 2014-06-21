@@ -19,7 +19,7 @@ package org.spearal.impl.coder;
 
 import java.io.IOException;
 
-import org.spearal.configurable.CoderProvider;
+import org.spearal.configuration.CoderProvider;
 import org.spearal.impl.ExtendedSpearalEncoder;
 
 /**
@@ -32,7 +32,7 @@ public class ArrayCoderProvider implements CoderProvider {
 	public ArrayCoderProvider() {
 		this.coder = new Coder() {
 			@Override
-			public void writeObject(ExtendedSpearalEncoder encoder, Object value) throws IOException {
+			public void encode(ExtendedSpearalEncoder encoder, Object value) throws IOException {
 				encoder.writeArray(value);
 			}
 		};

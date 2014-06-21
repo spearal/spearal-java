@@ -15,17 +15,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.spearal.introspect;
+package org.spearal.configuration;
 
-import java.util.Collection;
-
-import org.spearal.SpearalContext;
-import org.spearal.configurable.PropertyFactory.Property;
+import org.spearal.configuration.PropertyFactory.Property;
+import org.spearal.impl.ExtendedSpearalDecoder;
 
 /**
  * @author Franck WOLFF
  */
-public interface Introspector {
+public interface PropertyInstantiator extends Configurable {
 
-	Collection<Property> getProperties(SpearalContext context, Class<?> cls);
+	boolean canInstantiate(Property property);
+	Object instantiate(ExtendedSpearalDecoder decoder, Property property);
 }

@@ -15,17 +15,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.spearal.configurable;
+package org.spearal.configuration;
 
-import java.lang.reflect.Type;
+import java.io.IOException;
 
-import org.spearal.impl.ExtendedSpearalDecoder;
+import org.spearal.impl.ExtendedSpearalEncoder;
 
 /**
  * @author Franck WOLFF
  */
-public interface TypeInstantiator extends Configurable {
+public interface CoderProvider extends Configurable {
 
-	boolean canInstantiate(Type type);
-	Object instantiate(ExtendedSpearalDecoder decoder, Type type);
+	public interface Coder {
+		
+		void encode(ExtendedSpearalEncoder encoder, Object value) throws IOException;
+	}
+	
+	Coder getCoder(Class<?> valueClass);
 }

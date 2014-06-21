@@ -20,8 +20,8 @@ package org.spearal.impl.security;
 import java.io.Serializable;
 import java.lang.reflect.Type;
 
+import org.spearal.configuration.Securizer;
 import org.spearal.impl.util.TypeUtil;
-import org.spearal.security.Securizer;
 
 /**
  * @author Franck WOLFF

@@ -22,7 +22,7 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Map;
 
-import org.spearal.configurable.PropertyFactory;
+import org.spearal.configuration.PropertyFactory;
 
 /**
  * @author Franck WOLFF
