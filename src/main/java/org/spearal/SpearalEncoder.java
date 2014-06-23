@@ -25,7 +25,7 @@ import java.io.IOException;
 public interface SpearalEncoder {
 
 	SpearalContext getContext();
-	SpearalRequest getRequest();
+	SpearalPropertyFilter getPropertyFilter();
 	
 	void writeAny(Object o) throws IOException;
 }

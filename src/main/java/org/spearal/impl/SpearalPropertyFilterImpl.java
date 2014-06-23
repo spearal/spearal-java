@@ -27,25 +27,25 @@ import java.util.Map;
 import java.util.Set;
 
 import org.spearal.SpearalContext;
-import org.spearal.SpearalRequest;
+import org.spearal.SpearalPropertyFilter;
 import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.util.UnmodifiableArray;
 
 /**
  * @author Franck WOLFF
  */
-public class SpearalRequestImpl implements SpearalRequest {
+public class SpearalPropertyFilterImpl implements SpearalPropertyFilter {
 
 	private final SpearalContext context;
 	private final Map<Class<?>, Collection<Property>> propertiesMap;
 	
-	public SpearalRequestImpl(SpearalContext context) {
+	public SpearalPropertyFilterImpl(SpearalContext context) {
 		this.context = context;
 		this.propertiesMap = new HashMap<Class<?>, Collection<Property>>();
 	}
 
 	@Override
-	public void addPropertyFilter(Class<?> cls, String... propertyNames) {
+	public void add(Class<?> cls, String... propertyNames) {
 		if (propertyNames == null || propertyNames.length == 0) {
 			UnmodifiableArray<Property> empty = UnmodifiableArray.empty();
 			this.propertiesMap.put(cls, empty);
@@ -66,7 +66,7 @@ public class SpearalRequestImpl implements SpearalRequest {
 	}
 
 	@Override
-	public Collection<Property> getFilteredProperties(Class<?> cls) {
+	public Collection<Property> get(Class<?> cls) {
 		Collection<Property> properties = propertiesMap.get(cls);
 		if (properties == null) {
 			properties = context.getProperties(cls);

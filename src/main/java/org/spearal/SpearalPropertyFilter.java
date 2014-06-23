@@ -24,9 +24,9 @@ import org.spearal.configuration.PropertyFactory.Property;
 /**
  * @author Franck WOLFF
  */
-public interface SpearalRequest {
+public interface SpearalPropertyFilter {
 
-	void addPropertyFilter(Class<?> cls, String... propertyNames);
+	void add(Class<?> cls, String... propertyNames);
 	
-	Collection<Property> getFilteredProperties(Class<?> cls);
+	Collection<Property> get(Class<?> cls);
 }

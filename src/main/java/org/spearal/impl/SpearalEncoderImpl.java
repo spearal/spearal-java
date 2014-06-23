@@ -28,7 +28,7 @@ import java.util.Collection;
 import java.util.Map;
 
 import org.spearal.SpearalContext;
-import org.spearal.SpearalRequest;
+import org.spearal.SpearalPropertyFilter;
 import org.spearal.configuration.CoderProvider.Coder;
 import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.util.ClassCache;
@@ -44,7 +44,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 	private static final Charset UTF8 = Charset.forName("UTF-8");
 
 	private final SpearalContext context;
-	private final SpearalRequest request;
+	private final SpearalPropertyFilter propertyFilter;
 	private final OutputStream out;
 	
 	private final StringIndexedCache storedStrings;
@@ -66,13 +66,13 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 		this(context, null, out, capacity);
 	}
 	
-	public SpearalEncoderImpl(SpearalContext context, SpearalRequest request, OutputStream out) {
+	public SpearalEncoderImpl(SpearalContext context, SpearalPropertyFilter request, OutputStream out) {
 		this(context, request, out, 1024);
 	}
 	
-	public SpearalEncoderImpl(final SpearalContext context, SpearalRequest request, OutputStream out, int capacity) {
+	public SpearalEncoderImpl(final SpearalContext context, SpearalPropertyFilter propertyFilter, OutputStream out, int capacity) {
 		this.context = context;
-		this.request = (request != null ? request : new SpearalRequestImpl(context));
+		this.propertyFilter = (propertyFilter != null ? propertyFilter : new SpearalPropertyFilterImpl(context));
 		this.out = out;
 		
 		this.storedStrings = new StringIndexedCache();
@@ -104,8 +104,8 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 	}
 
 	@Override
-	public SpearalRequest getRequest() {
-		return request;
+	public SpearalPropertyFilter getPropertyFilter() {
+		return propertyFilter;
 	}
 
 	@Override
@@ -578,7 +578,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 				sb.append(context.getClassNameAlias(inter.getName())).append(':');
 		}
 
-		Collection<Property> selectedProperties = request.getFilteredProperties(cls);
+		Collection<Property> selectedProperties = propertyFilter.get(cls);
 		boolean first = true;
 		for (Property property : selectedProperties) {
 			if (first)

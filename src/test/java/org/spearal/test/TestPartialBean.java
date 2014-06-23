@@ -56,7 +56,7 @@ public class TestPartialBean extends AbstractSpearalTestUnit {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		SpearalFactory factory = new SpearalFactory();
 		SpearalEncoder encoder = factory.newEncoder(baos);
-		encoder.getRequest().addPropertyFilter(ChildBean.class, "childBooleanProperty", "parentStringProperty");
+		encoder.getPropertyFilter().add(ChildBean.class, "childBooleanProperty", "parentStringProperty");
 		encoder.writeAny(bean);
 		
 		Object result = decode(baos.toByteArray());
@@ -88,8 +88,8 @@ public class TestPartialBean extends AbstractSpearalTestUnit {
 
 		baos = new ByteArrayOutputStream();
 		encoder = factory.newEncoder(baos);
-		encoder.getRequest().addPropertyFilter(ChildBean.class, "childBooleanProperty", "simpleBeans", "parentStringProperty");
-		encoder.getRequest().addPropertyFilter(SimpleBean.class, "booleanValue", "stringValue");
+		encoder.getPropertyFilter().add(ChildBean.class, "childBooleanProperty", "simpleBeans", "parentStringProperty");
+		encoder.getPropertyFilter().add(SimpleBean.class, "booleanValue", "stringValue");
 		encoder.writeAny(bean);
 		
 		result = decode(baos.toByteArray());

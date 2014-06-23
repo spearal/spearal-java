@@ -27,7 +27,7 @@ import java.lang.reflect.Type;
 import org.spearal.SpearalFactory;
 import org.spearal.SpearalDecoder;
 import org.spearal.SpearalEncoder;
-import org.spearal.SpearalRequest;
+import org.spearal.SpearalPropertyFilter;
 
 /**
  * @author Franck WOLFF
@@ -50,7 +50,7 @@ public abstract class AbstractSpearalTestUnit {
 		return encode(new SpearalFactory(), null, o);
 	}
 
-	protected byte[] encode(SpearalRequest request, Object o) throws IOException {
+	protected byte[] encode(SpearalPropertyFilter request, Object o) throws IOException {
 		return encode(new SpearalFactory(), request, o);
 	}
 
@@ -58,7 +58,7 @@ public abstract class AbstractSpearalTestUnit {
 		return encode(factory, null, o);
 	}
 
-	protected byte[] encode(SpearalFactory factory, SpearalRequest request, Object o) throws IOException {
+	protected byte[] encode(SpearalFactory factory, SpearalPropertyFilter request, Object o) throws IOException {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		SpearalEncoder out = factory.newEncoder(baos, request);
 		out.writeAny(o);

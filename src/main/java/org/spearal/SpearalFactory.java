@@ -105,7 +105,7 @@ public class SpearalFactory {
 		return new SpearalEncoderImpl(context, out);
 	}
 	
-	public SpearalEncoder newEncoder(OutputStream out, SpearalRequest request) {
+	public SpearalEncoder newEncoder(OutputStream out, SpearalPropertyFilter request) {
 		return new SpearalEncoderImpl(context, request, out);
 	}
 	
