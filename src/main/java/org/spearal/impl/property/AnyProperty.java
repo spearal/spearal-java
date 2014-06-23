@@ -17,6 +17,7 @@
  */
 package org.spearal.impl.property;
 
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -26,11 +27,12 @@ import java.lang.reflect.Type;
 import org.spearal.SpearalContext;
 import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.ExtendedSpearalDecoder;
+import org.spearal.impl.ExtendedSpearalEncoder;
 
 /**
  * @author Franck WOLFF
  */
-public abstract class AbstractProperty implements Property {
+public class AnyProperty implements Property {
 
 	public static Class<?> typeOf(Field field, Method getter) {
 		if (field != null)
@@ -50,7 +52,7 @@ public abstract class AbstractProperty implements Property {
 	protected final Class<?> type;
 	protected final Type genericType;
 
-	public AbstractProperty(String name, Field field, Method getter, Method setter) {
+	public AnyProperty(String name, Field field, Method getter, Method setter) {
 		if (name == null || name.length() == 0)
 			throw new IllegalArgumentException("Illegal property name: " + name);
 		
@@ -103,28 +105,24 @@ public abstract class AbstractProperty implements Property {
 		return (field != null ? field.getDeclaringClass() : getter.getDeclaringClass());
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T initValue(ExtendedSpearalDecoder decoder, Object holder)
+	public Object init(ExtendedSpearalDecoder decoder, Object holder)
 		throws InstantiationException, IllegalAccessException, InvocationTargetException {
 
 		Object value = decoder.getContext().instantiate(decoder, this);
-		setValue(decoder.getContext(), holder, value);
-		return (T)value;
+		set(decoder.getContext(), holder, value);
+		return value;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T getValue(SpearalContext context, Object holder)
+	public Object get(SpearalContext context, Object holder)
 		throws IllegalAccessException, InvocationTargetException {
 		
-		if (field != null)
-			return (T)field.get(holder);
-		return (T)getter.invoke(holder);
+		return (field != null ? field.get(holder) : getter.invoke(holder));
 	}
 
 	@Override
-	public void setValue(SpearalContext context, Object holder, Object value)
+	public void set(SpearalContext context, Object holder, Object value)
 		throws IllegalAccessException, InvocationTargetException {
 		
 		if (field != null)
@@ -153,5 +151,24 @@ public abstract class AbstractProperty implements Property {
 	@Override
 	public boolean isReadOnly() {
 		return (field == null && setter == null);
+	}
+
+	@Override
+	public void write(ExtendedSpearalEncoder encoder, Object holder)
+		throws IOException, IllegalAccessException, InvocationTargetException {
+		
+		encoder.writeAny(field != null ? field.get(holder) : getter.invoke(holder));
+	}
+	
+	@Override
+	public void read(ExtendedSpearalDecoder decoder, Object holder, int parameterizedType)
+		throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException {
+		
+		if (field != null)
+			field.set(holder, decoder.readAny(parameterizedType, genericType));
+		else if (setter != null)
+			setter.invoke(holder, decoder.readAny(parameterizedType, genericType));
+		else
+			decoder.skipAny(parameterizedType);
 	}
 }

@@ -29,7 +29,7 @@ import org.spearal.impl.SpearalType;
 /**
  * @author Franck WOLFF
  */
-public class PrimitiveDoubleProperty extends AbstractProperty {
+public class PrimitiveDoubleProperty extends AnyProperty {
 
 	public PrimitiveDoubleProperty(String name, Field field, Method getter, Method setter) {
 		super(name, field, getter, setter);
@@ -39,10 +39,11 @@ public class PrimitiveDoubleProperty extends AbstractProperty {
 	public void write(ExtendedSpearalEncoder encoder, Object holder)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 		
-		if (field != null)
-			encoder.writeDouble(field.getDouble(holder));
-		else
-			encoder.writeDouble(((Double)getter.invoke(holder)).doubleValue());
+		encoder.writeDouble(
+			field != null ?
+			field.getDouble(holder) :
+			((Double)getter.invoke(holder)).doubleValue()
+		);
 	}
 
 	@Override

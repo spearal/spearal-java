@@ -31,7 +31,7 @@ import org.spearal.impl.ExtendedSpearalEncoder;
 /**
  * @author Franck WOLFF
  */
-public class PrimitiveBooleanProperty extends AbstractProperty {
+public class PrimitiveBooleanProperty extends AnyProperty {
 
 	public PrimitiveBooleanProperty(String name, Field field, Method getter, Method setter) {
 		super(name, field, getter, setter);
@@ -41,10 +41,11 @@ public class PrimitiveBooleanProperty extends AbstractProperty {
 	public void write(ExtendedSpearalEncoder encoder, Object holder)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 		
-		if (field != null)
-			encoder.writeBoolean(field.getBoolean(holder));
-		else
-			encoder.writeBoolean(((Boolean)getter.invoke(holder)).booleanValue());
+		encoder.writeBoolean(
+			field != null ?
+			field.getBoolean(holder) :
+			((Boolean)getter.invoke(holder)).booleanValue()
+		);
 	}
 
 	@Override

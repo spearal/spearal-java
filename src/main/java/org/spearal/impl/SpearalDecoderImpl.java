@@ -716,7 +716,8 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	}
 	}
     
-    @Override
+    @SuppressWarnings("unchecked")
+	@Override
 	public void readCollection(int parameterizedType, Object holder, Property property)
 		throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException {
     	
@@ -727,15 +728,15 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	int indexOrLength = readUnsignedIntegerValue(length0);
     	
     	if (reference) {
-    		property.setValue(context, holder, storedObjects.get(indexOrLength));
+    		property.set(context, holder, storedObjects.get(indexOrLength));
     		return;
     	}
     	
-    	Collection<Object> value = property.getValue(context, holder);
+		Collection<Object> value = (Collection<Object>)property.get(context, holder);
     	if (value != null)
     		value.clear();
     	else
-    		value = property.initValue(this, holder);
+    		value = (Collection<Object>)property.init(this, holder);
     	storedObjects.add(value);
     	
     	Type elementType = TypeUtil.getElementType(property.getGenericType());
@@ -821,6 +822,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void readMap(int parameterizedType, Object holder, Property property)
 		throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException {
@@ -832,15 +834,15 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	int indexOrLength = readUnsignedIntegerValue(length0);
     	
     	if (reference) {
-    		property.setValue(context, holder, storedObjects.get(indexOrLength));
+    		property.set(context, holder, storedObjects.get(indexOrLength));
     		return;
     	}
     	
-    	Map<Object, Object> value = property.getValue(context, holder);
+    	Map<Object, Object> value = (Map<Object, Object>)property.get(context, holder);
     	if (value != null)
     		value.clear();
     	else
-    		value = property.initValue(this, holder);
+    		value = (Map<Object, Object>)property.init(this, holder);
     	storedObjects.add(value);
 
     	Type[] keyValueTypes = TypeUtil.getKeyValueType(property.getGenericType());

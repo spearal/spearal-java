@@ -30,7 +30,7 @@ import org.spearal.impl.SpearalType;
 /**
  * @author Franck WOLFF
  */
-public class CollectionProperty extends AbstractProperty {
+public class CollectionProperty extends AnyProperty {
 
 	public CollectionProperty(String name, Field field, Method getter, Method setter) {
 		super(name, field, getter, setter);
@@ -40,7 +40,7 @@ public class CollectionProperty extends AbstractProperty {
 	public void write(ExtendedSpearalEncoder encoder, Object holder)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 		
-		encoder.writeCollection((Collection<?>)getValue(encoder.getContext(), holder));
+		encoder.writeCollection((Collection<?>)(field != null ? field.get(holder) : getter.invoke(holder)));
 	}
 
 	@Override
@@ -50,6 +50,6 @@ public class CollectionProperty extends AbstractProperty {
 		if (SpearalType.valueOf(parameterizedType) == SpearalType.COLLECTION)
 			decoder.readCollection(parameterizedType, holder, this);
 		else
-			setValue(decoder.getContext(), holder, decoder.readAny(parameterizedType, genericType));
+			super.read(decoder, holder, parameterizedType);
 	}
 }

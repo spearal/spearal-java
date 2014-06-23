@@ -45,13 +45,13 @@ public interface PropertyFactory extends Repeatable {
 		
 		Class<?> getDeclaringClass();
 		
-		<T> T initValue(ExtendedSpearalDecoder decoder, Object holder)
+		Object init(ExtendedSpearalDecoder decoder, Object holder)
 			throws InstantiationException, IllegalAccessException, InvocationTargetException;
 		
-		<T> T getValue(SpearalContext context, Object holder)
+		Object get(SpearalContext context, Object holder)
 			throws IllegalAccessException, InvocationTargetException;
 		
-		void setValue(SpearalContext context, Object holder, Object value)
+		void set(SpearalContext context, Object holder, Object value)
 			throws IllegalAccessException, InvocationTargetException;
 		
 		boolean isAnnotationPresent(Class<? extends Annotation> annotationClass);

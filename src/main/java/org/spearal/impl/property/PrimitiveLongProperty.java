@@ -29,7 +29,7 @@ import org.spearal.impl.SpearalType;
 /**
  * @author Franck WOLFF
  */
-public class PrimitiveLongProperty extends AbstractProperty {
+public class PrimitiveLongProperty extends AnyProperty {
 
 	public PrimitiveLongProperty(String name, Field field, Method getter, Method setter) {
 		super(name, field, getter, setter);
@@ -39,10 +39,11 @@ public class PrimitiveLongProperty extends AbstractProperty {
 	public void write(ExtendedSpearalEncoder encoder, Object holder)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 		
-		if (field != null)
-			encoder.writeLong(field.getLong(holder));
-		else
-			encoder.writeLong(((Long)getter.invoke(holder)).longValue());
+		encoder.writeLong(
+			field != null ?
+			field.getLong(holder) :
+			((Long)getter.invoke(holder)).longValue()
+		);
 	}
 
 	@Override

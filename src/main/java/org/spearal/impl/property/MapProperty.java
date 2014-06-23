@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Collection;
+import java.util.Map;
 
 import org.spearal.impl.ExtendedSpearalDecoder;
 import org.spearal.impl.ExtendedSpearalEncoder;
@@ -30,7 +30,7 @@ import org.spearal.impl.SpearalType;
 /**
  * @author Franck WOLFF
  */
-public class MapProperty extends AbstractProperty {
+public class MapProperty extends AnyProperty {
 
 	public MapProperty(String name, Field field, Method getter, Method setter) {
 		super(name, field, getter, setter);
@@ -40,7 +40,7 @@ public class MapProperty extends AbstractProperty {
 	public void write(ExtendedSpearalEncoder encoder, Object holder)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 		
-		encoder.writeCollection((Collection<?>)getValue(encoder.getContext(), holder));
+		encoder.writeMap((Map<?, ?>)(field != null ? field.get(holder) : getter.invoke(holder)));
 	}
 
 	@Override
@@ -50,6 +50,6 @@ public class MapProperty extends AbstractProperty {
 		if (SpearalType.valueOf(parameterizedType) == SpearalType.MAP)
 			decoder.readMap(parameterizedType, holder, this);
 		else
-			setValue(decoder.getContext(), holder, decoder.readAny(parameterizedType, genericType));
+			super.read(decoder, holder, parameterizedType);
 	}
 }

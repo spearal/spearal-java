@@ -31,7 +31,7 @@ public class SimplePropertiesFactory implements PropertyFactory {
 	
 	@Override
 	public Property createProperty(String name, Field field, Method getter, Method setter) {
-		Class<?> type = AbstractProperty.typeOf(field, getter);
+		Class<?> type = AnyProperty.typeOf(field, getter);
 		
 		if (type.isPrimitive()) {
 			if (type == boolean.class)
@@ -52,6 +52,6 @@ public class SimplePropertiesFactory implements PropertyFactory {
 				return new MapProperty(name, field, getter, setter);
 		}
 		
-		return new GeneralProperty(name, field, getter, setter);
+		return new AnyProperty(name, field, getter, setter);
 	}
 }
