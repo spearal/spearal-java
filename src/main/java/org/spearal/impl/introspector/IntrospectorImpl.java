@@ -22,19 +22,15 @@ import static java.lang.reflect.Modifier.PRIVATE;
 import static java.lang.reflect.Modifier.PROTECTED;
 import static java.lang.reflect.Modifier.STATIC;
 import static java.lang.reflect.Modifier.TRANSIENT;
+import static org.spearal.configuration.PropertyFactory.ZERO_PROPERTIES;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
 
 import org.spearal.SpearalContext;
@@ -42,7 +38,8 @@ import org.spearal.annotation.Exclude;
 import org.spearal.annotation.Include;
 import org.spearal.configuration.Introspector;
 import org.spearal.configuration.PropertyFactory.Property;
-import org.spearal.impl.util.UnmodifiableArray;
+import org.spearal.impl.cache.CopyOnWriteKeyValueMap;
+import org.spearal.impl.cache.KeyValueMap.ValueProvider;
 
 /**
  * @author Franck WOLFF
@@ -51,33 +48,34 @@ public class IntrospectorImpl implements Introspector {
 	
 	private static Logger logger = Logger.getLogger(IntrospectorImpl.class.getName());
 
-	private final ConcurrentMap<Class<?>, Collection<Property>> cache;
+	private final CopyOnWriteKeyValueMap<Class<?>, Property[]> cache;
 
 	public IntrospectorImpl() {
-		this.cache = new ConcurrentHashMap<Class<?>, Collection<Property>>();
+		this.cache = new CopyOnWriteKeyValueMap<Class<?>, Property[]>(true,
+			new ValueProvider<Class<?>, Property[]>() {
+				@Override
+				public Property[] createValue(SpearalContext context, Class<?> key) {
+					return (
+						Proxy.isProxyClass(key)
+						? introspectProxyProperties(context, key)
+						: introspectBeanProperties(context, key)
+					);
+				}
+			}
+		);
 	}
 	
 	@Override
-	public Collection<Property> getProperties(SpearalContext context, Class<?> cls) {
-		Collection<Property> properties = cache.get(cls);
-		
-		if (properties == null) {
-			properties = (
-				Proxy.isProxyClass(cls)
-				? introspectProxyProperties(context, cls)
-				: introspectBeanProperties(context, cls)
-			);
-			Collection<Property> previous = cache.putIfAbsent(cls, properties);
-			if (previous != null)
-				properties = previous;
-		}
-		
+	public Property[] getProperties(SpearalContext context, Class<?> cls) {
+		Property[] properties = cache.get(cls);
+		if (properties == null)
+			properties = cache.putIfAbsent(context, cls);
 		return properties;
 	}
 	
-	protected Collection<Property> introspectBeanProperties(SpearalContext context, Class<?> cls) {
+	protected Property[] introspectBeanProperties(SpearalContext context, Class<?> cls) {
 		if (cls == Object.class || cls == null)
-			return UnmodifiableArray.empty();
+			return ZERO_PROPERTIES;
 		
 		Field[] declaredFields = cls.getDeclaredFields();
 		Method[] declaredMethods = cls.getDeclaredMethods();
@@ -131,13 +129,14 @@ public class IntrospectorImpl implements Introspector {
 			}
 		}
 		
+		Property[] properties = propertiesMap.values().toArray(ZERO_PROPERTIES);
+		
 		Class<?> superCls = cls.getSuperclass();
 		if (superCls == Object.class || superCls == null)
-			return UnmodifiableArray.of(propertiesMap.values().toArray(new Property[0]));
+			return properties;
 		
-		List<Property> allProperties = new ArrayList<Property>(getProperties(context, superCls));
-		allProperties.addAll(propertiesMap.values());
-		return UnmodifiableArray.of(allProperties.toArray(new Property[0]));
+		Property[] superProperties = getProperties(context, superCls);
+		return concat(superProperties, properties);
 	}
 
 	protected Method findGetter(Method[] methods, Class<?> type, String name) {
@@ -190,9 +189,9 @@ public class IntrospectorImpl implements Introspector {
 		return looseMatch;
 	}
 	
-	protected Collection<Property> introspectProxyProperties(SpearalContext context, Class<?> cls) {
+	protected Property[] introspectProxyProperties(SpearalContext context, Class<?> cls) {
 		if (cls == null)
-			return UnmodifiableArray.empty();
+			return ZERO_PROPERTIES;
 		
 		Map<String, Method> setters = new HashMap<String, Method>();
 		Map<String, Method> getters = new HashMap<String, Method>();
@@ -238,6 +237,21 @@ public class IntrospectorImpl implements Introspector {
 			
 		}
 
-		return UnmodifiableArray.of(propertiesMap.values().toArray(new Property[0]));
+		return propertiesMap.values().toArray(ZERO_PROPERTIES);
+	}
+	
+	protected static Property[] concat(Property[] properties1, Property[] properties2) {
+		int length1 = properties1.length,
+			length2 = properties2.length;
+		
+		if (length1 == 0)
+			return properties2;
+		if (length2 == 0)
+			return properties1;
+		
+		Property[] properties = new Property[length1 + length2];
+		System.arraycopy(properties1, 0, properties, 0, length1);
+		System.arraycopy(properties2, 0, properties, length1, length2);
+		return properties;
 	}
 }

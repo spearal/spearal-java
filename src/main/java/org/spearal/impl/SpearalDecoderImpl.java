@@ -35,10 +35,9 @@ import org.spearal.SpearalContext;
 import org.spearal.SpearalPrinter;
 import org.spearal.SpearalPrinter.StringData;
 import org.spearal.configuration.PropertyFactory.Property;
-import org.spearal.impl.util.StringCache;
-import org.spearal.impl.util.StringCache.ValueProvider;
+import org.spearal.impl.cache.EqualityValueMap;
+import org.spearal.impl.cache.KeyValueMap.ValueProvider;
 import org.spearal.impl.util.TypeUtil;
-import org.spearal.impl.util.UnmodifiableArray;
 
 /**
  * @author Franck WOLFF
@@ -47,9 +46,9 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
 	private static final Charset UTF8 = Charset.forName("UTF-8");
 	
-	private final List<String> storedStrings;
-	private final List<Object> storedObjects;
-	private final StringCache<ClassDescriptor> descriptors;
+	private final List<String> sharedStrings;
+	private final List<Object> sharedObjects;
+	private final EqualityValueMap<String, ClassDescriptor> descriptors;
 
     private final SpearalContext context;
 	
@@ -64,11 +63,11 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	}
 
 	public SpearalDecoderImpl(final SpearalContext context, InputStream in, int capacity) {
-        this.storedStrings = new ArrayList<String>(64);
-        this.storedObjects = new ArrayList<Object>(64);
-        this.descriptors = new StringCache<ClassDescriptor>(new ValueProvider<ClassDescriptor>() {
+        this.sharedStrings = new ArrayList<String>(64);
+        this.sharedObjects = new ArrayList<Object>(64);
+        this.descriptors = new EqualityValueMap<String, ClassDescriptor>(new ValueProvider<String, ClassDescriptor>() {
 			@Override
-			public ClassDescriptor createValue(String key) {
+			public ClassDescriptor createValue(SpearalContext context, String key) {
 				return ClassDescriptor.forDescription(context, key);
 			}
 		});
@@ -561,10 +560,10 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	int indexOrLength = readUnsignedIntegerValue(length0);
     	
     	if (reference)
-    		return (byte[])storedObjects.get(indexOrLength);
+    		return (byte[])sharedObjects.get(indexOrLength);
     	
     	byte[] bytes = new byte[indexOrLength];
-    	storedObjects.add(bytes);
+    	sharedObjects.add(bytes);
     	readFully(bytes, 0, indexOrLength);
 		return bytes;
 	}
@@ -578,7 +577,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	int indexOrLength = readUnsignedIntegerValue(length0);
     	
     	if (!reference) {
-    		storedObjects.add(null);
+    		sharedObjects.add(null);
     		skipFully(indexOrLength);
     	}
     }
@@ -591,12 +590,12 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	int indexOrLength = readUnsignedIntegerValue(length0);
 
     	if (reference)
-    		printer.printByteArray((byte[])storedObjects.get(indexOrLength), indexOrLength, true);
+    		printer.printByteArray((byte[])sharedObjects.get(indexOrLength), indexOrLength, true);
     	else {
         	byte[] bytes = new byte[indexOrLength];
-        	storedObjects.add(bytes);
+        	sharedObjects.add(bytes);
         	readFully(bytes, 0, indexOrLength);
-        	printer.printByteArray(bytes, storedObjects.size() - 1, false);
+        	printer.printByteArray(bytes, sharedObjects.size() - 1, false);
     	}
     }
     
@@ -670,10 +669,10 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	int indexOrLength = readUnsignedIntegerValue(length0);
     	
     	if (reference)
-    		return (List<?>)storedObjects.get(indexOrLength);
+    		return (List<?>)sharedObjects.get(indexOrLength);
     	
     	List<Object> value = new ArrayList<Object>(indexOrLength);
-    	storedObjects.add(value);
+    	sharedObjects.add(value);
     	
     	for (int i = 0; i < indexOrLength; i++)
     		value.add(readAny());
@@ -690,7 +689,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	int indexOrLength = readUnsignedIntegerValue(length0);
     	
     	if (!reference) {
-			storedObjects.add(null);
+			sharedObjects.add(null);
     		for (int i = 0; i < indexOrLength; i++)
     			skipAny();
     	}
@@ -706,8 +705,8 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	if (reference)
     		printer.printCollectionReference(indexOrLength);
     	else {
-    		printer.printCollectionStart(storedObjects.size(), indexOrLength);
-    		storedObjects.add(null);
+    		printer.printCollectionStart(sharedObjects.size(), indexOrLength);
+    		sharedObjects.add(null);
     		
     		for (int i = 0; i < indexOrLength; i++)
     			printAny(printer);
@@ -728,7 +727,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	int indexOrLength = readUnsignedIntegerValue(length0);
     	
     	if (reference) {
-    		property.set(context, holder, storedObjects.get(indexOrLength));
+    		property.set(context, holder, sharedObjects.get(indexOrLength));
     		return;
     	}
     	
@@ -737,7 +736,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     		value.clear();
     	else
     		value = (Collection<Object>)property.init(this, holder);
-    	storedObjects.add(value);
+    	sharedObjects.add(value);
     	
     	Type elementType = TypeUtil.getElementType(property.getGenericType());
     	if (elementType == Object.class) {
@@ -769,10 +768,10 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	int indexOrLength = readUnsignedIntegerValue(length0);
     	
     	if (reference)
-    		return (Map<?, ?>)storedObjects.get(indexOrLength);
+    		return (Map<?, ?>)sharedObjects.get(indexOrLength);
     	
     	Map<Object, Object> value = new LinkedHashMap<Object, Object>(indexOrLength);
-    	storedObjects.add(value);
+    	sharedObjects.add(value);
     	
     	for (int i = 0; i < indexOrLength; i++) {
     		Object key = readAny();
@@ -793,8 +792,8 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	if (reference)
     		printer.printMapReference(indexOrLength);
     	else {
-    		printer.printMapStart(storedObjects.size(), indexOrLength);
-    		storedObjects.add(null);
+    		printer.printMapStart(sharedObjects.size(), indexOrLength);
+    		sharedObjects.add(null);
     		
     		for (int i = 0; i < indexOrLength; i++) {
     			printAny(printer);
@@ -814,7 +813,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	int indexOrLength = readUnsignedIntegerValue(length0);
     	
     	if (!reference) {
-			storedObjects.add(null);
+			sharedObjects.add(null);
     		for (int i = 0; i < indexOrLength; i++) {
     			skipAny();
     			skipAny();
@@ -834,7 +833,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	int indexOrLength = readUnsignedIntegerValue(length0);
     	
     	if (reference) {
-    		property.set(context, holder, storedObjects.get(indexOrLength));
+    		property.set(context, holder, sharedObjects.get(indexOrLength));
     		return;
     	}
     	
@@ -843,7 +842,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     		value.clear();
     	else
     		value = (Map<Object, Object>)property.init(this, holder);
-    	storedObjects.add(value);
+    	sharedObjects.add(value);
 
     	Type[] keyValueTypes = TypeUtil.getKeyValueType(property.getGenericType());
     	Type keyType = keyValueTypes[0];
@@ -976,11 +975,11 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	int indexOrLength = readUnsignedIntegerValue(length0);
     	
     	if (reference)
-    		return storedObjects.get(indexOrLength);
+    		return sharedObjects.get(indexOrLength);
     	
     	boolean classDescReference = (parameterizedType & 0x04) != 0;
     	String classDescription = readStringData(indexOrLength, classDescReference);
-    	ClassDescriptor descriptor = descriptors.putIfAbsent(classDescription);
+    	ClassDescriptor descriptor = descriptors.putIfAbsent(context, classDescription);
 
     	try {
 	    	Class<?> cls = descriptor.cls;
@@ -990,7 +989,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	    		? context.instantiatePartial(this, cls, descriptor.properties)
 	    		: context.instantiate(this, cls)
 	    	);
-	    	storedObjects.add(value);
+	    	sharedObjects.add(value);
 	    	
 	    	for (Property property : descriptor.properties) {
 	    		ensureAvailable(1);
@@ -1020,7 +1019,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	if (!reference) {
     		boolean classDescReference = (parameterizedType & 0x04) != 0;
     		String classDescription = readStringData(indexOrLength, classDescReference);
-    		storedObjects.add(null);
+    		sharedObjects.add(null);
     		
     		int propertiesCount = ClassDescriptor.propertiesCount(classDescription);
     		for (int i = 0; i < propertiesCount; i++)
@@ -1042,8 +1041,8 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
         	StringData classDescription = getStringData(indexOrLength, classDescReference);
     		String[] classNames = ClassDescriptor.classNames(classDescription.value);
     		
-    		storedObjects.add(null);
-    		printer.printBeanStart(storedObjects.size() - 1, classDescription, classNames);
+    		sharedObjects.add(null);
+    		printer.printBeanStart(sharedObjects.size() - 1, classDescription, classNames);
     		
     		String[] propertyNames = ClassDescriptor.propertyNames(classDescription.value);
     		for (String propertyName : propertyNames) {
@@ -1080,7 +1079,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     
     private String readStringData(int indexOrLength, boolean reference) throws IOException {
     	if (reference)
-    		return storedStrings.get(indexOrLength);
+    		return sharedStrings.get(indexOrLength);
     	
     	if (indexOrLength == 0)
     		return "";
@@ -1097,25 +1096,25 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	        value = new String(bytes, UTF8);
         }
         
-    	storedStrings.add(value);
+    	sharedStrings.add(value);
         
         return value;
     }
     
     private void skipStringData(int indexOrLength, boolean reference) throws IOException {
     	if (!reference) {
-    		storedStrings.add(null);
+    		sharedStrings.add(null);
     		skipFully(indexOrLength);
     	}
     }
     
     private StringData getStringData(int indexOrLength, boolean reference) throws IOException {
     	if (reference)
-    		return new StringData(storedStrings.get(indexOrLength), indexOrLength, true);
+    		return new StringData(sharedStrings.get(indexOrLength), indexOrLength, true);
     	if (indexOrLength == 0)
     		return new StringData("", -1, false);
     	String value = readStringData(indexOrLength, reference);
-    	return new StringData(value, storedStrings.size() - 1, false);
+    	return new StringData(value, sharedStrings.size() - 1, false);
     }
 
 	private long readLongData() {
@@ -1238,7 +1237,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	private static class ClassDescriptor {
 		
 		public final Class<?> cls;
-		public final Collection<Property> properties;
+		public final Property[] properties;
 		public final boolean partial;
 
 		public static ClassDescriptor forDescription(SpearalContext context, String description) {
@@ -1260,7 +1259,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 			
 			Class<?> cls = context.loadClass(classNames);
 			
-			Collection<Property> properties = context.getProperties(cls);
+			Property[] properties = context.getProperties(cls);
 			Property[] serializedProperties = new Property[propertyNames.length];
 			for (int i = 0; i < propertyNames.length; i++) {
 				String propertyName = propertyNames[i];
@@ -1272,9 +1271,9 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 				}
 			}
 			
-			boolean partial = serializedProperties.length < properties.size();
+			boolean partial = serializedProperties.length < properties.length;
 			
-			return new ClassDescriptor(cls, new UnmodifiableArray<Property>(serializedProperties), partial);
+			return new ClassDescriptor(cls, serializedProperties, partial);
 		}
 		
 		public static String[] classNames(String description) {
@@ -1304,7 +1303,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 			return count;
 		}
 		
-		public ClassDescriptor(Class<?> cls, Collection<Property> properties, boolean partial) {
+		public ClassDescriptor(Class<?> cls, Property[] properties, boolean partial) {
 			this.cls = cls;
 			this.properties = properties;
 			this.partial = partial;

@@ -22,13 +22,12 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.configuration.PropertyInstantiator;
 import org.spearal.configuration.TypeInstantiator;
-import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.ExtendedSpearalDecoder;
 
 /**
@@ -46,7 +45,7 @@ public class ProxyInstantiator implements TypeInstantiator, PropertyInstantiator
 		Class<?> cls = (Class<?>)type;
         try {
     		Constructor<?> constructor = cls.getConstructor(new Class<?>[]{ InvocationHandler.class });
-    		Collection<Property> properties = decoder.getContext().getProperties(cls);
+    		Property[] properties = decoder.getContext().getProperties(cls);
     		return constructor.newInstance(new PropertiesInvocationHandler(decoder, properties));
 		}
         catch (Exception e) {
@@ -70,7 +69,7 @@ public class ProxyInstantiator implements TypeInstantiator, PropertyInstantiator
 		private final Map<Method, String> methods;
 		private final Map<String, Object> values;
 		
-		public PropertiesInvocationHandler(ExtendedSpearalDecoder decoder, Collection<Property> properties) {
+		public PropertiesInvocationHandler(ExtendedSpearalDecoder decoder, Property[] properties) {
 			this.decoder = decoder;
 			this.methods = new HashMap<Method, String>();
 			this.values = new HashMap<String, Object>();

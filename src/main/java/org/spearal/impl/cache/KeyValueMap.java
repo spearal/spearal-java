@@ -15,16 +15,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.spearal;
+package org.spearal.impl.cache;
 
-import org.spearal.configuration.PropertyFactory.Property;
+import org.spearal.SpearalContext;
 
 /**
  * @author Franck WOLFF
  */
-public interface SpearalPropertyFilter {
+public interface KeyValueMap<K, V> extends Cloneable {
 
-	void add(Class<?> cls, String... propertyNames);
+	V get(K key);
 	
-	Property[] get(Class<?> cls);
+	V putIfAbsent(SpearalContext context, K key);
+	
+	int size();
+	
+	void clear();
+	
+	KeyValueMap<K, V> clone();
+	
+	public interface ValueProvider<K, V> {
+		
+		V createValue(SpearalContext context, K key);
+	}
 }

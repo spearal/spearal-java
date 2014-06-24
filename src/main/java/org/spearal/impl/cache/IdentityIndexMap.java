@@ -15,31 +15,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.spearal.impl.util;
+package org.spearal.impl.cache;
 
 /**
  * @author Franck WOLFF
  */
-public final class StringIndexedCache extends AbstractIndexedCache<String> {
-	
-	public StringIndexedCache() {
-		init(DEFAULT_INITIAL_CAPACITY);
+public final class IdentityIndexMap extends AbstractKeyIndexMap<Object> {
+
+	public IdentityIndexMap() {
 	}
-	
-	public StringIndexedCache(int capacity) {
-		init(roundUpToPowerOf2(capacity));
+
+	public IdentityIndexMap(int capacity) {
+		super(capacity);
 	}
-	
-	public int putIfAbsent(String key) {
-		final int hash = key.hashCode();
+
+	@Override
+	public int putIfAbsent(Object key) {
+		final int hash = System.identityHashCode(key);
         
 		int index = hash & (entries.length - 1);
-		Entry head = entries[index];
+		Entry<Object> head = entries[index];
 		
 		if (head != null) {
-			Entry entry = head;
+			Entry<Object> entry = head;
 			do {
-				if (hash == entry.hash && key.equals(entry.key))
+				if (key == entry.key)
 					return entry.index;
 				entry = entry.next;
 			}
@@ -51,7 +51,7 @@ public final class StringIndexedCache extends AbstractIndexedCache<String> {
 			}
 		}
 
-        entries[index] = new Entry(key, hash, size, head);
+        entries[index] = new Entry<Object>(key, hash, size, head);
         size++;
         
         return -1;

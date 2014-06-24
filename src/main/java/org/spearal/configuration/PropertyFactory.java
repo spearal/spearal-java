@@ -33,6 +33,8 @@ import org.spearal.impl.ExtendedSpearalEncoder;
  */
 public interface PropertyFactory extends Repeatable {
 	
+	public static final Property[] ZERO_PROPERTIES = new Property[0];
+	
 	public interface Property {
 		
 		String getName();

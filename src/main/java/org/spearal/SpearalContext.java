@@ -20,12 +20,11 @@ package org.spearal;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.util.Collection;
 
-import org.spearal.configuration.Configurable;
-import org.spearal.configuration.Securizer;
 import org.spearal.configuration.CoderProvider.Coder;
+import org.spearal.configuration.Configurable;
 import org.spearal.configuration.PropertyFactory.Property;
+import org.spearal.configuration.Securizer;
 
 /**
  * @author Franck WOLFF
@@ -42,13 +41,13 @@ public interface SpearalContext {
 	Class<?> loadClass(String...classNames)
 		throws SecurityException;
 	
-	Collection<Property> getProperties(Class<?> cls);
+	Property[] getProperties(Class<?> cls);
 	
 	Object instantiate(SpearalDecoder decoder, Type type)
 		throws InstantiationException, IllegalAccessException;
 	Object instantiate(SpearalDecoder decoder, Property property)
 		throws InstantiationException, IllegalAccessException;
-	Object instantiatePartial(SpearalDecoder decoder, Class<?> cls, Collection<Property> partialProperties)
+	Object instantiatePartial(SpearalDecoder decoder, Class<?> cls, Property[] partialProperties)
 		throws InstantiationException, IllegalAccessException;
 	
 	Coder getCoder(Class<?> valueClass);

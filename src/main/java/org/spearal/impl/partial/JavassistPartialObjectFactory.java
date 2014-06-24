@@ -18,7 +18,6 @@
 package org.spearal.impl.partial;
 
 import java.lang.reflect.Method;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,7 +44,7 @@ public class JavassistPartialObjectFactory implements PartialObjectFactory {
 	}
 
 	@Override
-	public Object instantiatePartial(ExtendedSpearalDecoder decoder, Class<?> cls, Collection<Property> partialProperties)
+	public Object instantiatePartial(ExtendedSpearalDecoder decoder, Class<?> cls, Property[] partialProperties)
 		throws InstantiationException, IllegalAccessException {
 		
 		Class<?> proxyClass = proxyClasses.get(cls);
@@ -98,20 +97,20 @@ public class JavassistPartialObjectFactory implements PartialObjectFactory {
 	
 	private static class PartialObjectProxyHandler implements MethodHandler {
 
-		private final Collection<Property> partialProperties;
+		private final Property[] partialProperties;
 		private final Set<Method> partialGetters;
 		private final Set<String> partialPropertiesNames;
 
-		public PartialObjectProxyHandler(Collection<Property> partialProperties) {
+		public PartialObjectProxyHandler(Property[] partialProperties) {
 			this.partialProperties = partialProperties;
 			
-			this.partialGetters = new HashSet<Method>(partialProperties.size());
+			this.partialGetters = new HashSet<Method>(partialProperties.length);
 			for (Property property : partialProperties) {
 				if (property.getGetter() != null)
 					partialGetters.add(property.getGetter());
 			}
 			
-			this.partialPropertiesNames = new HashSet<String>(partialProperties.size());
+			this.partialPropertiesNames = new HashSet<String>(partialProperties.length);
 			for (Property property : partialProperties)
 				partialPropertiesNames.add(property.getName());
 		}

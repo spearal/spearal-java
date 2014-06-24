@@ -17,8 +17,6 @@
  */
 package org.spearal.configuration;
 
-import java.util.Collection;
-
 import org.spearal.SpearalContext;
 import org.spearal.configuration.PropertyFactory.Property;
 
@@ -27,5 +25,5 @@ import org.spearal.configuration.PropertyFactory.Property;
  */
 public interface Introspector extends Configurable {
 
-	Collection<Property> getProperties(SpearalContext context, Class<?> cls);
+	Property[] getProperties(SpearalContext context, Class<?> cls);
 }

@@ -29,12 +29,11 @@ import java.util.Map;
 
 import org.spearal.SpearalContext;
 import org.spearal.SpearalPropertyFilter;
-import org.spearal.configuration.CoderProvider.Coder;
 import org.spearal.configuration.PropertyFactory.Property;
-import org.spearal.impl.util.ClassCache;
-import org.spearal.impl.util.ClassCache.ValueProvider;
-import org.spearal.impl.util.ObjectIndexedCache;
-import org.spearal.impl.util.StringIndexedCache;
+import org.spearal.impl.cache.IdentityIndexMap;
+import org.spearal.impl.cache.IdentityValueMap;
+import org.spearal.impl.cache.KeyValueMap.ValueProvider;
+import org.spearal.impl.cache.StringIndexMap;
 
 /**
  * @author Franck WOLFF
@@ -47,11 +46,9 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 	private final SpearalPropertyFilter propertyFilter;
 	private final OutputStream out;
 	
-	private final StringIndexedCache storedStrings;
-	private final ObjectIndexedCache storedObjects;
-	private final ClassCache<ClassDescriptor> descriptors;
-	
-	private final ClassCache<Coder> writers;
+	private final StringIndexMap sharedStrings;
+	private final IdentityIndexMap sharedObjects;
+	private final IdentityValueMap<Class<?>, ClassDescriptor> descriptors;
 	
 	private final byte[] buffer;
 	private int position;
@@ -75,20 +72,13 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 		this.propertyFilter = (propertyFilter != null ? propertyFilter : new SpearalPropertyFilterImpl(context));
 		this.out = out;
 		
-		this.storedStrings = new StringIndexedCache();
-		this.storedObjects = new ObjectIndexedCache();
-		this.descriptors = new ClassCache<ClassDescriptor>(new ValueProvider<ClassDescriptor>() {
+		this.sharedStrings = new StringIndexMap();
+		this.sharedObjects = new IdentityIndexMap();
+		this.descriptors = new IdentityValueMap<Class<?>, ClassDescriptor>(new ValueProvider<Class<?>, ClassDescriptor>() {
 			@Override
-			public ClassDescriptor createValue(Class<?> key) {
+			public ClassDescriptor createValue(SpearalContext context, Class<?> key) {
 				context.getSecurizer().checkEncodable(key);
 				return createDescriptor(key);
-			}
-		});
-		
-		this.writers = new ClassCache<Coder>(new ValueProvider<Coder>() {
-			@Override
-			public Coder createValue(Class<?> valueClass) {
-				return context.getCoder(valueClass);
 			}
 		});
 
@@ -115,7 +105,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 		if (o == null)
 			writeNull();
 		else
-			writers.putIfAbsent(o.getClass()).encode(this, o);
+			context.getCoder(o.getClass()).encode(this, o);
 		
 		if ((--depth) == 0)
 			flushBuffer();
@@ -436,7 +426,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 	@Override
 	public void writeByteArray(byte[] value) throws IOException {
 		
-		int reference = storedObjects.putIfAbsent(value);
+		int reference = sharedObjects.putIfAbsent(value);
 		
 		if (reference != -1) {
 			int length0 = unsignedIntLength0(reference);
@@ -457,7 +447,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 
 	@Override
 	public void writeArray(Object value) throws IOException {
-		int reference = storedObjects.putIfAbsent(value);
+		int reference = sharedObjects.putIfAbsent(value);
 		
 		if (reference != -1) {
 			int length0 = unsignedIntLength0(reference);
@@ -478,7 +468,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 
 	@Override
 	public void writeCollection(Collection<?> value) throws IOException {
-		int reference = storedObjects.putIfAbsent(value);
+		int reference = sharedObjects.putIfAbsent(value);
 		
 		if (reference != -1) {
 			int length0 = unsignedIntLength0(reference);
@@ -500,7 +490,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 
 	@Override
 	public void writeMap(Map<?, ?> value) throws IOException {
-		int reference = storedObjects.putIfAbsent(value);
+		int reference = sharedObjects.putIfAbsent(value);
 		
 		if (reference != -1) {
 			int length0 = unsignedIntLength0(reference);
@@ -540,7 +530,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 	@Override
 	public void writeBean(Object value) throws IOException {
 
-		int reference = storedObjects.putIfAbsent(value);
+		int reference = sharedObjects.putIfAbsent(value);
 		if (reference != -1) {
 			int length0 = unsignedIntLength0(reference);
 			ensureCapacity(length0 + 2);
@@ -548,7 +538,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 			writeUnsignedIntValue(reference, length0);
 		}
 		else {
-			ClassDescriptor descriptor = descriptors.putIfAbsent(value.getClass());
+			ClassDescriptor descriptor = descriptors.putIfAbsent(context, value.getClass());
 			
 			ensureCapacity(1);
 			buffer[position] = (byte)ITYPE_BEAN;
@@ -578,7 +568,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 				sb.append(context.getClassNameAlias(inter.getName())).append(':');
 		}
 
-		Collection<Property> selectedProperties = propertyFilter.get(cls);
+		Property[] selectedProperties = propertyFilter.get(cls);
 		boolean first = true;
 		for (Property property : selectedProperties) {
 			if (first)
@@ -601,7 +591,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
             return;
         }
 
-        int index = storedStrings.putIfAbsent(s);
+        int index = sharedStrings.putIfAbsent(s);
 
         if (index >= 0) {
         	int length0 = unsignedIntLength0(index);
@@ -797,9 +787,9 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 	private static class ClassDescriptor {
 		
 		public final String description;
-		public final Collection<Property> properties;
+		public final Property[] properties;
 		
-		public ClassDescriptor(String description, Collection<Property> properties) {
+		public ClassDescriptor(String description, Property[] properties) {
 			this.description = description;
 			this.properties = properties;
 		}

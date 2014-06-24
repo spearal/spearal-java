@@ -21,12 +21,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 import org.spearal.SpearalContext;
 import org.spearal.SpearalDecoder;
@@ -45,6 +42,8 @@ import org.spearal.configuration.Repeatable;
 import org.spearal.configuration.Securizer;
 import org.spearal.configuration.TypeInstantiator;
 import org.spearal.configuration.TypeLoader;
+import org.spearal.impl.cache.CopyOnWriteKeyValueMap;
+import org.spearal.impl.cache.KeyValueMap.ValueProvider;
 
 /**
  * @author Franck WOLFF
@@ -59,16 +58,16 @@ public class SpearalContextImpl implements SpearalContext {
 	private final Map<String, String> classAliases;
 	
 	private final List<TypeInstantiator> typeInstantiators;
-	private final ConcurrentMap<Type, TypeInstantiator> typeInstantiatorsCache;
+	private final CopyOnWriteKeyValueMap<Type, TypeInstantiator> typeInstantiatorsCache;
 
 	private final List<PropertyInstantiator> propertyInstantiators;
-	private final ConcurrentMap<Property, PropertyInstantiator> propertyInstantiatorsCache;
+	private final CopyOnWriteKeyValueMap<Property, PropertyInstantiator> propertyInstantiatorsCache;
 	
 	private final List<ConverterProvider> converterProviders;
-	private final ConcurrentMap<ConverterKey, Converter<?>> convertersCache;
+	private final CopyOnWriteKeyValueMap<ConverterKey, Converter<?>> convertersCache;
 	
 	private final List<CoderProvider> coderProviders;
-	private final ConcurrentMap<Class<?>, Coder> codersCache;
+	private final CopyOnWriteKeyValueMap<Class<?>, Coder> codersCache;
 	
 	private final List<PropertyFactory> propertyFactories;
 	
@@ -76,16 +75,64 @@ public class SpearalContextImpl implements SpearalContext {
 		this.classAliases = new HashMap<String, String>();
 
 		this.typeInstantiators = new ArrayList<TypeInstantiator>();
-		this.typeInstantiatorsCache = new ConcurrentHashMap<Type, TypeInstantiator>();
+		this.typeInstantiatorsCache = new CopyOnWriteKeyValueMap<Type, TypeInstantiator>(true,
+			new ValueProvider<Type, TypeInstantiator>() {
+				@Override
+				public TypeInstantiator createValue(SpearalContext context, Type key) {
+					securizer.checkDecodable(key);
+					for (TypeInstantiator instantiator : typeInstantiators) {
+						if (instantiator.canInstantiate(key))
+							return instantiator;
+					}
+					throw new RuntimeException("Could not find any instantiator for: " + key);
+				}
+			}
+		);
 
 		this.propertyInstantiators = new ArrayList<PropertyInstantiator>();
-		this.propertyInstantiatorsCache = new ConcurrentHashMap<Property, PropertyInstantiator>();
+		this.propertyInstantiatorsCache = new CopyOnWriteKeyValueMap<Property, PropertyInstantiator>(false,
+			new ValueProvider<Property, PropertyInstantiator>() {
+				@Override
+				public PropertyInstantiator createValue(SpearalContext context, Property key) {
+					securizer.checkDecodable(key.getGenericType());
+					for (PropertyInstantiator instantiator : propertyInstantiators) {
+						if (instantiator.canInstantiate(key))
+							return instantiator;
+					}
+					throw new RuntimeException("Could not find any instantiator for: " + key);
+				}
+			}
+		);
 		
 		this.converterProviders = new ArrayList<ConverterProvider>();
-		this.convertersCache = new ConcurrentHashMap<ConverterKey, Converter<?>>();
+		this.convertersCache = new CopyOnWriteKeyValueMap<ConverterKey, Converter<?>>(false,
+			new ValueProvider<ConverterKey, Converter<?>>() {
+				@Override
+				public Converter<?> createValue(SpearalContext context, ConverterKey key) {
+					for (ConverterProvider provider : converterProviders) {
+						Converter<?> converter = provider.getConverter(key.valueClass, key.targetType);
+						if (converter != null)
+							return converter;
+					}
+					throw new RuntimeException("No converter found from: " + key.valueClass + " to: " + key.targetType);
+				}
+			}
+		);
 		
 		this.coderProviders = new ArrayList<CoderProvider>();
-		this.codersCache = new ConcurrentHashMap<Class<?>, Coder>();
+		this.codersCache = new CopyOnWriteKeyValueMap<Class<?>, Coder>(true,
+			new ValueProvider<Class<?>, Coder>() {
+				@Override
+				public Coder createValue(SpearalContext context, Class<?> key) {
+					for (CoderProvider provider : coderProviders) {
+						Coder coder = provider.getCoder(key);
+						if (coder != null)
+							return coder;
+					}
+					throw new RuntimeException("Not coder found for type: " + key);
+				}
+			}
+		);
 		
 		this.propertyFactories = new ArrayList<PropertyFactory>();
 	}
@@ -175,54 +222,28 @@ public class SpearalContextImpl implements SpearalContext {
 	}
 
 	@Override
-	public Collection<Property> getProperties(Class<?> cls) {
+	public Property[] getProperties(Class<?> cls) {
 		return introspector.getProperties(this, cls);
 	}
 
 	@Override
 	public Object instantiate(SpearalDecoder decoder, Type type) throws InstantiationException {
 		TypeInstantiator typeInstantiator = typeInstantiatorsCache.get(type);
-		
-		if (typeInstantiator == null) {
-			securizer.checkDecodable(type);
-			for (TypeInstantiator ti : typeInstantiators) {
-				if (ti.canInstantiate(type)) {
-					typeInstantiatorsCache.putIfAbsent(type, ti);
-					typeInstantiator = ti;
-					break;
-				}
-			}
-		}
-		
 		if (typeInstantiator == null)
-			throw new InstantiationException("Could not find any instantiator for: " + type);
-
+			typeInstantiator = typeInstantiatorsCache.putIfAbsent(this, type);
 		return typeInstantiator.instantiate((ExtendedSpearalDecoder)decoder, type);
 	}
 
 	@Override
 	public Object instantiate(SpearalDecoder decoder, Property property) throws InstantiationException {
 		PropertyInstantiator propertyInstantiator = propertyInstantiatorsCache.get(property);
-		
-		if (propertyInstantiator == null) {
-			securizer.checkDecodable(property.getGenericType());
-			for (PropertyInstantiator ti : propertyInstantiators) {
-				if (ti.canInstantiate(property)) {
-					propertyInstantiatorsCache.putIfAbsent(property, ti);
-					propertyInstantiator = ti;
-					break;
-				}
-			}
-		}
-		
 		if (propertyInstantiator == null)
-			throw new InstantiationException("Could not find any instantiator for: " + property);
-
+			propertyInstantiator = propertyInstantiatorsCache.putIfAbsent(this, property);
 		return propertyInstantiator.instantiate((ExtendedSpearalDecoder)decoder, property);
 	}
 
 	@Override
-	public Object instantiatePartial(SpearalDecoder decoder, Class<?> cls, Collection<Property> partialProperties)
+	public Object instantiatePartial(SpearalDecoder decoder, Class<?> cls, Property[] partialProperties)
 		throws InstantiationException, IllegalAccessException {
 
 		return partialObjectFactory.instantiatePartial((ExtendedSpearalDecoder)decoder, cls, partialProperties);
@@ -231,42 +252,21 @@ public class SpearalContextImpl implements SpearalContext {
 	@Override
 	public Object convert(SpearalDecoder decoder, Object value, Type targetType) {
 		Class<?> valueClass = (value != null ? value.getClass() : null);
-		
 		if (valueClass == targetType)
 			return value;
 		
 		ConverterKey converterKey = new ConverterKey(valueClass, targetType);
-		
 		Converter<?> converter = convertersCache.get(converterKey);
-		if (converter == null) {
-			for (ConverterProvider provider : converterProviders) {
-				converter = provider.getConverter(valueClass, targetType);
-				if (converter != null) {
-					convertersCache.put(converterKey, converter);
-					break;
-				}
-			}
-			if (converter == null)
-				throw new UnsupportedOperationException("No converter found from: " + valueClass + " to: " + targetType);
-		}
-		
+		if (converter == null)
+			converter = convertersCache.putIfAbsent(this, converterKey);
 		return converter.convert((ExtendedSpearalDecoder)decoder, value, targetType);
 	}
 	
 	@Override
 	public Coder getCoder(Class<?> valueClass) {
 		Coder coder = codersCache.get(valueClass);
-		if (coder == null) {
-			for (CoderProvider provider : coderProviders) {
-				coder = provider.getCoder(valueClass);
-				if (coder != null) {
-					codersCache.put(valueClass, coder);
-					break;
-				}
-			}
-			if (coder == null)
-				throw new UnsupportedOperationException("Not coder found for type: " + valueClass);
-		}
+		if (coder == null)
+			coder = codersCache.putIfAbsent(this, valueClass);
 		return coder;
 	}
 	

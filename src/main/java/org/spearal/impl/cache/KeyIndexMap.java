@@ -15,16 +15,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.spearal;
+package org.spearal.impl.cache;
 
-import org.spearal.configuration.PropertyFactory.Property;
 
 /**
  * @author Franck WOLFF
  */
-public interface SpearalPropertyFilter {
+public interface KeyIndexMap<K> {
 
-	void add(Class<?> cls, String... propertyNames);
+	int putIfAbsent(K key);
 	
-	Property[] get(Class<?> cls);
+	int size();
+	
+	void clear();
 }

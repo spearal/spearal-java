@@ -17,9 +17,10 @@
  */
 package org.spearal.impl;
 
+import static org.spearal.configuration.PropertyFactory.ZERO_PROPERTIES;
+
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -29,7 +30,6 @@ import java.util.Set;
 import org.spearal.SpearalContext;
 import org.spearal.SpearalPropertyFilter;
 import org.spearal.configuration.PropertyFactory.Property;
-import org.spearal.impl.util.UnmodifiableArray;
 
 /**
  * @author Franck WOLFF
@@ -37,22 +37,20 @@ import org.spearal.impl.util.UnmodifiableArray;
 public class SpearalPropertyFilterImpl implements SpearalPropertyFilter {
 
 	private final SpearalContext context;
-	private final Map<Class<?>, Collection<Property>> propertiesMap;
+	private final Map<Class<?>, Property[]> propertiesMap;
 	
 	public SpearalPropertyFilterImpl(SpearalContext context) {
 		this.context = context;
-		this.propertiesMap = new HashMap<Class<?>, Collection<Property>>();
+		this.propertiesMap = new HashMap<Class<?>, Property[]>();
 	}
 
 	@Override
 	public void add(Class<?> cls, String... propertyNames) {
-		if (propertyNames == null || propertyNames.length == 0) {
-			UnmodifiableArray<Property> empty = UnmodifiableArray.empty();
-			this.propertiesMap.put(cls, empty);
-		}
+		if (propertyNames == null || propertyNames.length == 0)
+			this.propertiesMap.put(cls, ZERO_PROPERTIES);
 		else {
 			Set<String> propertyNamesSet = new HashSet<String>(Arrays.asList(propertyNames));
-			Collection<Property> properties = context.getProperties(cls);
+			Property[] properties = context.getProperties(cls);
 			List<Property> selectedProperties = new ArrayList<Property>(propertyNames.length);
 			
 			for (Property property : properties) {
@@ -60,14 +58,13 @@ public class SpearalPropertyFilterImpl implements SpearalPropertyFilter {
 					selectedProperties.add(property);
 			}
 			
-			this.propertiesMap.put(cls, UnmodifiableArray.of(selectedProperties.toArray(new Property[0])));
+			this.propertiesMap.put(cls, selectedProperties.toArray(ZERO_PROPERTIES));
 		}
-		
 	}
 
 	@Override
-	public Collection<Property> get(Class<?> cls) {
-		Collection<Property> properties = propertiesMap.get(cls);
+	public Property[] get(Class<?> cls) {
+		Property[] properties = propertiesMap.get(cls);
 		if (properties == null) {
 			properties = context.getProperties(cls);
 			this.propertiesMap.put(cls, properties);

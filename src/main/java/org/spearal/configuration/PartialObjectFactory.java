@@ -17,8 +17,6 @@
  */
 package org.spearal.configuration;
 
-import java.util.Collection;
-
 import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.ExtendedSpearalDecoder;
 
@@ -30,7 +28,7 @@ public interface PartialObjectFactory extends Configurable {
 	public interface PartialObjectProxy {
 
 		boolean $isDefined(String propertyName);
-		Collection<Property> $getDefinedProperties();
+		Property[] $getDefinedProperties();
 	}
 
 	public static class UndefinedPropertyException extends RuntimeException {
@@ -42,6 +40,6 @@ public interface PartialObjectFactory extends Configurable {
 		}
 	}
 
-	Object instantiatePartial(ExtendedSpearalDecoder decoder, Class<?> cls, Collection<Property> partialProperties)
+	Object instantiatePartial(ExtendedSpearalDecoder decoder, Class<?> cls, Property[] partialProperties)
 		throws InstantiationException, IllegalAccessException;
 }

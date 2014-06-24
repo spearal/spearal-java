@@ -51,6 +51,8 @@ public class AnyProperty implements Property {
 	
 	protected final Class<?> type;
 	protected final Type genericType;
+	
+	private final int hash;
 
 	public AnyProperty(String name, Field field, Method getter, Method setter) {
 		if (name == null || name.length() == 0)
@@ -68,6 +70,12 @@ public class AnyProperty implements Property {
 		
 		this.type = typeOf(field, getter);
 		this.genericType = genericTypeOf(field, getter);
+		
+		int hash = name.hashCode();
+		hash += (31 * hash) + (field != null ? field.hashCode() : 0);
+		hash += (31 * hash) + (getter != null ? getter.hashCode() : 0);
+		hash += (31 * hash) + (setter != null ? setter.hashCode() : 0);
+		this.hash = hash;
 	}
 
 	@Override
@@ -170,5 +178,31 @@ public class AnyProperty implements Property {
 			setter.invoke(holder, decoder.readAny(parameterizedType, genericType));
 		else
 			decoder.skipAny(parameterizedType);
+	}
+
+	@Override
+	public int hashCode() {
+		return hash;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == this)
+			return true;
+		if (obj.getClass() != getClass())
+			return false;
+		Property p = (Property)obj;
+		return (
+			name.equals(p.getName()) &&
+			(field != null ? field.equals(p.getField()) : p.getField() == null) &&
+			(getter != null ? getter.equals(p.getGetter()) : p.getGetter() == null) &&
+			(setter != null ? setter.equals(p.getSetter()) : p.getSetter() == null)
+		);
+	}
+
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + ":" + name +
+			" {field=" + field + ", getter=" + getter + ", setter=" + setter + "}";
 	}
 }
