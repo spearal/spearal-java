@@ -22,11 +22,11 @@ import org.spearal.SpearalContext;
 /**
  * @author Franck WOLFF
  */
-public final class CopyOnWriteDualIdentityValueMap<K1, K2, V> {
+public final class CowDualIdentityValueMap<K1, K2, V> {
 
 	protected volatile DualIdentityValueMap<K1, K2, V> map;
 	
-	public CopyOnWriteDualIdentityValueMap(DualIdentityValueMap.ValueProvider<K1, K2, V> provider) {
+	public CowDualIdentityValueMap(DualIdentityValueMap.ValueProvider<K1, K2, V> provider) {
 		this.map = new DualIdentityValueMap<K1, K2, V>(provider, 1);
 	}
 	

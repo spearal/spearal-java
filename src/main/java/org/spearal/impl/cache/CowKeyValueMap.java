@@ -23,15 +23,15 @@ import org.spearal.impl.cache.KeyValueMap.ValueProvider;
 /**
  * @author Franck WOLFF
  */
-public final class CopyOnWriteKeyValueMap<K, V> {
+public final class CowKeyValueMap<K, V> {
 
 	protected volatile KeyValueMap<K, V> map;
 	
-	public CopyOnWriteKeyValueMap(boolean useIdentity) {
+	public CowKeyValueMap(boolean useIdentity) {
 		this(useIdentity, null);
 	}
 	
-	public CopyOnWriteKeyValueMap(boolean useIdentity, ValueProvider<K, V> provider) {
+	public CowKeyValueMap(boolean useIdentity, ValueProvider<K, V> provider) {
 		if (useIdentity)
 			 this.map = new IdentityValueMap<K, V>(provider, 1);
 		else
