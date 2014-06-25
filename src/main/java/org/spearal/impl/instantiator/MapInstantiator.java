@@ -50,6 +50,8 @@ public class MapInstantiator implements TypeInstantiator, PropertyInstantiator {
             throw new IllegalArgumentException("Unsupported map interface: " + cls);
         }
 		
+		decoder.getContext().getSecurizer().checkDecodable(type);
+		
         try {
 			return cls.newInstance();
 		}

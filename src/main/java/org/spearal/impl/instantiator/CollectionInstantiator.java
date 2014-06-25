@@ -53,6 +53,8 @@ public class CollectionInstantiator implements TypeInstantiator, PropertyInstant
             throw new IllegalArgumentException("Unsupported collection interface: " + cls);
         }
 		
+		decoder.getContext().getSecurizer().checkDecodable(type);
+		
         try {
 			return cls.newInstance();
 		}

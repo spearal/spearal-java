@@ -40,7 +40,11 @@ public class CollectionProperty extends AnyProperty {
 	public void write(ExtendedSpearalEncoder encoder, Object holder)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 		
-		encoder.writeCollection((Collection<?>)(field != null ? field.get(holder) : getter.invoke(holder)));
+		Collection<?> value = (Collection<?>)(field != null ? field.get(holder) : getter.invoke(holder));
+		if (value == null)
+			encoder.writeNull();
+		else
+			encoder.writeCollection(value);
 	}
 
 	@Override

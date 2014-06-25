@@ -646,16 +646,16 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     		minutes = (buffer[position++] & 0xff);
     		seconds = (buffer[position++] & 0xff);
     		
-    		switch (parameterizedType & 0x03) {
-    		case 1:
-    			nanoseconds = readUnsignedIntegerValue(hours >>> 5);
-    			break;
-    		case 2:
-    			nanoseconds = readUnsignedIntegerValue(hours >>> 5) * 1000;
-    			break;
-    		case 3:
-    			nanoseconds = readUnsignedIntegerValue(hours >>> 5) * 1000000;
-    			break;
+    		int subsecondsType = (parameterizedType & 0x03);
+    		if (subsecondsType != 0) {
+    			int length0 = (hours >>> 5);
+    			ensureAvailable(length0 + 1);
+    			nanoseconds = readUnsignedIntegerValue(length0);
+    			
+    			if (subsecondsType == 2)
+    				nanoseconds *= 1000;
+    			else if (subsecondsType == 3)
+    				nanoseconds *= 1000000;
     		}
     		
     		hours &= 0x1f;

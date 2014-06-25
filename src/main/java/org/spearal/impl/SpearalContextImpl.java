@@ -81,7 +81,6 @@ public class SpearalContextImpl implements SpearalContext {
 			new ValueProvider<Type, TypeInstantiator>() {
 				@Override
 				public TypeInstantiator createValue(SpearalContext context, Type key) {
-					securizer.checkDecodable(key);
 					for (TypeInstantiator instantiator : typeInstantiators) {
 						if (instantiator.canInstantiate(key))
 							return instantiator;
@@ -96,7 +95,6 @@ public class SpearalContextImpl implements SpearalContext {
 			new ValueProvider<Property, PropertyInstantiator>() {
 				@Override
 				public PropertyInstantiator createValue(SpearalContext context, Property key) {
-					securizer.checkDecodable(key.getGenericType());
 					for (PropertyInstantiator instantiator : propertyInstantiators) {
 						if (instantiator.canInstantiate(key))
 							return instantiator;

@@ -40,7 +40,11 @@ public class MapProperty extends AnyProperty {
 	public void write(ExtendedSpearalEncoder encoder, Object holder)
 		throws IOException, IllegalAccessException, InvocationTargetException {
 		
-		encoder.writeMap((Map<?, ?>)(field != null ? field.get(holder) : getter.invoke(holder)));
+		Map<?, ?> value = (Map<?, ?>)(field != null ? field.get(holder) : getter.invoke(holder));
+		if (value == null)
+			encoder.writeNull();
+		else
+			encoder.writeMap(value);
 	}
 
 	@Override

@@ -46,6 +46,8 @@ public class ClassInstantiator implements TypeInstantiator, PropertyInstantiator
 
 	@Override
 	public Object instantiate(ExtendedSpearalDecoder decoder, Type type) {
+		decoder.getContext().getSecurizer().checkDecodable(type);
+		
 		Class<?> cls = TypeUtil.classOfType(type);
         try {
 			return cls.newInstance();
