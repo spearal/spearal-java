@@ -27,6 +27,7 @@ import org.spearal.SpearalContext;
 import org.spearal.configuration.TypeLoader;
 import org.spearal.impl.cache.CopyOnWriteValueMap;
 import org.spearal.impl.cache.ValueMap.ValueProvider;
+import org.spearal.impl.util.ClassDescriptionUtil;
 
 /**
  * @author Franck WOLFF
@@ -58,7 +59,8 @@ public class TypeLoaderImpl implements TypeLoader, ValueProvider<String, Class<?
 	public Class<?> createValue(SpearalContext context, String key) {
 		Class<?> cls;
 		
-		if (key.indexOf(':') == -1) {
+		String[] classNames = ClassDescriptionUtil.splitClassNames(key);
+		if (classNames.length <= 1) {
 			try {
 				cls = Class.forName(context.getClassNameAlias(key), true, classLoader);
 				if (cls.isInterface()) {
@@ -73,8 +75,6 @@ public class TypeLoaderImpl implements TypeLoader, ValueProvider<String, Class<?
 			}
 		}
 		else {
-			String[] classNames = key.split(":");
-			
 			List<Class<?>> interfaces = new ArrayList<Class<?>>(classNames.length);
 			
 			for (int i = 0; i < classNames.length; i++) {

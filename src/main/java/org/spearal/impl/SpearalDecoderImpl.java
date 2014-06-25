@@ -37,6 +37,7 @@ import org.spearal.SpearalPrinter.StringData;
 import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.cache.EqualityValueMap;
 import org.spearal.impl.cache.ValueMap.ValueProvider;
+import org.spearal.impl.util.ClassDescriptionUtil;
 import org.spearal.impl.util.TypeUtil;
 
 /**
@@ -857,7 +858,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 		ensureAvailable(length0 + 1);
     	int indexOrLength = readUnsignedIntegerValue(length0);
     	
-    	String className = context.getClassNameAlias(readStringData(indexOrLength, reference));
+    	String className = readStringData(indexOrLength, reference);
 		Class<? extends Enum> cls = (Class<? extends Enum>)context.loadClass(className);
     	
     	ensureAvailable(1);
@@ -912,7 +913,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	int indexOrLength = readUnsignedIntegerValue(length0);
     	
     	String className = readStringData(indexOrLength, reference);
-		return context.loadClass(context.getClassNameAlias(className));
+		return context.loadClass(className);
 	}
 	
 	@Override
@@ -991,7 +992,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     		String classDescription = readStringData(indexOrLength, classDescReference);
     		sharedObjects.add(null);
     		
-    		int propertiesCount = ClassDescriptor.propertiesCount(classDescription);
+    		int propertiesCount = ClassDescriptionUtil.propertiesCount(classDescription);
     		for (int i = 0; i < propertiesCount; i++)
     			skipAny();
     	}
@@ -1009,12 +1010,12 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	else {
         	boolean classDescReference = (parameterizedType & 0x04) != 0;
         	StringData classDescription = getStringData(indexOrLength, classDescReference);
-    		String[] classNames = ClassDescriptor.classNames(classDescription.value);
+    		String[] classNames = ClassDescriptionUtil.splitClassNames(classDescription.value);
     		
     		sharedObjects.add(null);
     		printer.printBeanStart(sharedObjects.size() - 1, classDescription, classNames);
     		
-    		String[] propertyNames = ClassDescriptor.propertyNames(classDescription.value);
+    		String[] propertyNames = ClassDescriptionUtil.splitPropertyNames(classDescription.value);
     		for (String propertyName : propertyNames) {
     			printer.printBeanPropertyStart(propertyName);
     			printAny(printer);
@@ -1211,20 +1212,9 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 		public final boolean partial;
 
 		public static ClassDescriptor forDescription(SpearalContext context, String description) {
-			
-			String classNames;
-			String[] propertyNames;
+			String classNames = ClassDescriptionUtil.classNames(description);
+			String[] propertyNames = ClassDescriptionUtil.splitPropertyNames(description);
 
-			int iLastColon = description.lastIndexOf(':');
-			if (iLastColon == -1) {
-				classNames = description;
-				propertyNames = new String[0];
-			}
-			else {
-				classNames = description.substring(0, iLastColon);
-				propertyNames = description.substring(iLastColon + 1).split(",");
-			}
-			
 			Class<?> cls = context.loadClass(classNames);
 			
 			Property[] properties = context.getProperties(cls);
@@ -1242,33 +1232,6 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 			boolean partial = serializedProperties.length < properties.length;
 			
 			return new ClassDescriptor(cls, serializedProperties, partial);
-		}
-		
-		public static String[] classNames(String description) {
-			int iLastColon = description.lastIndexOf(':');
-			if (iLastColon == -1)
-				return new String[0];
-			return description.substring(0, iLastColon).split(":");
-		}
-		
-		public static String[] propertyNames(String description) {
-			int iLastColon = description.lastIndexOf(':');
-			if (iLastColon == -1)
-				return new String[]{ description };
-			return description.substring(iLastColon + 1).split(",");
-		}
-		
-		public static int propertiesCount(String description) {
-			int iLastColon = description.lastIndexOf(':');
-			if (iLastColon == -1)
-				return 0;
-			
-			int count = 1;
-			for (int i = iLastColon + 1; i < description.length(); i++) {
-				if (description.charAt(i) == ',')
-					count++;
-			}
-			return count;
 		}
 		
 		public ClassDescriptor(Class<?> cls, Property[] properties, boolean partial) {

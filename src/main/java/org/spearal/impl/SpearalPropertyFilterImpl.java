@@ -19,11 +19,8 @@ package org.spearal.impl;
 
 import static org.spearal.configuration.PropertyFactory.ZERO_PROPERTIES;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -49,16 +46,15 @@ public class SpearalPropertyFilterImpl implements SpearalPropertyFilter {
 		if (propertyNames == null || propertyNames.length == 0)
 			this.propertiesMap.put(cls, ZERO_PROPERTIES);
 		else {
-			Set<String> propertyNamesSet = new HashSet<String>(Arrays.asList(propertyNames));
-			Property[] properties = context.getProperties(cls);
-			List<Property> selectedProperties = new ArrayList<Property>(propertyNames.length);
+			Set<String> propertyNamesSet = new HashSet<String>(propertyNames.length);
+			for (String propertyName : propertyNames)
+				propertyNamesSet.add(propertyName);
 			
-			for (Property property : properties) {
-				if (propertyNamesSet.contains(property.getName()))
-					selectedProperties.add(property);
-			}
-			
-			this.propertiesMap.put(cls, selectedProperties.toArray(ZERO_PROPERTIES));
+			Property[] properties = context.getProperties(cls).clone();
+			for (int i = 0; i < properties.length; i++)
+				if (!propertyNamesSet.contains(properties[i].getName()))
+					properties[i] = null;
+			this.propertiesMap.put(cls, properties);
 		}
 	}
 

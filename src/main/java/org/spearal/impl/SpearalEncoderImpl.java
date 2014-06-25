@@ -20,7 +20,6 @@ package org.spearal.impl;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Array;
-import java.lang.reflect.Proxy;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
@@ -32,8 +31,9 @@ import org.spearal.SpearalPropertyFilter;
 import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.cache.IdentityIndexMap;
 import org.spearal.impl.cache.IdentityValueMap;
-import org.spearal.impl.cache.ValueMap.ValueProvider;
 import org.spearal.impl.cache.StringIndexMap;
+import org.spearal.impl.cache.ValueMap.ValueProvider;
+import org.spearal.impl.util.ClassDescriptionUtil;
 
 /**
  * @author Franck WOLFF
@@ -545,6 +545,8 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 			writeStringData(descriptor.description);
 			
 			for (Property property : descriptor.properties) {
+				if (property == null)
+					continue;
 				try {
 					property.write(this, value);
 				}
@@ -559,26 +561,9 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 	}
 	
 	private ClassDescriptor createDescriptor(Class<?> cls) {
-		StringBuilder sb = new StringBuilder();
-
-		if (!Proxy.isProxyClass(cls))
-			sb.append(context.getClassNameAlias(cls.getName())).append(':');
-		else {
-			for (Class<?> inter : cls.getInterfaces())
-				sb.append(context.getClassNameAlias(inter.getName())).append(':');
-		}
-
-		Property[] selectedProperties = propertyFilter.get(cls);
-		boolean first = true;
-		for (Property property : selectedProperties) {
-			if (first)
-				first = false;
-			else
-				sb.append(',');
-			sb.append(property.getName());
-		}
-		
-		return new ClassDescriptor(sb.toString(), selectedProperties);
+		Property[] properties = propertyFilter.get(cls);
+		String description = ClassDescriptionUtil.createAliasedDescription(context, cls, properties);
+		return new ClassDescriptor(description, properties);
 	}
     
     private void writeStringData(String s) throws IOException {

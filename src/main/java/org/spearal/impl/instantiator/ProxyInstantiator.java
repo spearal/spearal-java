@@ -42,14 +42,14 @@ public class ProxyInstantiator implements TypeInstantiator, PropertyInstantiator
 
 	@Override
 	public Object instantiate(ExtendedSpearalDecoder decoder, Type type) {
-		Class<?> cls = (Class<?>)type;
         try {
+    		Class<?> cls = (Class<?>)type;
     		Constructor<?> constructor = cls.getConstructor(new Class<?>[]{ InvocationHandler.class });
     		Property[] properties = decoder.getContext().getProperties(cls);
     		return constructor.newInstance(new PropertiesInvocationHandler(decoder, properties));
 		}
         catch (Exception e) {
-			throw new RuntimeException("Could not create instance of: " + cls, e);
+			throw new RuntimeException("Could not create instance of: " + type, e);
 		}
 	}
 
