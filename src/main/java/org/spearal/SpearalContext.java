@@ -38,7 +38,7 @@ public interface SpearalContext {
 	
 	String getClassNameAlias(String className);
 	
-	Class<?> loadClass(String...classNames)
+	Class<?> loadClass(String classNames)
 		throws SecurityException;
 	
 	Property[] getProperties(Class<?> cls);

@@ -18,45 +18,37 @@
 package org.spearal.impl.cache;
 
 import org.spearal.SpearalContext;
-import org.spearal.impl.cache.KeyValueMap.ValueProvider;
 
 /**
  * @author Franck WOLFF
  */
-public final class CowKeyValueMap<K, V> {
+public final class CopyOnWriteDualIdentityValueMap<K1, K2, V> {
 
-	protected volatile KeyValueMap<K, V> map;
+	protected volatile DualIdentityValueMap<K1, K2, V> map;
 	
-	public CowKeyValueMap(boolean useIdentity) {
-		this(useIdentity, null);
+	public CopyOnWriteDualIdentityValueMap(DualIdentityValueMap.ValueProvider<K1, K2, V> provider) {
+		this.map = new DualIdentityValueMap<K1, K2, V>(provider, 1);
 	}
 	
-	public CowKeyValueMap(boolean useIdentity, ValueProvider<K, V> provider) {
-		if (useIdentity)
-			 this.map = new IdentityValueMap<K, V>(provider, 1);
-		else
-			 this.map = new EqualityValueMap<K, V>(provider, 1);
+	public V get(K1 key1, K2 key2) {
+		return get().get(key1, key2);
 	}
 	
-	public V get(K key) {
-		return get().get(key);
-	}
-	
-	public synchronized V putIfAbsent(SpearalContext context, K key) {
-		KeyValueMap<K, V> map = get();
+	public synchronized V putIfAbsent(SpearalContext context, K1 key1, K2 key2) {
+		DualIdentityValueMap<K1, K2, V> map = get();
 		
-		V value = map.get(key);
+		V value = map.get(key1, key2);
 		if (value == null) {
 			map = map.clone();
-			value = map.putIfAbsent(context, key);
+			value = map.putIfAbsent(context, key1, key2);
 			set(map);
 		}
 		return value;
 	}
 	
-	public V getOrPutIfAbsent(SpearalContext context, K key) {
-		V value = get().get(key);
-		return (value != null ? value : putIfAbsent(context, key));
+	public V getOrPutIfAbsent(SpearalContext context, K1 key1, K2 key2) {
+		V value = get().get(key1, key2);
+		return (value != null ? value : putIfAbsent(context, key1, key2));
 	}
 	
 	public int size() {
@@ -68,11 +60,11 @@ public final class CowKeyValueMap<K, V> {
 		return get().toString();
 	}
 
-	private KeyValueMap<K, V> get() {
+	private DualIdentityValueMap<K1, K2, V> get() {
 		return map;
 	}
 	
-	private void set(KeyValueMap<K, V> map) {
+	private void set(DualIdentityValueMap<K1, K2, V> map) {
 		this.map = map;
 	}
 }

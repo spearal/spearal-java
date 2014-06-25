@@ -17,15 +17,12 @@
  */
 package org.spearal.configuration;
 
-import java.io.Serializable;
+import org.spearal.SpearalContext;
 
 /**
  * @author Franck WOLFF
  */
 public interface TypeLoader extends Configurable {
-	
-	public interface ClassNotFound extends Serializable {
-	}
 
-	Class<?> loadClass(String... classNames) throws SecurityException;
+	Class<?> loadClass(SpearalContext context, String classNames) throws SecurityException;
 }

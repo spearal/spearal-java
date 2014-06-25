@@ -20,8 +20,6 @@ package org.spearal.impl.partial;
 import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 import javassist.util.proxy.MethodFilter;
 import javassist.util.proxy.MethodHandler;
@@ -32,36 +30,36 @@ import org.spearal.SpearalContext;
 import org.spearal.configuration.PartialObjectFactory;
 import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.ExtendedSpearalDecoder;
+import org.spearal.impl.cache.CopyOnWriteKeyValueMap;
+import org.spearal.impl.cache.KeyValueMap.ValueProvider;
 
 /**
  * @author Franck WOLFF
  */
-public class JavassistPartialObjectFactory implements PartialObjectFactory {
+public class JavassistPartialObjectFactory implements PartialObjectFactory, ValueProvider<Class<?>, Class<?>> {
 	
-	private final ConcurrentMap<Class<?>, Class<?>> proxyClasses = new ConcurrentHashMap<Class<?>, Class<?>>();
+	private final CopyOnWriteKeyValueMap<Class<?>, Class<?>> proxyClassesCache;
 	
 	public JavassistPartialObjectFactory() {
+		this.proxyClassesCache = new CopyOnWriteKeyValueMap<Class<?>, Class<?>>(true, this);
+	}
+
+	@Override
+	public Class<?> createValue(SpearalContext context, Class<?> key) {
+		context.getSecurizer().checkDecodable(key);
+		
+		ProxyFactory proxyFactory = new ProxyFactory();
+		proxyFactory.setFilter(new PartialObjectFilter(context, key));
+		proxyFactory.setSuperclass(key);
+		proxyFactory.setInterfaces(new Class<?>[] { PartialObjectProxy.class });
+		return proxyFactory.createClass();
 	}
 
 	@Override
 	public Object instantiatePartial(ExtendedSpearalDecoder decoder, Class<?> cls, Property[] partialProperties)
 		throws InstantiationException, IllegalAccessException {
 		
-		Class<?> proxyClass = proxyClasses.get(cls);
-		if (proxyClass == null) {
-			SpearalContext ctx = decoder.getContext();
-			ctx.getSecurizer().checkDecodable(cls);
-			
-			ProxyFactory proxyFactory = new ProxyFactory();
-			proxyFactory.setFilter(new PartialObjectFilter(ctx, cls));
-			proxyFactory.setSuperclass(cls);
-			proxyFactory.setInterfaces(new Class<?>[] { PartialObjectProxy.class });
-			proxyClass = proxyFactory.createClass();
-			Class<?> previousProxyClass = proxyClasses.putIfAbsent(cls, proxyClass);
-			if (previousProxyClass != null)
-				proxyClass = previousProxyClass;
-		}
-
+		Class<?> proxyClass = proxyClassesCache.getOrPutIfAbsent(decoder.getContext(), cls);
 		ProxyObject proxyObject = (ProxyObject)proxyClass.newInstance();
 		proxyObject.setHandler(new PartialObjectProxyHandler(partialProperties));
 		return proxyObject;

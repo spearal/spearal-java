@@ -1212,18 +1212,16 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
 		public static ClassDescriptor forDescription(SpearalContext context, String description) {
 			
-			String[] classNames;
+			String classNames;
 			String[] propertyNames;
 
 			int iLastColon = description.lastIndexOf(':');
 			if (iLastColon == -1) {
-				classNames = new String[]{ context.getClassNameAlias(description) };
+				classNames = description;
 				propertyNames = new String[0];
 			}
 			else {
-				classNames = description.substring(0, iLastColon).split(":");
-				for (int i = 0; i < classNames.length; i++)
-					classNames[i] = context.getClassNameAlias(classNames[i]);
+				classNames = description.substring(0, iLastColon);
 				propertyNames = description.substring(iLastColon + 1).split(",");
 			}
 			

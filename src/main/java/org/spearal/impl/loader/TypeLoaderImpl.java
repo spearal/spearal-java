@@ -22,41 +22,45 @@ import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
+import org.spearal.SpearalContext;
 import org.spearal.configuration.TypeLoader;
+import org.spearal.impl.cache.CopyOnWriteKeyValueMap;
+import org.spearal.impl.cache.KeyValueMap.ValueProvider;
 
 /**
  * @author Franck WOLFF
  */
-public class TypeLoaderImpl implements TypeLoader {
+public class TypeLoaderImpl implements TypeLoader, ValueProvider<String, Class<?>> {
 
 	private final ClassLoader classLoader;
-	private final ConcurrentMap<String, Class<?>> classesCache;
+	private final CopyOnWriteKeyValueMap<String, Class<?>> classesCache;
 	
 	public TypeLoaderImpl() {
 		this(TypeLoaderImpl.class.getClassLoader());
 	}
 	
-	public TypeLoaderImpl(ClassLoader classLoader) {
+	public TypeLoaderImpl(final ClassLoader classLoader) {
 		this.classLoader = classLoader;
-		this.classesCache = new ConcurrentHashMap<String, Class<?>>();
+		this.classesCache = new CopyOnWriteKeyValueMap<String, Class<?>>(true, this);
 	}
 
 	@Override
-	public Class<?> loadClass(String... classNames) throws SecurityException {
-		if (classNames == null || classNames.length == 0)
-			return ClassNotFound.class;
-		return (classNames.length == 1 ? loadClass(classNames[0]) : loadClasses(classNames));
+	public Class<?> loadClass(SpearalContext context, String classNames) throws SecurityException {
+		if (classNames == null || classNames.length() == 0)
+			return null;
+		
+		Class<?> cls = classesCache.getOrPutIfAbsent(context, classNames);
+		return (cls != ClassNotFound.class ? cls : null);
 	}
 	
-	private Class<?> loadClass(String className) throws SecurityException {
-		Class<?> cls = classesCache.get(className);
+	@Override
+	public Class<?> createValue(SpearalContext context, String key) {
+		Class<?> cls;
 		
-		if (cls == null) {
+		if (key.indexOf(':') == -1) {
 			try {
-				cls = Class.forName(className, true, classLoader);
+				cls = Class.forName(context.getClassNameAlias(key), true, classLoader);
 				if (cls.isInterface()) {
 					if (Serializable.class.isAssignableFrom(cls))
 						cls = Proxy.getProxyClass(classLoader, new Class<?>[]{ cls });
@@ -67,58 +71,36 @@ public class TypeLoaderImpl implements TypeLoader {
 			catch (ClassNotFoundException e) {
 				cls = ClassNotFound.class;
 			}
-			
-			Class<?> previous = classesCache.putIfAbsent(className, cls);
-			if (previous != null)
-				cls = previous;
 		}
-
-		return cls;
-	}
-	
-	private Class<?> loadClasses(String[] classNames) throws SecurityException {
-		String key = key(classNames);
-		Class<?> cls = classesCache.get(key);
-		
-		if (cls == null) {
+		else {
+			String[] classNames = key.split(":");
+			
 			List<Class<?>> interfaces = new ArrayList<Class<?>>(classNames.length);
 			
-			boolean serializable = false;
 			for (int i = 0; i < classNames.length; i++) {
 				if (isDuplicate(classNames, i))
 					continue;
 				
 				Class<?> inter;
-				
 				try {
-					inter = Class.forName(classNames[i], true, classLoader);
-					if (Serializable.class.isAssignableFrom(inter))
-						serializable = true;
+					inter = Class.forName(context.getClassNameAlias(classNames[i]), true, classLoader);
 				}
 				catch (ClassNotFoundException e) {
-					inter = ClassNotFound.class;
-					serializable = true;
+					continue;
 				}
-
-				// TODO: create a Javassist proxy if one the classse isn't an interface?
 				if (!inter.isInterface()) {
 					throw new UnsupportedOperationException(
 						"Cannot create Proxy for: " + Arrays.toString(classNames) +
 						" (" + inter + " isn't an interface)"
 					);
 				}
-				
 				interfaces.add(inter);
 			}
 			
-			if (!serializable)
-				interfaces.add(Serializable.class);
-			
-			cls = Proxy.getProxyClass(classLoader, interfaces.toArray(new Class<?>[0]));
-			
-			Class<?> previous = classesCache.putIfAbsent(key, cls);
-			if (previous != null)
-				cls = previous;
+			if (interfaces.size() == 0)
+				cls = ClassNotFound.class;
+			else
+				cls = Proxy.getProxyClass(classLoader, interfaces.toArray(new Class<?>[0]));
 		}
 		
 		return cls;
@@ -133,10 +115,6 @@ public class TypeLoaderImpl implements TypeLoader {
 		return false;
 	}
 	
-	private static String key(String[] classNames) {
-		StringBuilder sb = new StringBuilder(classNames[0]);
-		for (int i = 1; i < classNames.length; i++)
-			sb.append(':').append(classNames[i]);
-		return sb.toString();
+	private interface ClassNotFound {
 	}
 }
