@@ -24,19 +24,12 @@ import org.spearal.SpearalContext;
  */
 public class IdentityValueMap<K, V> extends AbstractKeyValueMap<K, V> {
 
-	public IdentityValueMap() {
-	}
-
 	public IdentityValueMap(ValueProvider<K, V> provider) {
 		super(provider);
 	}
 
-	public IdentityValueMap(int capacity) {
-		super(capacity);
-	}
-
-	public IdentityValueMap(int capacity, ValueProvider<K, V> provider) {
-		super(capacity, provider);
+	public IdentityValueMap(ValueProvider<K, V> provider, int capacity) {
+		super(provider, capacity);
 	}
 
 	@Override
@@ -83,7 +76,7 @@ public class IdentityValueMap<K, V> extends AbstractKeyValueMap<K, V> {
 	}
 
 	@Override
-	protected AbstractKeyValueMap<K, V> create(int capacity, ValueProvider<K, V> provider) {
-		return new IdentityValueMap<K, V>(capacity, provider);
+	protected AbstractKeyValueMap<K, V> create(ValueProvider<K, V> provider, int capacity) {
+		return new IdentityValueMap<K, V>(provider, capacity);
 	}
 }

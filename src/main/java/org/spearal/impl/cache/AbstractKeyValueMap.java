@@ -17,7 +17,6 @@
  */
 package org.spearal.impl.cache;
 
-
 /**
  * @author Franck WOLFF
  */
@@ -25,21 +24,12 @@ public abstract class AbstractKeyValueMap<K, V> extends AbstractMap implements K
 
 	protected ValueProvider<K, V> provider;
 	protected Entry<K, V>[] entries;
-	
-	public AbstractKeyValueMap() {
-		this.provider = null;
-	}
 
 	public AbstractKeyValueMap(ValueProvider<K, V> provider) {
 		this.provider = provider;
 	}
 
-	public AbstractKeyValueMap(int capacity) {
-		super(capacity);
-		this.provider = null;
-	}
-
-	public AbstractKeyValueMap(int capacity, ValueProvider<K, V> provider) {
+	public AbstractKeyValueMap(ValueProvider<K, V> provider, int capacity) {
 		super(capacity);
 		this.provider = provider;
 	}
@@ -83,13 +73,13 @@ public abstract class AbstractKeyValueMap<K, V> extends AbstractMap implements K
 		return sb.toString();
 	}
 
-	protected abstract AbstractKeyValueMap<K, V> create(int capacity, ValueProvider<K, V> provider);
+	protected abstract AbstractKeyValueMap<K, V> create(ValueProvider<K, V> provider, int capacity);
 	
 	@Override
 	public KeyValueMap<K, V> clone() {
 		Entry<K, V>[] entries = this.entries;
 
-		AbstractKeyValueMap<K, V> clone = create(entries.length, provider);
+		AbstractKeyValueMap<K, V> clone = create(provider, entries.length);
 		
 		clone.threshold = threshold;
 		clone.size = size;
@@ -140,6 +130,9 @@ public abstract class AbstractKeyValueMap<K, V> extends AbstractMap implements K
 		public Entry<K, V> next;
 		
 		public Entry(K key, int hash, V value, Entry<K, V> next) {
+			if (key == null || value == null)
+				throw new NullPointerException();
+			
 			this.key = key;
 			this.hash = hash;
 			this.value = value;

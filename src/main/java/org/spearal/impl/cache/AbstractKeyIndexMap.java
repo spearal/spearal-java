@@ -100,6 +100,9 @@ public abstract class AbstractKeyIndexMap<K> extends AbstractMap implements KeyI
 		public Entry<K> next;
 		
 		public Entry(K key, int hash, int index, Entry<K> next) {
+			if (key == null)
+				throw new NullPointerException();
+			
 			this.key = key;
 			this.hash = hash;
 			this.index = index;

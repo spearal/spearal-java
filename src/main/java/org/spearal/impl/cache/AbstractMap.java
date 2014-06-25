@@ -53,11 +53,11 @@ public abstract class AbstractMap {
 	}
     
 	protected static int roundUpToPowerOf2(int number) {
+		if (number <= 1)
+			return 1;
     	if (number >= MAXIMUM_CAPACITY)
     		return MAXIMUM_CAPACITY;
     	int rounded = Integer.highestOneBit(number);
-    	if (rounded == 0)
-    		return 1;
     	if (Integer.bitCount(number) > 1)
     		return rounded << 1;
     	return rounded;

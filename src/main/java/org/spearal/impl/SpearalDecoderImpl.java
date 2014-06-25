@@ -247,8 +247,17 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
         	
         case BEAN:
         	value = readBean(parameterizedType);
-        	if (value.getClass() == targetType)
-        		return value;
+        	if (value == null) {
+        		if (!(targetType instanceof Class<?>) || !((Class<?>)targetType).isPrimitive())
+        			return null;
+        	}
+        	else {
+        		Class<?> valueClass = value.getClass();
+        		if (valueClass == targetType)
+        			return value;
+        		if ((targetType instanceof Class) && ((Class<?>)targetType).isAssignableFrom(valueClass))
+        			return value;
+        	}
         	break;
         
         default:
@@ -739,24 +748,8 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	sharedObjects.add(value);
     	
     	Type elementType = TypeUtil.getElementType(property.getGenericType());
-    	if (elementType == Object.class) {
-        	for (int i = 0; i < indexOrLength; i++)
-        		value.add(readAny());
-    	}
-    	else if (elementType instanceof Class) {
-    		Class<?> elementClass = (Class<?>)elementType;
-	    	for (int i = 0; i < indexOrLength; i++) {
-	    		Object element = readAny();
-	    		if (element == null || elementClass.isAssignableFrom(element.getClass()))
-	    			value.add(element);
-	    		else
-	    			value.add(context.convert(this, element, elementType));
-	    	}
-    	}
-    	else {
-	    	for (int i = 0; i < indexOrLength; i++)
-	    		value.add(context.convert(this, readAny(), elementType));
-    	}
+    	for (int i = 0; i < indexOrLength; i++)
+    		value.add(readAny(elementType));
 	}
 
 	@Override
@@ -848,33 +841,10 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	Type keyType = keyValueTypes[0];
     	Type valType = keyValueTypes[1];
     	
-    	if (keyType == Object.class && valType == Object.class) {
-        	for (int i = 0; i < indexOrLength; i++) {
-        		Object key = readAny();
-        		Object val = readAny();
-        		value.put(key, val);
-        	}
-    	}
-    	else if (keyType instanceof Class && valType instanceof Class) {
-    		Class<?> keyClass = (Class<?>)keyType;
-    		Class<?> valClass = (Class<?>)valType;
-        	
-    		for (int i = 0; i < indexOrLength; i++) {
-        		Object key = readAny();
-        		if (key != null && !keyClass.isAssignableFrom(key.getClass()))
-        			key = context.convert(this, key, keyType);
-        		Object val = readAny();
-        		if (val != null && !valClass.isAssignableFrom(val.getClass()))
-        			val = context.convert(this, val, valType);
-        		value.put(key, val);
-        	}
-    	}
-    	else {
-	    	for (int i = 0; i < indexOrLength; i++) {
-	    		Object key = context.convert(this, readAny(), keyType);
-	    		Object val = context.convert(this, readAny(), valType);
-	    		value.put(key, val);
-	    	}
+    	for (int i = 0; i < indexOrLength; i++) {
+    		Object key = readAny(keyType);
+    		Object val = readAny(valType);
+    		value.put(key, val);
     	}
 	}
 

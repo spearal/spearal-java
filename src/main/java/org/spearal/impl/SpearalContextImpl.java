@@ -42,7 +42,9 @@ import org.spearal.configuration.Repeatable;
 import org.spearal.configuration.Securizer;
 import org.spearal.configuration.TypeInstantiator;
 import org.spearal.configuration.TypeLoader;
+import org.spearal.impl.cache.CopyOnWriteDualIdentityValueMap;
 import org.spearal.impl.cache.CopyOnWriteKeyValueMap;
+import org.spearal.impl.cache.DualIdentityValueMap;
 import org.spearal.impl.cache.KeyValueMap.ValueProvider;
 
 /**
@@ -64,7 +66,7 @@ public class SpearalContextImpl implements SpearalContext {
 	private final CopyOnWriteKeyValueMap<Property, PropertyInstantiator> propertyInstantiatorsCache;
 	
 	private final List<ConverterProvider> converterProviders;
-	private final CopyOnWriteKeyValueMap<ConverterKey, Converter<?>> convertersCache;
+	private final CopyOnWriteDualIdentityValueMap<Class<?>, Type, Converter<?>> convertersCache;
 	
 	private final List<CoderProvider> coderProviders;
 	private final CopyOnWriteKeyValueMap<Class<?>, Coder> codersCache;
@@ -105,16 +107,16 @@ public class SpearalContextImpl implements SpearalContext {
 		);
 		
 		this.converterProviders = new ArrayList<ConverterProvider>();
-		this.convertersCache = new CopyOnWriteKeyValueMap<ConverterKey, Converter<?>>(false,
-			new ValueProvider<ConverterKey, Converter<?>>() {
+		this.convertersCache = new CopyOnWriteDualIdentityValueMap<Class<?>, Type, Converter<?>>(
+			new DualIdentityValueMap.ValueProvider<Class<?>, Type, Converter<?>>() {
 				@Override
-				public Converter<?> createValue(SpearalContext context, ConverterKey key) {
+				public Converter<?> createValue(SpearalContext context, Class<?> valueClass, Type targetType) {
 					for (ConverterProvider provider : converterProviders) {
-						Converter<?> converter = provider.getConverter(key.valueClass, key.targetType);
+						Converter<?> converter = provider.getConverter(valueClass, targetType);
 						if (converter != null)
 							return converter;
 					}
-					throw new RuntimeException("No converter found from: " + key.valueClass + " to: " + key.targetType);
+					throw new RuntimeException("No converter found from: " + valueClass + " to: " + targetType);
 				}
 			}
 		);
@@ -228,18 +230,14 @@ public class SpearalContextImpl implements SpearalContext {
 
 	@Override
 	public Object instantiate(SpearalDecoder decoder, Type type) throws InstantiationException {
-		TypeInstantiator typeInstantiator = typeInstantiatorsCache.get(type);
-		if (typeInstantiator == null)
-			typeInstantiator = typeInstantiatorsCache.putIfAbsent(this, type);
-		return typeInstantiator.instantiate((ExtendedSpearalDecoder)decoder, type);
+		return typeInstantiatorsCache.getOrPutIfAbsent(this, type)
+			.instantiate((ExtendedSpearalDecoder)decoder, type);
 	}
 
 	@Override
 	public Object instantiate(SpearalDecoder decoder, Property property) throws InstantiationException {
-		PropertyInstantiator propertyInstantiator = propertyInstantiatorsCache.get(property);
-		if (propertyInstantiator == null)
-			propertyInstantiator = propertyInstantiatorsCache.putIfAbsent(this, property);
-		return propertyInstantiator.instantiate((ExtendedSpearalDecoder)decoder, property);
+		return propertyInstantiatorsCache.getOrPutIfAbsent(this, property)
+			.instantiate((ExtendedSpearalDecoder)decoder, property);
 	}
 
 	@Override
@@ -254,20 +252,13 @@ public class SpearalContextImpl implements SpearalContext {
 		Class<?> valueClass = (value != null ? value.getClass() : null);
 		if (valueClass == targetType)
 			return value;
-		
-		ConverterKey converterKey = new ConverterKey(valueClass, targetType);
-		Converter<?> converter = convertersCache.get(converterKey);
-		if (converter == null)
-			converter = convertersCache.putIfAbsent(this, converterKey);
-		return converter.convert((ExtendedSpearalDecoder)decoder, value, targetType);
+		return convertersCache.getOrPutIfAbsent(this, valueClass, targetType)
+			.convert((ExtendedSpearalDecoder)decoder, value, targetType);
 	}
 	
 	@Override
 	public Coder getCoder(Class<?> valueClass) {
-		Coder coder = codersCache.get(valueClass);
-		if (coder == null)
-			coder = codersCache.putIfAbsent(this, valueClass);
-		return coder;
+		return codersCache.getOrPutIfAbsent(this, valueClass);
 	}
 	
 	@Override
@@ -284,29 +275,5 @@ public class SpearalContextImpl implements SpearalContext {
 				"setter=" + setter +
 			"}"
 		);
-	}
-
-	private static final class ConverterKey {
-		
-		public final Class<?> valueClass;
-		public final Type targetType;
-		public final int hash;
-
-		public ConverterKey(Class<?> valueClass, Type targetType) {
-			this.valueClass = valueClass;
-			this.targetType = targetType;
-			this.hash = (valueClass == null ? 0 : valueClass.hashCode()) + targetType.hashCode();
-		}
-
-		@Override
-		public int hashCode() {
-			return hash;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			ConverterKey key = (ConverterKey)obj;
-			return key.valueClass == valueClass && key.targetType == targetType;
-		}
 	}
 }
