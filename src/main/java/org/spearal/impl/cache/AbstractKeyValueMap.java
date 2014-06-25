@@ -17,6 +17,7 @@
  */
 package org.spearal.impl.cache;
 
+
 /**
  * @author Franck WOLFF
  */
@@ -58,6 +59,28 @@ public abstract class AbstractKeyValueMap<K, V> extends AbstractMap implements K
 
 	protected void setProvider(ValueProvider<K, V> provider) {
 		this.provider = provider;
+	}
+
+	@Override
+	public String toString() {
+		Entry<K, V>[] entries = this.entries;
+		boolean first = true;
+
+		StringBuilder sb = new StringBuilder(256);
+		sb.append('{');
+		for (Entry<K, V> entry : entries) {
+			if (entry == null)
+				continue;
+			if (first)
+				first = false;
+			else
+				sb.append(", ");
+			sb.append(entry.key).append('=').append(entry.value);
+			for (Entry<K, V> next = entry.next; next != null; next = next.next)
+				sb.append(", ").append(entry.key).append('=').append(entry.value);
+		}
+		sb.append('}');
+		return sb.toString();
 	}
 
 	protected abstract AbstractKeyValueMap<K, V> create(int capacity, ValueProvider<K, V> provider);
@@ -122,8 +145,7 @@ public abstract class AbstractKeyValueMap<K, V> extends AbstractMap implements K
 			this.value = value;
 			this.next = next;
 		}
-		
-		
+
 		@Override
 		public Entry<K, V> clone() {
 			return new Entry<K, V>(key, hash, value, (next != null ? next.clone() : null));

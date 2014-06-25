@@ -39,6 +39,30 @@ public abstract class AbstractKeyIndexMap<K> extends AbstractMap implements KeyI
 		this.entries = new Entry[capacity];
 	}
     
+	@Override
+	public String toString() {
+		Object[] keys = new Object[size];
+
+		Entry<K>[] entries = this.entries;
+		for (Entry<K> entry : entries) {
+			if (entry == null)
+				continue;
+			keys[entry.index] = entry.key;
+			for (Entry<K> next = entry.next; next != null; next = next.next)
+				keys[next.index] = next.key;
+		}
+		
+		StringBuilder sb = new StringBuilder(256);
+		sb.append('{');
+		if (keys.length > 0) {
+			sb.append("0:").append(keys[0]);
+			for (int i = 1; i < keys.length; i++)
+				sb.append(", ").append(i).append(":").append(keys[i]);
+		}
+		sb.append('}');
+		return sb.toString();
+	}
+
 	protected final int resize(int newCapacity) {
         Entry<K>[] oldEntries = entries;
 
