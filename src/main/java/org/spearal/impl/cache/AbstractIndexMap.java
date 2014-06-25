@@ -20,14 +20,14 @@ package org.spearal.impl.cache;
 /**
  * @author Franck WOLFF
  */
-public abstract class AbstractKeyIndexMap<K> extends AbstractMap implements KeyIndexMap<K> {
+public abstract class AbstractIndexMap<K> extends AbstractMap implements IndexMap<K> {
 
 	protected Entry<K>[] entries;
 
-	public AbstractKeyIndexMap() {
+	public AbstractIndexMap() {
 	}
 
-	public AbstractKeyIndexMap(int capacity) {
+	public AbstractIndexMap(int capacity) {
 		super(capacity);
 	}
 

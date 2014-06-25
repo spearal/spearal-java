@@ -20,7 +20,7 @@ package org.spearal.impl.cache;
 /**
  * @author Franck WOLFF
  */
-public final class IdentityIndexMap extends AbstractKeyIndexMap<Object> {
+public final class IdentityIndexMap extends AbstractIndexMap<Object> {
 
 	public IdentityIndexMap() {
 	}

@@ -42,10 +42,10 @@ import org.spearal.configuration.Repeatable;
 import org.spearal.configuration.Securizer;
 import org.spearal.configuration.TypeInstantiator;
 import org.spearal.configuration.TypeLoader;
-import org.spearal.impl.cache.CopyOnWriteDualIdentityValueMap;
-import org.spearal.impl.cache.CopyOnWriteKeyValueMap;
-import org.spearal.impl.cache.DualIdentityValueMap;
-import org.spearal.impl.cache.KeyValueMap.ValueProvider;
+import org.spearal.impl.cache.CopyOnWriteDualIdentityMap;
+import org.spearal.impl.cache.CopyOnWriteValueMap;
+import org.spearal.impl.cache.DualIdentityMap;
+import org.spearal.impl.cache.ValueMap.ValueProvider;
 
 /**
  * @author Franck WOLFF
@@ -60,16 +60,16 @@ public class SpearalContextImpl implements SpearalContext {
 	private final Map<String, String> classAliases;
 	
 	private final List<TypeInstantiator> typeInstantiators;
-	private final CopyOnWriteKeyValueMap<Type, TypeInstantiator> typeInstantiatorsCache;
+	private final CopyOnWriteValueMap<Type, TypeInstantiator> typeInstantiatorsCache;
 
 	private final List<PropertyInstantiator> propertyInstantiators;
-	private final CopyOnWriteKeyValueMap<Property, PropertyInstantiator> propertyInstantiatorsCache;
+	private final CopyOnWriteValueMap<Property, PropertyInstantiator> propertyInstantiatorsCache;
 	
 	private final List<ConverterProvider> converterProviders;
-	private final CopyOnWriteDualIdentityValueMap<Class<?>, Type, Converter<?>> convertersCache;
+	private final CopyOnWriteDualIdentityMap<Class<?>, Type, Converter<?>> convertersCache;
 	
 	private final List<CoderProvider> coderProviders;
-	private final CopyOnWriteKeyValueMap<Class<?>, Coder> codersCache;
+	private final CopyOnWriteValueMap<Class<?>, Coder> codersCache;
 	
 	private final List<PropertyFactory> propertyFactories;
 	
@@ -77,7 +77,7 @@ public class SpearalContextImpl implements SpearalContext {
 		this.classAliases = new HashMap<String, String>();
 
 		this.typeInstantiators = new ArrayList<TypeInstantiator>();
-		this.typeInstantiatorsCache = new CopyOnWriteKeyValueMap<Type, TypeInstantiator>(true,
+		this.typeInstantiatorsCache = new CopyOnWriteValueMap<Type, TypeInstantiator>(true,
 			new ValueProvider<Type, TypeInstantiator>() {
 				@Override
 				public TypeInstantiator createValue(SpearalContext context, Type key) {
@@ -92,7 +92,7 @@ public class SpearalContextImpl implements SpearalContext {
 		);
 
 		this.propertyInstantiators = new ArrayList<PropertyInstantiator>();
-		this.propertyInstantiatorsCache = new CopyOnWriteKeyValueMap<Property, PropertyInstantiator>(false,
+		this.propertyInstantiatorsCache = new CopyOnWriteValueMap<Property, PropertyInstantiator>(false,
 			new ValueProvider<Property, PropertyInstantiator>() {
 				@Override
 				public PropertyInstantiator createValue(SpearalContext context, Property key) {
@@ -107,8 +107,8 @@ public class SpearalContextImpl implements SpearalContext {
 		);
 		
 		this.converterProviders = new ArrayList<ConverterProvider>();
-		this.convertersCache = new CopyOnWriteDualIdentityValueMap<Class<?>, Type, Converter<?>>(
-			new DualIdentityValueMap.ValueProvider<Class<?>, Type, Converter<?>>() {
+		this.convertersCache = new CopyOnWriteDualIdentityMap<Class<?>, Type, Converter<?>>(
+			new DualIdentityMap.ValueProvider<Class<?>, Type, Converter<?>>() {
 				@Override
 				public Converter<?> createValue(SpearalContext context, Class<?> valueClass, Type targetType) {
 					for (ConverterProvider provider : converterProviders) {
@@ -122,7 +122,7 @@ public class SpearalContextImpl implements SpearalContext {
 		);
 		
 		this.coderProviders = new ArrayList<CoderProvider>();
-		this.codersCache = new CopyOnWriteKeyValueMap<Class<?>, Coder>(true,
+		this.codersCache = new CopyOnWriteValueMap<Class<?>, Coder>(true,
 			new ValueProvider<Class<?>, Coder>() {
 				@Override
 				public Coder createValue(SpearalContext context, Class<?> key) {

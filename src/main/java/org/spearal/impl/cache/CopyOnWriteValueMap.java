@@ -18,37 +18,41 @@
 package org.spearal.impl.cache;
 
 import org.spearal.SpearalContext;
+import org.spearal.impl.cache.ValueMap.ValueProvider;
 
 /**
  * @author Franck WOLFF
  */
-public final class CopyOnWriteDualIdentityValueMap<K1, K2, V> {
+public final class CopyOnWriteValueMap<K, V> {
 
-	protected volatile DualIdentityValueMap<K1, K2, V> map;
+	protected volatile ValueMap<K, V> map;
 	
-	public CopyOnWriteDualIdentityValueMap(DualIdentityValueMap.ValueProvider<K1, K2, V> provider) {
-		this.map = new DualIdentityValueMap<K1, K2, V>(provider, 1);
+	public CopyOnWriteValueMap(boolean identity, ValueProvider<K, V> provider) {
+		if (identity)
+			 this.map = new IdentityValueMap<K, V>(provider, 1);
+		else
+			 this.map = new EqualityValueMap<K, V>(provider, 1);
 	}
 	
-	public V get(K1 key1, K2 key2) {
-		return get().get(key1, key2);
+	public V get(K key) {
+		return get().get(key);
 	}
 	
-	public synchronized V putIfAbsent(SpearalContext context, K1 key1, K2 key2) {
-		DualIdentityValueMap<K1, K2, V> map = get();
+	public synchronized V putIfAbsent(SpearalContext context, K key) {
+		ValueMap<K, V> map = get();
 		
-		V value = map.get(key1, key2);
+		V value = map.get(key);
 		if (value == null) {
 			map = map.clone();
-			value = map.putIfAbsent(context, key1, key2);
+			value = map.putIfAbsent(context, key);
 			set(map);
 		}
 		return value;
 	}
 	
-	public V getOrPutIfAbsent(SpearalContext context, K1 key1, K2 key2) {
-		V value = get().get(key1, key2);
-		return (value != null ? value : putIfAbsent(context, key1, key2));
+	public V getOrPutIfAbsent(SpearalContext context, K key) {
+		V value = get().get(key);
+		return (value != null ? value : putIfAbsent(context, key));
 	}
 	
 	public int size() {
@@ -60,11 +64,11 @@ public final class CopyOnWriteDualIdentityValueMap<K1, K2, V> {
 		return get().toString();
 	}
 
-	private DualIdentityValueMap<K1, K2, V> get() {
+	private ValueMap<K, V> get() {
 		return map;
 	}
 	
-	private void set(DualIdentityValueMap<K1, K2, V> map) {
+	private void set(ValueMap<K, V> map) {
 		this.map = map;
 	}
 }

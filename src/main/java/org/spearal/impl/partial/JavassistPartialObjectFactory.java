@@ -30,18 +30,18 @@ import org.spearal.SpearalContext;
 import org.spearal.configuration.PartialObjectFactory;
 import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.ExtendedSpearalDecoder;
-import org.spearal.impl.cache.CopyOnWriteKeyValueMap;
-import org.spearal.impl.cache.KeyValueMap.ValueProvider;
+import org.spearal.impl.cache.CopyOnWriteValueMap;
+import org.spearal.impl.cache.ValueMap.ValueProvider;
 
 /**
  * @author Franck WOLFF
  */
 public class JavassistPartialObjectFactory implements PartialObjectFactory, ValueProvider<Class<?>, Class<?>> {
 	
-	private final CopyOnWriteKeyValueMap<Class<?>, Class<?>> proxyClassesCache;
+	private final CopyOnWriteValueMap<Class<?>, Class<?>> proxyClassesCache;
 	
 	public JavassistPartialObjectFactory() {
-		this.proxyClassesCache = new CopyOnWriteKeyValueMap<Class<?>, Class<?>>(true, this);
+		this.proxyClassesCache = new CopyOnWriteValueMap<Class<?>, Class<?>>(true, this);
 	}
 
 	@Override

@@ -22,18 +22,18 @@ import org.spearal.SpearalContext;
 /**
  * @author Franck WOLFF
  */
-public final class DualIdentityValueMap<K1, K2, V> extends AbstractMap {
+public final class DualIdentityMap<K1, K2, V> extends AbstractMap {
 
 	protected ValueProvider<K1, K2, V> provider;
 	protected Entry<K1, K2, V>[] entries;
 
-	public DualIdentityValueMap(ValueProvider<K1, K2, V> provider) {
+	public DualIdentityMap(ValueProvider<K1, K2, V> provider) {
 		super();
 
 		this.provider = provider;
 	}
 
-	public DualIdentityValueMap(ValueProvider<K1, K2, V> provider, int capacity) {
+	public DualIdentityMap(ValueProvider<K1, K2, V> provider, int capacity) {
 		super(capacity);
 		
 		this.provider = provider;
@@ -113,10 +113,10 @@ public final class DualIdentityValueMap<K1, K2, V> extends AbstractMap {
 	}
 	
 	@Override
-	public DualIdentityValueMap<K1, K2, V> clone() {
+	public DualIdentityMap<K1, K2, V> clone() {
 		Entry<K1, K2, V>[] entries = this.entries;
 
-		DualIdentityValueMap<K1, K2, V> clone = new DualIdentityValueMap<K1, K2, V>(provider, entries.length);
+		DualIdentityMap<K1, K2, V> clone = new DualIdentityMap<K1, K2, V>(provider, entries.length);
 		
 		clone.threshold = threshold;
 		clone.size = size;

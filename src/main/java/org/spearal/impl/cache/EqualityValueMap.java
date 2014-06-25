@@ -22,7 +22,7 @@ import org.spearal.SpearalContext;
 /**
  * @author Franck WOLFF
  */
-public class EqualityValueMap<K, V> extends AbstractKeyValueMap<K, V> {
+public class EqualityValueMap<K, V> extends AbstractValueMap<K, V> {
 
 	public EqualityValueMap(ValueProvider<K, V> provider) {
 		super(provider);
@@ -77,7 +77,7 @@ public class EqualityValueMap<K, V> extends AbstractKeyValueMap<K, V> {
 	}
 
 	@Override
-	protected AbstractKeyValueMap<K, V> create(ValueProvider<K, V> provider, int capacity) {
+	protected AbstractValueMap<K, V> create(ValueProvider<K, V> provider, int capacity) {
 		return new EqualityValueMap<K, V>(provider, capacity);
 	}
 }

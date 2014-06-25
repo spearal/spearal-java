@@ -21,7 +21,7 @@ package org.spearal.impl.cache;
 /**
  * @author Franck WOLFF
  */
-public interface KeyIndexMap<K> {
+public interface IndexMap<K> {
 
 	int putIfAbsent(K key);
 	

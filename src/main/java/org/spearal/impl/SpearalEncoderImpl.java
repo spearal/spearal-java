@@ -32,7 +32,7 @@ import org.spearal.SpearalPropertyFilter;
 import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.cache.IdentityIndexMap;
 import org.spearal.impl.cache.IdentityValueMap;
-import org.spearal.impl.cache.KeyValueMap.ValueProvider;
+import org.spearal.impl.cache.ValueMap.ValueProvider;
 import org.spearal.impl.cache.StringIndexMap;
 
 /**

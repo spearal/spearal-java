@@ -36,7 +36,7 @@ import org.spearal.SpearalPrinter;
 import org.spearal.SpearalPrinter.StringData;
 import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.cache.EqualityValueMap;
-import org.spearal.impl.cache.KeyValueMap.ValueProvider;
+import org.spearal.impl.cache.ValueMap.ValueProvider;
 import org.spearal.impl.util.TypeUtil;
 
 /**

@@ -25,8 +25,8 @@ import java.util.List;
 
 import org.spearal.SpearalContext;
 import org.spearal.configuration.TypeLoader;
-import org.spearal.impl.cache.CopyOnWriteKeyValueMap;
-import org.spearal.impl.cache.KeyValueMap.ValueProvider;
+import org.spearal.impl.cache.CopyOnWriteValueMap;
+import org.spearal.impl.cache.ValueMap.ValueProvider;
 
 /**
  * @author Franck WOLFF
@@ -34,7 +34,7 @@ import org.spearal.impl.cache.KeyValueMap.ValueProvider;
 public class TypeLoaderImpl implements TypeLoader, ValueProvider<String, Class<?>> {
 
 	private final ClassLoader classLoader;
-	private final CopyOnWriteKeyValueMap<String, Class<?>> classesCache;
+	private final CopyOnWriteValueMap<String, Class<?>> classesCache;
 	
 	public TypeLoaderImpl() {
 		this(TypeLoaderImpl.class.getClassLoader());
@@ -42,7 +42,7 @@ public class TypeLoaderImpl implements TypeLoader, ValueProvider<String, Class<?
 	
 	public TypeLoaderImpl(final ClassLoader classLoader) {
 		this.classLoader = classLoader;
-		this.classesCache = new CopyOnWriteKeyValueMap<String, Class<?>>(true, this);
+		this.classesCache = new CopyOnWriteValueMap<String, Class<?>>(true, this);
 	}
 
 	@Override

@@ -20,7 +20,7 @@ package org.spearal.impl.cache;
 /**
  * @author Franck WOLFF
  */
-public final class StringIndexMap extends AbstractKeyIndexMap<String> {
+public final class StringIndexMap extends AbstractIndexMap<String> {
 
 	public StringIndexMap() {
 	}
