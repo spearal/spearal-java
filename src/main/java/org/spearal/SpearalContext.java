@@ -22,6 +22,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
 import org.spearal.configuration.CoderProvider.Coder;
+import org.spearal.configuration.EncoderBeanDescriptorFactory.EncoderBeanDescriptor;
 import org.spearal.configuration.Configurable;
 import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.configuration.Securizer;
@@ -55,4 +56,6 @@ public interface SpearalContext {
 	Object convert(SpearalDecoder decoder, Object value, Type targetType);
 	
 	Property createProperty(String name, Field field, Method getter, Method setter);
+	
+	EncoderBeanDescriptor createDescriptor(SpearalEncoder encoder, Object value);
 }

@@ -27,12 +27,15 @@ import java.util.Map;
 
 import org.spearal.SpearalContext;
 import org.spearal.SpearalDecoder;
+import org.spearal.SpearalEncoder;
 import org.spearal.configuration.ClassNameAlias;
 import org.spearal.configuration.CoderProvider;
 import org.spearal.configuration.CoderProvider.Coder;
 import org.spearal.configuration.Configurable;
 import org.spearal.configuration.ConverterProvider;
 import org.spearal.configuration.ConverterProvider.Converter;
+import org.spearal.configuration.EncoderBeanDescriptorFactory;
+import org.spearal.configuration.EncoderBeanDescriptorFactory.EncoderBeanDescriptor;
 import org.spearal.configuration.Introspector;
 import org.spearal.configuration.PartialObjectFactory;
 import org.spearal.configuration.PropertyFactory;
@@ -72,6 +75,8 @@ public class SpearalContextImpl implements SpearalContext {
 	private final CopyOnWriteValueMap<Class<?>, Coder> codersCache;
 	
 	private final List<PropertyFactory> propertyFactories;
+	
+	private final List<EncoderBeanDescriptorFactory> descriptorFactories;
 	
 	public SpearalContextImpl() {
 		this.classAliases = new HashMap<String, String>();
@@ -135,6 +140,8 @@ public class SpearalContextImpl implements SpearalContext {
 		);
 		
 		this.propertyFactories = new ArrayList<PropertyFactory>();
+		
+		this.descriptorFactories = new ArrayList<EncoderBeanDescriptorFactory>();
 	}
 
 	@Override
@@ -181,6 +188,11 @@ public class SpearalContextImpl implements SpearalContext {
 			
 			if (configurable instanceof PropertyFactory) {
 				propertyFactories.add((append ? propertyFactories.size() : 0), (PropertyFactory)configurable);
+				added = true;
+			}
+			
+			if (configurable instanceof EncoderBeanDescriptorFactory) {
+				descriptorFactories.add((append ? descriptorFactories.size() : 0), (EncoderBeanDescriptorFactory)configurable);
 				added = true;
 			}
 		}
@@ -273,5 +285,15 @@ public class SpearalContextImpl implements SpearalContext {
 				"setter=" + setter +
 			"}"
 		);
+	}
+	
+	@Override
+	public EncoderBeanDescriptor createDescriptor(SpearalEncoder encoder, Object value) {
+		for (EncoderBeanDescriptorFactory factory : descriptorFactories) {
+			EncoderBeanDescriptor descriptor = factory.createDescription(encoder, value);
+			if (descriptor != null)
+				return descriptor;
+		}
+		throw new UnsupportedOperationException("Could not create bean descriptor for: " + value);
 	}
 }

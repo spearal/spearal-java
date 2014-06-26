@@ -34,6 +34,7 @@ import org.spearal.impl.coder.MapCoder;
 import org.spearal.impl.coder.SimpleCodersProvider;
 import org.spearal.impl.converter.EnumConverter;
 import org.spearal.impl.converter.SimpleConvertersProvider;
+import org.spearal.impl.descriptor.EncoderBeanDescriptorFactoryImpl;
 import org.spearal.impl.instantiator.ClassInstantiator;
 import org.spearal.impl.instantiator.CollectionInstantiator;
 import org.spearal.impl.instantiator.MapInstantiator;
@@ -85,6 +86,10 @@ public class SpearalFactory {
 		context.configure(new ArrayCoder(), true);
 		context.configure(new EnumCoder(), true);
 		context.configure(new BeanCoder(), true);
+		
+		// Bean descriptors.
+		
+		context.configure(new EncoderBeanDescriptorFactoryImpl(), true);
 	}
 	
 	protected static final PartialObjectFactory newDefaultPartialObjectFactory() {

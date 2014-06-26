@@ -23,16 +23,15 @@ import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collection;
+import java.util.IdentityHashMap;
 import java.util.Map;
 
 import org.spearal.SpearalContext;
 import org.spearal.SpearalPropertyFilter;
+import org.spearal.configuration.EncoderBeanDescriptorFactory.EncoderBeanDescriptor;
 import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.cache.IdentityIndexMap;
-import org.spearal.impl.cache.IdentityValueMap;
 import org.spearal.impl.cache.StringIndexMap;
-import org.spearal.impl.cache.ValueMap.ValueProvider;
-import org.spearal.impl.util.ClassDescriptionUtil;
 
 /**
  * @author Franck WOLFF
@@ -45,7 +44,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 	
 	private final StringIndexMap sharedStrings;
 	private final IdentityIndexMap sharedObjects;
-	private final IdentityValueMap<Class<?>, ClassDescriptor> descriptors;
+	private final Map<Class<?>, EncoderBeanDescriptor> descriptors;
 	
 	private final byte[] buffer;
 	private int position;
@@ -71,13 +70,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 		
 		this.sharedStrings = new StringIndexMap();
 		this.sharedObjects = new IdentityIndexMap();
-		this.descriptors = new IdentityValueMap<Class<?>, ClassDescriptor>(new ValueProvider<Class<?>, ClassDescriptor>() {
-			@Override
-			public ClassDescriptor createValue(SpearalContext context, Class<?> key) {
-				context.getSecurizer().checkEncodable(key);
-				return createDescriptor(key);
-			}
-		});
+		this.descriptors = new IdentityHashMap<Class<?>, EncoderBeanDescriptor>(32);
 
 		this.buffer = new byte[capacity];
         this.position = 0;
@@ -535,13 +528,20 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 			writeUnsignedIntValue(reference, length0);
 		}
 		else {
-			ClassDescriptor descriptor = descriptors.putIfAbsent(context, value.getClass());
+			Class<?> cls = value.getClass();
+			
+			EncoderBeanDescriptor descriptor = descriptors.get(cls);
+			if (descriptor == null) {
+				descriptor = context.createDescriptor(this, value);
+				if (descriptor.isCacheable())
+					descriptors.put(cls, descriptor);
+			}
 			
 			ensureCapacity(1);
 			buffer[position] = (byte)ITYPE_BEAN;
-			writeStringData(descriptor.description);
+			writeStringData(descriptor.getDescription());
 			
-			for (Property property : descriptor.properties) {
+			for (Property property : descriptor.getProperties()) {
 				if (property == null)
 					continue;
 				try {
@@ -555,12 +555,6 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 				}
 			}
 		}
-	}
-	
-	private ClassDescriptor createDescriptor(Class<?> cls) {
-		Property[] properties = propertyFilter.get(cls);
-		String description = ClassDescriptionUtil.createAliasedDescription(context, cls, properties);
-		return new ClassDescriptor(description, properties);
 	}
     
     private void writeStringData(String s) throws IOException {
@@ -754,19 +748,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 		
 		this.position = position;
 	}
-/*	
-	private void writeIntData(int value) {
-		final byte[] buffer = this.buffer;
-		int position = this.position;
-		
-		buffer[position++] = (byte)(value >>> 24);
-		buffer[position++] = (byte)(value >>> 16);
-		buffer[position++] = (byte)(value >>> 8);
-		buffer[position++] = (byte)value;
-		
-		this.position = position;
-	}
-*/	
+
 	private static int unsignedIntLength0(int value) {
 		if (value <= 0xffff)
 			return (value <= 0xff ? 0 : 1);
@@ -788,91 +770,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 			throw new RuntimeException("Internal error: length0=" + length0);
 		}
 	}
-/*	
-	private void writeVariableUnsignedIntValue(int value) throws IOException {
-		int length;
-		if (value <= 0x3fff)
-			length = (value <= 0x7f ? 1 : 2);
-		else if (value <= 0xfffffff)
-			length = (value <= 0x1fffff ? 3 : 4);
-		else
-			length = 5;
-		
-		ensureCapacity(length);
-		
-		switch (length) {
-		case 5:
-			buffer[position++] = (byte)0xf0;
-			break;
-		case 4:
-			buffer[position] = (byte)0xe0;
-			break;
-		case 3:
-			buffer[position] = (byte)0xc0;
-			break;
-		case 2:
-			buffer[position] = (byte)0x80;
-			break;
-		}
-		
-		switch (length) {
-		case 5:
-		case 4:
-			buffer[position++] = (byte)(value >>> 24);
-		case 3:
-			buffer[position++] = (byte)(value >>> 16);
-		case 2:
-			buffer[position++] = (byte)(value >>> 8);
-		case 1:
-			buffer[position++] = (byte)value;
-		}
-	}
-	
-	private void writeVariableIntValue(int value) throws IOException {
-		int inverse = 0x00;
-		if (value < 0 && value != Integer.MIN_VALUE) {
-			inverse = 0x80;
-			value = -value;
-		}
-		
-		int length;
-		if (value <= 0x1fff)
-			length = (value <= 0x3f ? 1 : 2);
-		else if (value <= 0x7ffffff)
-			length = (value <= 0xfffff ? 3 : 4);
-		else
-			length = 5;
-		
-		ensureCapacity(length);
-		
-		switch (length) {
-		case 5:
-			buffer[position++] = (byte)(inverse | 0x78);
-			break;
-		case 4:
-			buffer[position] = (byte)(inverse | 0x70);
-			break;
-		case 3:
-			buffer[position] = (byte)(inverse | 0x60);
-			break;
-		case 2:
-			buffer[position] = (byte)(inverse | 0x40);
-			break;
-		}
-		
-		switch (length) {
-		case 5:
-		case 4:
-			buffer[position++] = (byte)(value >>> 24);
-		case 3:
-			buffer[position++] = (byte)(value >>> 16);
-		case 2:
-			buffer[position++] = (byte)(value >>> 8);
-		case 1:
-			buffer[position++] = (byte)value;
-		}
-	}
-*/
+
     private void ensureCapacity(int capacity) throws IOException {
 		if (buffer.length - position < capacity)
 			flushBuffer();
@@ -897,15 +795,4 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 	    	}
     	}
     }
-	
-	private static class ClassDescriptor {
-		
-		public final String description;
-		public final Property[] properties;
-		
-		public ClassDescriptor(String description, Property[] properties) {
-			this.description = description;
-			this.properties = properties;
-		}
-	}
 }
