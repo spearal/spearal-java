@@ -17,7 +17,6 @@
  */
 package org.spearal.impl.loader;
 
-import java.io.Serializable;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,12 +62,8 @@ public class TypeLoaderImpl implements TypeLoader, ValueProvider<String, Class<?
 		if (classNames.length <= 1) {
 			try {
 				cls = Class.forName(context.getClassNameAlias(key), true, classLoader);
-				if (cls.isInterface()) {
-					if (Serializable.class.isAssignableFrom(cls))
-						cls = Proxy.getProxyClass(classLoader, new Class<?>[]{ cls });
-					else
-						cls = Proxy.getProxyClass(classLoader, new Class<?>[]{ cls, Serializable.class });
-				}
+				if (cls.isInterface())
+					cls = Proxy.getProxyClass(classLoader, new Class<?>[]{ cls });
 			}
 			catch (ClassNotFoundException e) {
 				cls = ClassNotFound.class;

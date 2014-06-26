@@ -17,6 +17,7 @@
  */
 package org.spearal.test.model;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -32,7 +33,7 @@ public class ChildBean extends ParentBean {
 	private Set<SimpleBean> simpleBeans;
 	
 	public ChildBean() {
-		//this.simpleBeans = new HashSet<SimpleBean>();
+		this.simpleBeans = new HashSet<SimpleBean>();
 	}
 
 	public ChildBean(int parentIntProperty, String parentStringProperty, boolean childBooleanProperty, double childDoubleProperty) {
@@ -40,7 +41,7 @@ public class ChildBean extends ParentBean {
 		
 		this.childBooleanProperty = childBooleanProperty;
 		this.childDoubleProperty = childDoubleProperty;
-		//this.simpleBeans = new HashSet<SimpleBean>();
+		this.simpleBeans = new HashSet<SimpleBean>();
 	}
 
 	public boolean isChildBooleanProperty() {

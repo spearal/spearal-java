@@ -18,7 +18,6 @@
 package org.spearal.test;
 
 import java.io.IOException;
-import java.util.HashSet;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -34,7 +33,7 @@ public class TestBean extends AbstractSpearalTestUnit {
 
 	@Before
 	public void setUp() throws Exception {
-		printStream = System.out;
+		// printStream = System.out;
 	}
 
 	@After
@@ -49,7 +48,11 @@ public class TestBean extends AbstractSpearalTestUnit {
 		encodeDecode(new ChildBean(-3, "parent", true, 0.001), -1);
 		
 		ChildBean bean = new ChildBean(56, "parent", false, 3.001);
-		bean.setSimpleBeans(new HashSet<SimpleBean>());
+		bean.setSimpleBeans(null);
+		
+		encodeDecode(bean, -1);
+		
+		bean = new ChildBean(56, "parent", false, 3.001);
 		bean.getSimpleBeans().add(new SimpleBean(true, 3, 5.09, "abc"));
 		bean.getSimpleBeans().add(new SimpleBean(false, -5, -10.09, "abc"));
 		

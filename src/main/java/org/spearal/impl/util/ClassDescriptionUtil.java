@@ -28,33 +28,31 @@ import org.spearal.configuration.PropertyFactory.Property;
 public class ClassDescriptionUtil {
 	
 	public static String classNames(String description) {
-		int iLastColon = description.lastIndexOf(':');
-		if (iLastColon == -1)
+		int iSharp = description.indexOf('#');
+		if (iSharp == -1)
 			return description;
-		return description.substring(0, iLastColon);
+		return description.substring(0, iSharp);
 	}
 	
 	public static String[] splitClassNames(String description) {
-		int iLastColon = description.lastIndexOf(':');
-		if (iLastColon == -1)
-			return new String[] { description };
-		return split(description, ':', 0, iLastColon);
+		int iSharp = description.indexOf('#');
+		return split(description, 0, (iSharp != -1 ? iSharp : description.length()));
 	}
 	
 	public static String[] splitPropertyNames(String description) {
-		int iLastColon = description.lastIndexOf(':');
-		if (iLastColon == -1)
+		int iSharp = description.indexOf('#');
+		if (iSharp == -1)
 			return new String[0];
-		return split(description, ',', iLastColon + 1, description.length());
+		return split(description, iSharp + 1, description.length());
 	}
 	
 	public static int propertiesCount(String description) {
-		int iLastColon = description.lastIndexOf(':');
-		if (iLastColon == -1)
+		int iSharp = description.indexOf('#');
+		if (iSharp == -1)
 			return 0;
 		
 		int count = 1;
-		for (int i = iLastColon + 1; i < description.length(); i++) {
+		for (int i = iSharp + 1; i < description.length(); i++) {
 			if (description.charAt(i) == ',')
 				count++;
 		}
@@ -65,10 +63,15 @@ public class ClassDescriptionUtil {
 		StringBuilder sb = new StringBuilder(64);
 
 		if (!Proxy.isProxyClass(cls))
-			sb.append(context.getClassNameAlias(cls.getName())).append(':');
+			sb.append(context.getClassNameAlias(cls.getName())).append('#');
 		else {
-			for (Class<?> inter : cls.getInterfaces())
-				sb.append(context.getClassNameAlias(inter.getName())).append(':');
+			Class<?>[] interfaces = cls.getInterfaces();
+			if (interfaces.length > 0) {
+				sb.append(context.getClassNameAlias(interfaces[0].getName()));
+				for (int i = 1; i < interfaces.length; i++)
+					sb.append(',').append(context.getClassNameAlias(interfaces[i].getName()));
+			}
+			sb.append('#');
 		}
 
 		boolean first = true;
@@ -85,10 +88,10 @@ public class ClassDescriptionUtil {
 		return sb.toString();
 	}
 	
-	private static String[] split(String s, char separ, int from, int to) {
+	private static String[] split(String s, int from, int to) {
 		int count = 1;
 		for (int i = from; i < to; i++) {
-			if (s.charAt(i) == separ)
+			if (s.charAt(i) == ',')
 				count++;
 		}
 		
@@ -98,7 +101,7 @@ public class ClassDescriptionUtil {
 		String[] result = new String[count];
 		int iResult = 0, iStart = from;
 		for (int i = from; i < to; i++) {
-			if (s.charAt(i) == separ) {
+			if (s.charAt(i) == ',') {
 				result[iResult++] = s.substring(iStart, i);
 				iStart = i + 1;
 			}
