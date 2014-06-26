@@ -22,7 +22,6 @@ import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Map;
 
@@ -39,8 +38,6 @@ import org.spearal.impl.util.ClassDescriptionUtil;
  * @author Franck WOLFF
  */
 public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType {
-
-	private static final Charset UTF8 = Charset.forName("UTF-8");
 
 	private final SpearalContext context;
 	private final SpearalPropertyFilter propertyFilter;
@@ -585,18 +582,150 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
         	writeUnsignedIntValue(index, length0);
         }
         else {
-        	byte[] bytes = s.getBytes(UTF8);
+        	int count = utfByteCount(s);
         	
-        	int length0 = unsignedIntLength0(bytes.length);
+        	int length0 = unsignedIntLength0(count);
             if (length0 > 0)
             	buffer[position++] |= length0;
             else
             	position++;
             ensureCapacity(length0 + 1);
-        	writeUnsignedIntValue(bytes.length, length0);
+        	writeUnsignedIntValue(count, length0);
         	
-        	writeBytes(bytes);
+        	final byte[] buffer = this.buffer;
+        	final int bufferLength = buffer.length;
+            
+        	int position = this.position;
+            
+            // String chars are in [0x0000, 0x007f]: write them directly as bytes.
+            if (count == length) {
+                if (length <= bufferLength - position) {
+                	for (int i = 0; i < length; i++)
+                		buffer[position++] = (byte)s.charAt(i);
+                	this.position = position;
+                }
+                else {
+    	        	
+    	        	int i = 0;
+    	        	while (position < bufferLength)
+    	        		buffer[position++] = (byte)s.charAt(i++);
+    	        	this.position = position;
+    	        	
+    	        	do {
+    		        	flushBuffer();
+    		        	position = 0;
+
+    		        	int max = Math.min(bufferLength, length - i);
+    		        	while (position < max)
+    		        		buffer[position++] = (byte)s.charAt(i++);
+    		        	this.position = position;
+    	        	}
+    	        	while (i < length);
+                }
+            }
+            // We have at least one char > 0x007f but enough buffer to write them all.
+            else if (count <= bufferLength - position) {
+            	
+            	for (int i = 0; i < length; i++) {
+                	char c = s.charAt(i);
+                	if (c <= 0x007f)
+                    	buffer[position++] = (byte)c;
+                    else if (c > 0x07ff) {
+                    	if (c >= 0xd800 && c <= 0xdbff) {
+                			int uc = (((c & 0x3ff) << 10) | (s.charAt(++i) & 0x3ff)) + 0x10000;
+                			buffer[position++] = (byte)(0xf0 | ((uc >>> 18)));
+                			buffer[position++] = (byte)(0x80 | ((uc >>> 12) & 0x3f));
+                			buffer[position++] = (byte)(0x80 | ((uc >>> 06) & 0x3f));
+                			buffer[position++] = (byte)(0x80 | (uc & 0x3f));
+                		}
+                		else {
+	                    	buffer[position++] = (byte)(0xE0 | (c >>> 12));
+	                    	buffer[position++] = (byte)(0x80 | ((c >>> 6) & 0x3f));
+	                    	buffer[position++] = (byte)(0x80 | (c & 0x3f));
+                		}
+                    }
+                    else {
+                    	buffer[position++] = (byte)(0xC0 | ((c >>> 6) & 0x1f));
+                    	buffer[position++] = (byte)(0x80 | (c & 0x3f));
+                    }
+                }
+                
+                this.position = position;
+            }
+            // We have at least one char > 0x007f and not enough buffer to write them all.
+            else {
+	        	final int bufferLengthMinus3 = buffer.length - 3;
+            	
+            	int i = 0, total = 0;
+	        	do {
+	            	flushBuffer();
+
+	            	position = 0;
+	            	final int max = Math.min(count - total, bufferLengthMinus3);
+	            	
+	            	while (position < max) {
+	            		char c = s.charAt(i++);
+		            	if (c <= 0x007f)
+		                	buffer[position++] = (byte)c;
+		                else if (c > 0x07ff) {
+		                	if (c >= 0xd800 && c <= 0xdbff) {
+	                			int uc = (((c & 0x3ff) << 10) | (s.charAt(i++) & 0x3ff)) + 0x10000;
+	                			buffer[position++] = (byte)(0xf0 | ((uc >>> 18)));
+	                			buffer[position++] = (byte)(0x80 | ((uc >>> 12) & 0x3f));
+	                			buffer[position++] = (byte)(0x80 | ((uc >>> 06) & 0x3f));
+	                			buffer[position++] = (byte)(0x80 | (uc & 0x3f));
+	                		}
+	                		else {
+			                	buffer[position++] = (byte)(0xE0 | (c >>> 12));
+			                	buffer[position++] = (byte)(0x80 | ((c >>> 6) & 0x3f));
+			                	buffer[position++] = (byte)(0x80 | (c & 0x3f));
+	                		}
+		                }
+		                else {
+		                	buffer[position++] = (byte)(0xC0 | ((c >>> 6) & 0x1f));
+		                	buffer[position++] = (byte)(0x80 | (c & 0x3f));
+		                }
+	            	}
+	            	
+	            	total += position;
+	            	this.position = position;
+	        	}
+	        	while (total < count);
+            }
+
+//        	private static final Charset UTF8 = Charset.forName("UTF-8");
+
+//        	byte[] bytes = s.getBytes(UTF8);
+//        	
+//        	int length0 = unsignedIntLength0(bytes.length);
+//          if (length0 > 0)
+//            	buffer[position++] |= length0;
+//          else
+//            	position++;
+//          ensureCapacity(length0 + 1);
+//        	writeUnsignedIntValue(bytes.length, length0);
+//        	
+//        	writeBytes(bytes);
         }
+    }
+	
+	private static int utfByteCount(String s) {
+    	final int length = s.length();
+    	
+    	int count = length;
+        for (int i = 0; i < length; i++) {
+        	char c = s.charAt(i);
+        	if (c > 0x007f) {
+        		if (c > 0x07ff) {
+        			if (c >= 0xd800 && c <= 0xdbff)
+        				i++;
+        			count += 2;
+        		}
+        		else
+        			count++;
+        	}
+        }
+        return count;
     }
 
 	private static int unsignedLongLength0(long value) {
