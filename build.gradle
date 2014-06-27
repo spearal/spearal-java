@@ -17,6 +17,10 @@
  */
 
 apply plugin: 'java'
+apply plugin: 'maven'
+
+group = 'org.spearal'
+version =  spearalVersion
 
 repositories {
     mavenLocal()
