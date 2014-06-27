@@ -41,6 +41,37 @@ SpearalDecoder decoder = factory.newEncoder(bais);
 Object copy = decoder.readAny();
 ````
 
+## Working with partial encoding:
+
+Spearal lets you encode only some properties of an object. Let's say you have bean defined by this class:
+
+````java
+class Person implements Serializable {
+
+    private String firstName;
+    private String lastName;
+    private List<String> phones;
+    
+    // getters / setters...
+}
+````
+
+If you are retrieving a collection of Persons and just need their first and last names, it is useless to serialize their phones. Spearal lets you encode just the firstName and lastName properties:
+
+````java
+SpearalFactory factory = new SpearalFactory();
+ByteArrayOutputStream baos = new ByteArrayOutputStream();
+SpearalEncoder encoder = factory.newEncoder(baos);
+
+// Only firstName and lastName:
+encoder.getPropertyFilter().add(Person.class, "firstName", "lastName");
+
+encoder.writeAny(obj);
+````
+
+
+
+
 ## What is the Spearal Mime Type?
 
 Data exchanged in the Spearal format should use the `application/spearal` mime type.
