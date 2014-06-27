@@ -5,7 +5,7 @@ Spearal Java
 
 Spearal is a compact binary format for exchanging arbitrary complex data between various endpoints such as Java EE, JavaScript / HTML, Android and iOS applications.
 
-Spearal-Java is the common Java codebase used in all Spearal / Java specific implementations.
+Spearal-Java is the common Java codebase used in all Spearal / Java specific extensions.
 
 ## How to get and build the project?
 
