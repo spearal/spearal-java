@@ -1,0 +1,24 @@
+apply plugin: 'java'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+compileJava {
+    sourceCompatibility=1.6
+    targetCompatibility=1.6
+}
+
+jar {
+    baseName = 'spearal-java'
+    version =  spearalVersion
+}
+
+dependencies {
+    compile "org.javassist:javassist:3.18.2-GA", "junit:junit:4.11"
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '1.12'
+}

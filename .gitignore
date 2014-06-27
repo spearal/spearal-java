@@ -1,4 +1,5 @@
-/bin
+/.gradle
+/.settings
 /bin-java
 /bin-test
-spearal-*.jar
+/build
