@@ -74,7 +74,7 @@ When decoding the result, you will get a proxy for each Person, that will throw 
 ````java
 ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
 SpearalDecoder decoder = factory.newEncoder(bais);
-Person copy = (Person)decoder.readAny();
+Person copy = decoder.readAny(Person.class);
 
 System.out.println(copy.getFirstName());
 System.out.println(copy.getLastName());
