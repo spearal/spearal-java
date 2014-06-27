@@ -69,8 +69,19 @@ encoder.getPropertyFilter().add(Person.class, "firstName", "lastName");
 encoder.writeAny(obj);
 ````
 
+When decoding the result, you will get a proxy for each Person, that will throw a `UndefinedPropertyException` if you try to access the phones collection:
 
+````java
+ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+SpearalDecoder decoder = factory.newEncoder(bais);
+Person copy = (Person)decoder.readAny();
 
+System.out.println(copy.getFirstName());
+System.out.println(copy.getLastName());
+
+// This line throw a UndefinedPropertyException:
+System.out.println(copy.getPhones());
+````
 
 ## What is the Spearal Mime Type?
 
