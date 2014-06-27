@@ -34,7 +34,10 @@ jar {
 }
 
 dependencies {
-    compile "org.javassist:javassist:3.18.2-GA", "junit:junit:4.11"
+
+    compile "org.javassist:javassist:3.18.2-GA"
+    
+    testCompile "junit:junit:4.11"
 }
 
 task wrapper(type: Wrapper) {
