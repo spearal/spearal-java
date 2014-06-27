@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 
+import org.spearal.configuration.Configurable;
 import org.spearal.configuration.PartialObjectFactory;
 import org.spearal.impl.SpearalContextImpl;
 import org.spearal.impl.SpearalDecoderImpl;
@@ -43,6 +44,7 @@ import org.spearal.impl.introspector.IntrospectorImpl;
 import org.spearal.impl.loader.TypeLoaderImpl;
 import org.spearal.impl.property.SimplePropertiesFactory;
 import org.spearal.impl.security.SecurizerImpl;
+import org.spearal.impl.util.ServiceLoader;
 
 /**
  * @author Franck WOLFF
@@ -52,6 +54,10 @@ public class SpearalFactory {
 	private final SpearalContextImpl context;
 	
 	public SpearalFactory() {
+		this(true);
+	}
+	
+	public SpearalFactory(boolean loadServices) {
 		
 		context = new SpearalContextImpl();
 		
@@ -90,6 +96,13 @@ public class SpearalFactory {
 		// Bean descriptors.
 		
 		context.configure(new EncoderBeanDescriptorFactoryImpl(), true);
+		
+		// Load plugins.
+		
+		if (loadServices) {
+			for (Configurable configurable : ServiceLoader.load(Configurable.class))
+				context.configure(configurable);
+		}
 	}
 	
 	protected static final PartialObjectFactory newDefaultPartialObjectFactory() {
