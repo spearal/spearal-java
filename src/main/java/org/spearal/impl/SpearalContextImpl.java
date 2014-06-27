@@ -40,10 +40,12 @@ import org.spearal.configuration.Introspector;
 import org.spearal.configuration.PartialObjectFactory;
 import org.spearal.configuration.PropertyFactory;
 import org.spearal.configuration.PropertyFactory.Property;
-import org.spearal.configuration.PropertyInstantiator;
+import org.spearal.configuration.PropertyInstantiatorProvider;
+import org.spearal.configuration.PropertyInstantiatorProvider.PropertyInstantiator;
 import org.spearal.configuration.Repeatable;
 import org.spearal.configuration.Securizer;
-import org.spearal.configuration.TypeInstantiator;
+import org.spearal.configuration.TypeInstantiatorProvider;
+import org.spearal.configuration.TypeInstantiatorProvider.TypeInstantiator;
 import org.spearal.configuration.TypeLoader;
 import org.spearal.impl.cache.CopyOnWriteDualIdentityMap;
 import org.spearal.impl.cache.CopyOnWriteValueMap;
@@ -62,10 +64,10 @@ public class SpearalContextImpl implements SpearalContext {
 	
 	private final Map<String, String> classAliases;
 	
-	private final List<TypeInstantiator> typeInstantiators;
+	private final List<TypeInstantiatorProvider> typeInstantiatorProviders;
 	private final CopyOnWriteValueMap<Type, TypeInstantiator> typeInstantiatorsCache;
 
-	private final List<PropertyInstantiator> propertyInstantiators;
+	private final List<PropertyInstantiatorProvider> propertyInstantiatorProviders;
 	private final CopyOnWriteValueMap<Property, PropertyInstantiator> propertyInstantiatorsCache;
 	
 	private final List<ConverterProvider> converterProviders;
@@ -81,13 +83,14 @@ public class SpearalContextImpl implements SpearalContext {
 	public SpearalContextImpl() {
 		this.classAliases = new HashMap<String, String>();
 
-		this.typeInstantiators = new ArrayList<TypeInstantiator>();
+		this.typeInstantiatorProviders = new ArrayList<TypeInstantiatorProvider>();
 		this.typeInstantiatorsCache = new CopyOnWriteValueMap<Type, TypeInstantiator>(true,
 			new ValueProvider<Type, TypeInstantiator>() {
 				@Override
 				public TypeInstantiator createValue(SpearalContext context, Type key) {
-					for (TypeInstantiator instantiator : typeInstantiators) {
-						if (instantiator.canInstantiate(key))
+					for (TypeInstantiatorProvider provider : typeInstantiatorProviders) {
+						TypeInstantiator instantiator = provider.getInstantiator(key);
+						if (instantiator != null)
 							return instantiator;
 					}
 					throw new RuntimeException("Could not find any instantiator for: " + key);
@@ -95,13 +98,14 @@ public class SpearalContextImpl implements SpearalContext {
 			}
 		);
 
-		this.propertyInstantiators = new ArrayList<PropertyInstantiator>();
+		this.propertyInstantiatorProviders = new ArrayList<PropertyInstantiatorProvider>();
 		this.propertyInstantiatorsCache = new CopyOnWriteValueMap<Property, PropertyInstantiator>(false,
 			new ValueProvider<Property, PropertyInstantiator>() {
 				@Override
 				public PropertyInstantiator createValue(SpearalContext context, Property key) {
-					for (PropertyInstantiator instantiator : propertyInstantiators) {
-						if (instantiator.canInstantiate(key))
+					for (PropertyInstantiatorProvider provider : propertyInstantiatorProviders) {
+						PropertyInstantiator instantiator = provider.getInstantiator(key);
+						if (instantiator != null)
 							return instantiator;
 					}
 					throw new RuntimeException("Could not find any instantiator for: " + key);
@@ -166,13 +170,13 @@ public class SpearalContextImpl implements SpearalContext {
 				added = true;
 			}
 			
-			if (configurable instanceof TypeInstantiator) {
-				typeInstantiators.add((append ? typeInstantiators.size() : 0), (TypeInstantiator)configurable);
+			if (configurable instanceof TypeInstantiatorProvider) {
+				typeInstantiatorProviders.add((append ? typeInstantiatorProviders.size() : 0), (TypeInstantiatorProvider)configurable);
 				added = true;
 			}
 			
-			if (configurable instanceof PropertyInstantiator) {
-				propertyInstantiators.add((append ? propertyInstantiators.size() : 0), (PropertyInstantiator)configurable);
+			if (configurable instanceof PropertyInstantiatorProvider) {
+				propertyInstantiatorProviders.add((append ? propertyInstantiatorProviders.size() : 0), (PropertyInstantiatorProvider)configurable);
 				added = true;
 			}
 			

@@ -23,8 +23,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.TreeSet;
 
-import org.spearal.configuration.PropertyInstantiator;
-import org.spearal.configuration.TypeInstantiator;
+import org.spearal.configuration.PropertyInstantiatorProvider;
+import org.spearal.configuration.PropertyInstantiatorProvider.PropertyInstantiator;
+import org.spearal.configuration.TypeInstantiatorProvider;
+import org.spearal.configuration.TypeInstantiatorProvider.TypeInstantiator;
 import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.ExtendedSpearalDecoder;
 import org.spearal.impl.util.TypeUtil;
@@ -32,11 +34,13 @@ import org.spearal.impl.util.TypeUtil;
 /**
  * @author Franck WOLFF
  */
-public class CollectionInstantiator implements TypeInstantiator, PropertyInstantiator {
+public class CollectionInstantiator implements
+	TypeInstantiatorProvider, TypeInstantiator,
+	PropertyInstantiatorProvider, PropertyInstantiator {
 
 	@Override
-	public boolean canInstantiate(Type type) {
-		return Collection.class.isAssignableFrom(TypeUtil.classOfType(type));
+	public TypeInstantiator getInstantiator(Type type) {
+		return (canInstantiate(type) ? this : null);
 	}
 
 	@Override
@@ -64,12 +68,16 @@ public class CollectionInstantiator implements TypeInstantiator, PropertyInstant
 	}
 
 	@Override
-	public boolean canInstantiate(Property property) {
-		return canInstantiate(property.getGenericType());
+	public PropertyInstantiator getInstantiator(Property property) {
+		return (canInstantiate(property.getGenericType()) ? this : null);
 	}
 
 	@Override
 	public Object instantiate(ExtendedSpearalDecoder decoder, Property property) {
 		return instantiate(decoder, property.getGenericType());
+	}
+
+	private static boolean canInstantiate(Type type) {
+		return Collection.class.isAssignableFrom(TypeUtil.classOfType(type));
 	}
 }
