@@ -79,7 +79,7 @@ Person copy = decoder.readAny(Person.class);
 System.out.println(copy.getFirstName());
 System.out.println(copy.getLastName());
 
-// This line throw a UndefinedPropertyException:
+// This line throws a UndefinedPropertyException:
 System.out.println(copy.getPhones());
 ````
 
