@@ -63,13 +63,13 @@ public class ClassDescriptionUtil {
 		StringBuilder sb = new StringBuilder(64);
 
 		if (!Proxy.isProxyClass(cls))
-			sb.append(context.getClassNameAlias(cls.getName())).append('#');
+			sb.append(context.alias(cls)).append('#');
 		else {
 			Class<?>[] interfaces = cls.getInterfaces();
 			if (interfaces.length > 0) {
-				sb.append(context.getClassNameAlias(interfaces[0].getName()));
+				sb.append(context.alias(interfaces[0]));
 				for (int i = 1; i < interfaces.length; i++)
-					sb.append(',').append(context.getClassNameAlias(interfaces[i].getName()));
+					sb.append(',').append(context.alias(interfaces[i]));
 			}
 			sb.append('#');
 		}

@@ -21,14 +21,12 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.spearal.SpearalContext;
 import org.spearal.SpearalDecoder;
 import org.spearal.SpearalEncoder;
-import org.spearal.configuration.ClassNameAlias;
+import org.spearal.configuration.AliasStrategy;
 import org.spearal.configuration.CoderProvider;
 import org.spearal.configuration.CoderProvider.Coder;
 import org.spearal.configuration.Configurable;
@@ -61,8 +59,7 @@ public class SpearalContextImpl implements SpearalContext {
 	private TypeLoader loader;
 	private Securizer securizer;
 	private PartialObjectFactory partialObjectFactory;
-	
-	private final Map<String, String> classAliases;
+	private AliasStrategy aliasStrategy;
 	
 	private final List<TypeInstantiatorProvider> typeInstantiatorProviders;
 	private final CopyOnWriteValueMap<Type, TypeInstantiator> typeInstantiatorsCache;
@@ -81,8 +78,6 @@ public class SpearalContextImpl implements SpearalContext {
 	private final List<EncoderBeanDescriptorFactory> descriptorFactories;
 	
 	public SpearalContextImpl() {
-		this.classAliases = new HashMap<String, String>();
-
 		this.typeInstantiatorProviders = new ArrayList<TypeInstantiatorProvider>();
 		this.typeInstantiatorsCache = new CopyOnWriteValueMap<Type, TypeInstantiator>(true,
 			new ValueProvider<Type, TypeInstantiator>() {
@@ -163,13 +158,6 @@ public class SpearalContextImpl implements SpearalContext {
 		boolean added = false;
 		
 		if (configurable instanceof Repeatable) {
-			if (configurable instanceof ClassNameAlias) {
-				ClassNameAlias classAlias = (ClassNameAlias)configurable;
-				classAliases.put(classAlias.getClassName(), classAlias.getAlias());
-				classAliases.put(classAlias.getAlias(), classAlias.getClassName());
-				added = true;
-			}
-			
 			if (configurable instanceof TypeInstantiatorProvider) {
 				typeInstantiatorProviders.add((append ? typeInstantiatorProviders.size() : 0), (TypeInstantiatorProvider)configurable);
 				added = true;
@@ -201,6 +189,11 @@ public class SpearalContextImpl implements SpearalContext {
 			}
 		}
 		else {
+			if (configurable instanceof AliasStrategy) {
+				aliasStrategy = (AliasStrategy)configurable;
+				added = true;
+			}
+			
 			if (configurable instanceof Introspector) {
 				introspector = (Introspector)configurable;
 				added = true;
@@ -227,9 +220,13 @@ public class SpearalContextImpl implements SpearalContext {
 	}
 
 	@Override
-	public String getClassNameAlias(String className) {
-		String alias = classAliases.get(className);
-		return (alias != null ? alias : className);
+	public String alias(Class<?> cls) {
+		return aliasStrategy.alias(cls);
+	}
+
+	@Override
+	public String unalias(String aliasedClassName) {
+		return aliasStrategy.unalias(aliasedClassName);
 	}
 
 	@Override

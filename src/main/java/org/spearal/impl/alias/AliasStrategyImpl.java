@@ -15,50 +15,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.spearal.test;
+package org.spearal.impl.alias;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
+import org.spearal.configuration.AliasStrategy;
 
 /**
  * @author Franck WOLFF
  */
-@RunWith(Suite.class)
-@SuiteClasses({
-	TestSpearalType.class,
+public class AliasStrategyImpl implements AliasStrategy {
 
-	TestNull.class,
-	
-	TestBoolean.class,
-	
-	TestDateTime.class,
-	
-	TestByte.class,
-	TestShort.class,
-	TestInteger.class,
-	TestLong.class,
-	TestBigInteger.class,
+	@Override
+	public String alias(Class<?> cls) {
+		return cls.getName();
+	}
 
-	TestFloat.class,
-	TestDouble.class,
-	TestBigDecimal.class,
-
-	TestString.class,
-	
-	TestByteArray.class,
-	
-	TestCollection.class,
-	TestArray.class,
-	
-	TestMap.class,
-	
-	TestEnum.class,
-	TestClass.class,
-	TestProxy.class,
-	TestBean.class,
-	TestAliasedBean.class,
-	TestPartialBean.class
-})
-public class AllTests {
+	@Override
+	public String unalias(String aliasedClassName) {
+		return aliasedClassName;
+	}
 }

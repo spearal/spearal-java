@@ -20,36 +20,8 @@ package org.spearal.configuration;
 /**
  * @author Franck WOLFF
  */
-public class ClassNameAlias implements Repeatable {
-	
-	private final String className;
-	private final String alias;
+public interface AliasStrategy extends Configurable {
 
-	public ClassNameAlias(Class<?> cls, Class<?> clsAlias) {
-		this(cls.getName(), clsAlias.getName());
-	}
-
-	public ClassNameAlias(Class<?> cls, String alias) {
-		this(cls.getName(), alias);
-	}
-
-	public ClassNameAlias(String className, Class<?> clsAlias) {
-		this(className, clsAlias.getName());
-	}
-
-	public ClassNameAlias(String className, String alias) {
-		if (className == null || alias == null)
-			throw new NullPointerException();
-		
-		this.className = className;
-		this.alias = alias;
-	}
-
-	public String getClassName() {
-		return className;
-	}
-
-	public String getAlias() {
-		return alias;
-	}
+	String alias(Class<?> cls);
+	String unalias(String aliasedClassName);
 }

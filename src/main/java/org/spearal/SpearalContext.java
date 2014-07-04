@@ -37,7 +37,8 @@ public interface SpearalContext {
 	
 	Securizer getSecurizer();
 	
-	String getClassNameAlias(String className);
+	String alias(Class<?> cls);
+	String unalias(String aliasedClassName);
 	
 	Class<?> loadClass(String classNames)
 		throws SecurityException;

@@ -27,6 +27,7 @@ import org.spearal.impl.SpearalContextImpl;
 import org.spearal.impl.SpearalDecoderImpl;
 import org.spearal.impl.SpearalEncoderImpl;
 import org.spearal.impl.SpearalPrinterImpl;
+import org.spearal.impl.alias.AliasStrategyImpl;
 import org.spearal.impl.coder.ArrayCoder;
 import org.spearal.impl.coder.BeanCoder;
 import org.spearal.impl.coder.CollectionCoder;
@@ -96,6 +97,10 @@ public class SpearalFactory {
 		// Bean descriptors.
 		
 		context.configure(new EncoderBeanDescriptorFactoryImpl(), true);
+		
+		// Alias strategy.
+		
+		context.configure(new AliasStrategyImpl(), true);
 		
 		// Load plugins.
 		

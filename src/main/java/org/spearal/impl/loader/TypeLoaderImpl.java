@@ -61,7 +61,7 @@ public class TypeLoaderImpl implements TypeLoader, ValueProvider<String, Class<?
 		String[] classNames = ClassDescriptionUtil.splitClassNames(key);
 		if (classNames.length <= 1) {
 			try {
-				cls = Class.forName(context.getClassNameAlias(key), true, classLoader);
+				cls = Class.forName(context.unalias(key), true, classLoader);
 				if (cls.isInterface())
 					cls = Proxy.getProxyClass(classLoader, new Class<?>[]{ cls });
 			}
@@ -78,7 +78,7 @@ public class TypeLoaderImpl implements TypeLoader, ValueProvider<String, Class<?
 				
 				Class<?> inter;
 				try {
-					inter = Class.forName(context.getClassNameAlias(classNames[i]), true, classLoader);
+					inter = Class.forName(context.unalias(classNames[i]), true, classLoader);
 				}
 				catch (ClassNotFoundException e) {
 					continue;
