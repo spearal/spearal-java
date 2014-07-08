@@ -158,7 +158,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 			
 			ensureCapacity(length0 + 3);
 			buffer[position++] = (byte)(inverse | (length0 << 4) | date.month);
-			buffer[position++] = (byte)date.day;
+			buffer[position++] = (byte)date.date;
 			writeUnsignedIntValue(year, length0);
 		}
 		

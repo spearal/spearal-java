@@ -612,21 +612,21 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     @Override
     public SpearalDateTime readDateTime(int parameterizedType) throws IOException {
 
-    	boolean date = ((parameterizedType & 0x08) != 0);
-    	boolean time = ((parameterizedType & 0x04) != 0);
+    	boolean hasDate = ((parameterizedType & 0x08) != 0);
+    	boolean hasTime = ((parameterizedType & 0x04) != 0);
     	
     	int year = 0;
     	int month = 0;
-    	int day = 0;
+    	int date = 0;
     	int hours = 0;
     	int minutes = 0;
     	int seconds = 0;
     	int nanoseconds = 0;
     	
-    	if (date) {
+    	if (hasDate) {
     		ensureAvailable(2);
     		month = (buffer[position++] & 0xff);
-    		day = (buffer[position++] & 0xff);
+    		date = (buffer[position++] & 0xff);
     		
     		int length0 = ((month >>> 4) & 0x03);
     		boolean inverse = ((month & 0x80) != 0);
@@ -640,7 +640,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     		year += 2000;
     	}
     	
-    	if (time) {
+    	if (hasTime) {
     		ensureAvailable(3);
     		hours = (buffer[position++] & 0xff);
     		minutes = (buffer[position++] & 0xff);
@@ -661,7 +661,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     		hours &= 0x1f;
     	}
     	
-    	return new SpearalDateTime(year, month, day, hours, minutes, seconds, nanoseconds, date, time);
+    	return new SpearalDateTime(year, month, date, hours, minutes, seconds, nanoseconds, hasDate, hasTime);
     }
     
     

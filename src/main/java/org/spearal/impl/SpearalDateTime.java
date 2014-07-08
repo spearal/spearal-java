@@ -37,14 +37,14 @@ public class SpearalDateTime {
 	
 	public final int year;
 	public final int month;
-	public final int day;
+	public final int date;
 	public final int hours;
 	public final int minutes;
 	public final int seconds;
 	public final int nanoseconds;
 	
-	public static SpearalDateTime forDate(int year, int month, int day) {
-		return new SpearalDateTime(year, month, day, 0, 0, 0, 0, true, false);
+	public static SpearalDateTime forDate(int year, int month, int date) {
+		return new SpearalDateTime(year, month, date, 0, 0, 0, 0, true, false);
 	}
 	
 	public static SpearalDateTime forTime(int hours, int minutes, int seconds) {
@@ -137,7 +137,7 @@ public class SpearalDateTime {
 	
 	@SuppressWarnings("boxing")
 	public SpearalDateTime(
-		int year, int month, int day,
+		int year, int month, int date,
 		int hours, int minutes, int seconds, int nanoseconds,
 		boolean hasDate, boolean hasTime) {
 		
@@ -146,13 +146,13 @@ public class SpearalDateTime {
 				throw new IllegalArgumentException("Illegal year: " + year);
 			if (month < 1 || month > 12)
 				throw new IllegalArgumentException("Illegal month: " + month);
-			if (day < 1 || day > 31)
-				throw new IllegalArgumentException("Illegal day: " + day);
+			if (date < 1 || date > 31)
+				throw new IllegalArgumentException("Illegal date: " + date);
 		}
 		else {
 			year = 0;
 			month = 0;
-			day = 0;
+			date = 0;
 		}
 		
 		if (hasTime) {
@@ -180,7 +180,7 @@ public class SpearalDateTime {
 		
 		this.year = year;
 		this.month = month;
-		this.day = day;
+		this.date = date;
 		this.hours = hours;
 		this.minutes = minutes;
 		this.seconds = seconds;
@@ -200,7 +200,7 @@ public class SpearalDateTime {
 			}
 			calendar.set(Calendar.YEAR, year);
 			calendar.set(Calendar.MONTH, month - 1);
-			calendar.set(Calendar.DATE, day);
+			calendar.set(Calendar.DATE, date);
 		}
 		
 		if (hasTime) {
@@ -236,7 +236,7 @@ public class SpearalDateTime {
 	public String toString() {
 		return String.format(
 			"%+010d-%02d-%02dT%02d:%02d:%02d.%09dZ",
-			year, month, day,
+			year, month, date,
 			hours, minutes, seconds, nanoseconds
 		);
 	}
