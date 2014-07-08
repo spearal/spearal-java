@@ -737,11 +737,11 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	int indexOrLength = readUnsignedIntegerValue(length0);
     	
     	if (reference) {
-    		property.set(context, holder, sharedObjects.get(indexOrLength));
+    		property.set(holder, sharedObjects.get(indexOrLength));
     		return;
     	}
     	
-		Collection<Object> value = (Collection<Object>)property.get(context, holder);
+		Collection<Object> value = (Collection<Object>)property.get(holder);
     	if (value != null)
     		value.clear();
     	else
@@ -827,11 +827,11 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	int indexOrLength = readUnsignedIntegerValue(length0);
     	
     	if (reference) {
-    		property.set(context, holder, sharedObjects.get(indexOrLength));
+    		property.set(holder, sharedObjects.get(indexOrLength));
     		return;
     	}
     	
-    	Map<Object, Object> value = (Map<Object, Object>)property.get(context, holder);
+    	Map<Object, Object> value = (Map<Object, Object>)property.get(holder);
     	if (value != null)
     		value.clear();
     	else

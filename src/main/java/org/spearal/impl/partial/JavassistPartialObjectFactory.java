@@ -59,9 +59,10 @@ public class JavassistPartialObjectFactory implements PartialObjectFactory, Valu
 	public Object instantiatePartial(ExtendedSpearalDecoder decoder, Class<?> cls, Property[] partialProperties)
 		throws InstantiationException, IllegalAccessException {
 		
-		Class<?> proxyClass = proxyClassesCache.getOrPutIfAbsent(decoder.getContext(), cls);
+		SpearalContext context = decoder.getContext();
+		Class<?> proxyClass = proxyClassesCache.getOrPutIfAbsent(context, cls);
 		ProxyObject proxyObject = (ProxyObject)proxyClass.newInstance();
-		proxyObject.setHandler(new PartialObjectProxyHandler(partialProperties));
+		proxyObject.setHandler(new PartialObjectProxyHandler(context, partialProperties));
 		return proxyObject;
 	}
 	
@@ -95,11 +96,13 @@ public class JavassistPartialObjectFactory implements PartialObjectFactory, Valu
 	
 	private static class PartialObjectProxyHandler implements MethodHandler {
 
+		private final SpearalContext context;
 		private final Property[] partialProperties;
 		private final Set<Method> partialGetters;
 		private final Set<String> partialPropertiesNames;
 
-		public PartialObjectProxyHandler(Property[] partialProperties) {
+		public PartialObjectProxyHandler(SpearalContext context, Property[] partialProperties) {
+			this.context = context;
 			this.partialProperties = partialProperties;
 			
 			this.partialGetters = new HashSet<Method>(partialProperties.length);
@@ -122,6 +125,8 @@ public class JavassistPartialObjectFactory implements PartialObjectFactory, Valu
 				return Boolean.valueOf(partialPropertiesNames.contains(args[0]));
 			if ("$getDefinedProperties".equals(name))
 				return partialProperties;
+			if ("$getContext".equals(name))
+				return context;
 			
 			throw new UndefinedPropertyException(method.toString());
 		}

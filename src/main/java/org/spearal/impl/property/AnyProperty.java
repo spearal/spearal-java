@@ -24,7 +24,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
-import org.spearal.SpearalContext;
 import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.ExtendedSpearalDecoder;
 import org.spearal.impl.ExtendedSpearalEncoder;
@@ -118,19 +117,19 @@ public class AnyProperty implements Property {
 		throws InstantiationException, IllegalAccessException, InvocationTargetException {
 
 		Object value = decoder.getContext().instantiate(decoder, this);
-		set(decoder.getContext(), holder, value);
+		set(holder, value);
 		return value;
 	}
 
 	@Override
-	public Object get(SpearalContext context, Object holder)
+	public Object get(Object holder)
 		throws IllegalAccessException, InvocationTargetException {
 		
 		return (field != null ? field.get(holder) : getter.invoke(holder));
 	}
 
 	@Override
-	public void set(SpearalContext context, Object holder, Object value)
+	public void set(Object holder, Object value)
 		throws IllegalAccessException, InvocationTargetException {
 		
 		if (field != null)

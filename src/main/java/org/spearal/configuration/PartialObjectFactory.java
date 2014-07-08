@@ -17,6 +17,7 @@
  */
 package org.spearal.configuration;
 
+import org.spearal.SpearalContext;
 import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.ExtendedSpearalDecoder;
 
@@ -29,6 +30,7 @@ public interface PartialObjectFactory extends Configurable {
 
 		boolean $isDefined(String propertyName);
 		Property[] $getDefinedProperties();
+		SpearalContext $getContext();
 	}
 
 	public static class UndefinedPropertyException extends RuntimeException {

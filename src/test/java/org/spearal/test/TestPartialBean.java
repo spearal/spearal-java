@@ -97,6 +97,14 @@ public class TestPartialBean extends AbstractSpearalTestUnit {
 			Assert.fail("Not a PartialObjectProxy: " + result);
 		if (!(result instanceof ChildBean))
 			Assert.fail("Not a ChildBean: " + result);
+
+		PartialObjectProxy partial = (PartialObjectProxy)result;
+		Assert.assertNotNull(partial.$getContext());
+		Assert.assertTrue(partial.$isDefined("childBooleanProperty"));
+		Assert.assertTrue(partial.$isDefined("simpleBeans"));
+		Assert.assertTrue(partial.$isDefined("parentStringProperty"));
+		Assert.assertEquals(3, partial.$getDefinedProperties().length);
+		
 		Assert.assertEquals(bean.isChildBooleanProperty(), ((ChildBean)result).isChildBooleanProperty());
 		Assert.assertEquals(bean.getParentStringProperty(), ((ChildBean)result).getParentStringProperty());
 		try {

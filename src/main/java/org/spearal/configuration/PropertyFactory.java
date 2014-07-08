@@ -24,7 +24,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
-import org.spearal.SpearalContext;
 import org.spearal.impl.ExtendedSpearalDecoder;
 import org.spearal.impl.ExtendedSpearalEncoder;
 
@@ -50,10 +49,10 @@ public interface PropertyFactory extends Repeatable {
 		Object init(ExtendedSpearalDecoder decoder, Object holder)
 			throws InstantiationException, IllegalAccessException, InvocationTargetException;
 		
-		Object get(SpearalContext context, Object holder)
+		Object get(Object holder)
 			throws IllegalAccessException, InvocationTargetException;
 		
-		void set(SpearalContext context, Object holder, Object value)
+		void set(Object holder, Object value)
 			throws IllegalAccessException, InvocationTargetException;
 		
 		boolean isAnnotationPresent(Class<? extends Annotation> annotationClass);
