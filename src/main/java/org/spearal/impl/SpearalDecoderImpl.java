@@ -432,21 +432,25 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     
     @Override
 	public BigInteger readBigIntegral(int parameterizedType) throws IOException {
-    	final int length0 = (parameterizedType & 0x03);
+		boolean reference = (parameterizedType & 0x04) != 0;
+		int length0 = (parameterizedType & 0x03);
     	
-    	ensureAvailable(length0 + 1);
-    	int length = readUnsignedIntegerValue(length0);
+		ensureAvailable(length0 + 1);
+    	int indexOrLength = readUnsignedIntegerValue(length0);
     	
-    	byte[] bytes = new byte[length];
-    	readFully(bytes, 0, length);
-    	return new BigInteger(bytes);
+    	String representation = readStringData(indexOrLength, reference);
+		return new BigInteger(representation);
 	}
 
     @Override
     public void skipBigIntegral(int parameterizedType) throws IOException {
-    	int length0 = (parameterizedType & 0x03);
-    	ensureAvailable(length0 + 1);
-    	skipFully(readUnsignedIntegerValue(length0));
+    	boolean reference = (parameterizedType & 0x04) != 0;
+		int length0 = (parameterizedType & 0x03);
+    	
+		ensureAvailable(length0 + 1);
+    	int indexOrLength = readUnsignedIntegerValue(length0);
+    	
+    	skipStringData(indexOrLength, reference);
     }
 
 	@Override
@@ -499,34 +503,25 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
 	@Override
 	public BigDecimal readBigFloating(int parameterizedType) throws IOException {
-		int bytesLength0 = (parameterizedType & 0x03);
-		
-		ensureAvailable(bytesLength0 + 2);
-		int length = readUnsignedIntegerValue(bytesLength0);
-		
-		byte[] bytes = new byte[length];
-    	readFully(bytes, 0, length);
+		boolean reference = (parameterizedType & 0x04) != 0;
+		int length0 = (parameterizedType & 0x03);
     	
-    	ensureAvailable(1);
-    	parameterizedType = (buffer[position++] & 0xff);
-    	// assert (SpearalType.valueOf(parameterizedType) == SpearalType.INTEGRAL);
-    	int scale = (int)readIntegral(parameterizedType);
+		ensureAvailable(length0 + 1);
+    	int indexOrLength = readUnsignedIntegerValue(length0);
     	
-    	return new BigDecimal(new BigInteger(bytes), scale);
+    	String representation = readStringData(indexOrLength, reference);
+		return new BigDecimal(representation);
 	}
 	
 	@Override
     public void skipBigFloating(int parameterizedType) throws IOException {
-		int bytesLength0 = (parameterizedType & 0x03);
-		
-		ensureAvailable(bytesLength0 + 2);
-		int length = readUnsignedIntegerValue(bytesLength0);
-		
-		skipFully(length);
-
-		ensureAvailable(1);
-    	parameterizedType = (buffer[position++] & 0xff);
-    	readIntegral(parameterizedType);
+    	boolean reference = (parameterizedType & 0x04) != 0;
+		int length0 = (parameterizedType & 0x03);
+    	
+		ensureAvailable(length0 + 1);
+    	int indexOrLength = readUnsignedIntegerValue(length0);
+    	
+    	skipStringData(indexOrLength, reference);
 	}
 
 	@Override

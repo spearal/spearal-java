@@ -301,14 +301,9 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 			return;
 		}
 		
-		byte[] bytes = value.toByteArray();
-		int length0 = unsignedIntLength0(bytes.length);
-		
-		ensureCapacity(length0 + 2);
-		buffer[position++] = (byte)(ITYPE_BIG_INTEGRAL | length0);
-		writeUnsignedIntValue(bytes.length, length0);
-		
-		writeBytes(bytes);
+		ensureCapacity(1);
+		buffer[position] = (byte)ITYPE_BIG_INTEGRAL;
+		writeStringData(value.toString(10));
 	}
 
 	@Override
@@ -388,16 +383,9 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 
 	@Override
 	public void writeBigDecimal(BigDecimal value) throws IOException {
-		byte[] bytes = value.unscaledValue().toByteArray();
-		int length0 = unsignedIntLength0(bytes.length);
-
-		ensureCapacity(length0 + 2);
-		buffer[position++] = (byte)(ITYPE_BIG_FLOATING | length0);
-		writeUnsignedIntValue(bytes.length, length0);
-		
-		writeBytes(bytes);
-
-		writeInt(value.scale());
+		ensureCapacity(1);
+		buffer[position] = (byte)ITYPE_BIG_FLOATING;
+		writeStringData(value.toString());
 	}
 	
 	@Override

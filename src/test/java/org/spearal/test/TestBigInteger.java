@@ -43,10 +43,10 @@ public class TestBigInteger extends AbstractSpearalTestUnit {
 
 	@Test
 	public void test() throws IOException {
-		encodeDecode(newBigInteger(8000, true), 4004);
-		encodeDecode(newBigInteger(256, true), 131);
+		encodeDecode(newBigInteger(8000, true), 9637);
+		encodeDecode(newBigInteger(256, true), 313);
 		
-		encodeDecode(BigInteger.valueOf(Long.MIN_VALUE).subtract(BigInteger.ONE), 11);
+		encodeDecode(BigInteger.valueOf(Long.MIN_VALUE).subtract(BigInteger.ONE), 22);
 		
 		encodeDecode(BigInteger.valueOf(Long.MIN_VALUE), 9);
 		encodeDecode(BigInteger.valueOf(Long.MIN_VALUE + 1), 9);
@@ -59,10 +59,10 @@ public class TestBigInteger extends AbstractSpearalTestUnit {
 		encodeDecode(BigInteger.valueOf(Long.MAX_VALUE - 1), 9);
 		encodeDecode(BigInteger.valueOf(Long.MAX_VALUE), 9);
 		
-		encodeDecode(BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE), 11);
+		encodeDecode(BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE), 21);
 
-		encodeDecode(newBigInteger(256, false), 131);
-		encodeDecode(newBigInteger(8000, false), 4004);
+		encodeDecode(newBigInteger(256, false), 312);
+		encodeDecode(newBigInteger(8000, false), 9636);
 	}
 	
 	private static BigInteger newBigInteger(int length, boolean negate) {

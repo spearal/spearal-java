@@ -34,7 +34,7 @@ public class TestBigDecimal extends AbstractSpearalTestUnit {
 
 	@Before
 	public void setUp() throws Exception {
-		// printStream = System.out;
+		printStream = System.out;
 	}
 
 	@After
@@ -44,22 +44,22 @@ public class TestBigDecimal extends AbstractSpearalTestUnit {
 
 	@Test
 	public void test() throws IOException {
-		encodeDecode(newBigDecimal(8000, 256, true), 4007);
-		encodeDecode(newBigDecimal(256, 256, true), 134);
+		encodeDecode(newBigDecimal(8000, 256, true), 9638);
+		encodeDecode(newBigDecimal(256, 256, true), 314);
 		
-		encodeDecode(new BigDecimal(Double.toString(-Double.MAX_VALUE)), 12);
+		encodeDecode(new BigDecimal(Double.toString(-Double.MAX_VALUE)), 26);
 		
 		encodeDecode(BigDecimal.TEN.negate(), 5);
-		encodeDecode(BigDecimal.ONE.negate(), 5);
-		encodeDecode(BigDecimal.ZERO.negate(), 5);
-		encodeDecode(BigDecimal.ZERO, 5);
-		encodeDecode(BigDecimal.ONE, 5);
-		encodeDecode(BigDecimal.TEN, 5);
+		encodeDecode(BigDecimal.ONE.negate(), 4);
+		encodeDecode(BigDecimal.ZERO.negate(), 3);
+		encodeDecode(BigDecimal.ZERO, 3);
+		encodeDecode(BigDecimal.ONE, 3);
+		encodeDecode(BigDecimal.TEN, 4);
 
-		encodeDecode(new BigDecimal(Double.toString(Double.MAX_VALUE)), 12);
+		encodeDecode(new BigDecimal(Double.toString(Double.MAX_VALUE)), 25);
 
-		encodeDecode(newBigDecimal(256, 256, false), 134);
-		encodeDecode(newBigDecimal(8000, 256, false), 4007);
+		encodeDecode(newBigDecimal(256, 256, false), 313);
+		encodeDecode(newBigDecimal(8000, 256, false), 9637);
 	}
 
 	private static BigDecimal newBigDecimal(int length, int scale, boolean negate) {
