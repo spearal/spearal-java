@@ -34,7 +34,7 @@ public class TestBigDecimal extends AbstractSpearalTestUnit {
 
 	@Before
 	public void setUp() throws Exception {
-		printStream = System.out;
+		// printStream = System.out;
 	}
 
 	@After
