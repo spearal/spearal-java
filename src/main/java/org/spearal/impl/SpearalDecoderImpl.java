@@ -17,6 +17,9 @@
  */
 package org.spearal.impl;
 
+import static org.spearal.impl.SharedConstants.BIG_NUMBER_ALPHA;
+import static org.spearal.impl.SharedConstants.UTF8;
+
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,7 +27,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -45,8 +47,6 @@ import org.spearal.impl.util.TypeUtil;
  */
 public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
-	private static final Charset UTF8 = Charset.forName("UTF-8");
-	
 	private final List<String> sharedStrings;
 	private final List<Object> sharedObjects;
 	private final EqualityValueMap<String, ClassDescriptor> descriptors;
@@ -432,25 +432,26 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     
     @Override
 	public BigInteger readBigIntegral(int parameterizedType) throws IOException {
-		boolean reference = (parameterizedType & 0x04) != 0;
 		int length0 = (parameterizedType & 0x03);
-    	
 		ensureAvailable(length0 + 1);
     	int indexOrLength = readUnsignedIntegerValue(length0);
     	
-    	String representation = readStringData(indexOrLength, reference);
+    	String representation;
+    	if ((parameterizedType & 0x04) != 0)
+    		representation = sharedStrings.get(indexOrLength);
+    	else
+        	representation = readBigNumberData(indexOrLength);
 		return new BigInteger(representation);
 	}
 
     @Override
     public void skipBigIntegral(int parameterizedType) throws IOException {
-    	boolean reference = (parameterizedType & 0x04) != 0;
 		int length0 = (parameterizedType & 0x03);
-    	
 		ensureAvailable(length0 + 1);
     	int indexOrLength = readUnsignedIntegerValue(length0);
-    	
-    	skipStringData(indexOrLength, reference);
+
+    	if ((parameterizedType & 0x04) == 0)
+    		skipFully((indexOrLength / 2) + (indexOrLength % 2));
     }
 
 	@Override
@@ -503,57 +504,40 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
 	@Override
 	public BigDecimal readBigFloating(int parameterizedType) throws IOException {
-		boolean reference = (parameterizedType & 0x04) != 0;
 		int length0 = (parameterizedType & 0x03);
-    	
 		ensureAvailable(length0 + 1);
     	int indexOrLength = readUnsignedIntegerValue(length0);
     	
-    	String representation = readStringData(indexOrLength, reference);
+    	String representation;
+    	if ((parameterizedType & 0x04) != 0)
+    		representation = sharedStrings.get(indexOrLength);
+    	else
+        	representation = readBigNumberData(indexOrLength);
 		return new BigDecimal(representation);
 	}
 	
 	@Override
     public void skipBigFloating(int parameterizedType) throws IOException {
-    	boolean reference = (parameterizedType & 0x04) != 0;
 		int length0 = (parameterizedType & 0x03);
-    	
 		ensureAvailable(length0 + 1);
     	int indexOrLength = readUnsignedIntegerValue(length0);
     	
-    	skipStringData(indexOrLength, reference);
+    	if ((parameterizedType & 0x04) == 0)
+    		skipFully((indexOrLength / 2) + (indexOrLength % 2));
 	}
 
 	@Override
     public String readString(int parameterizedType) throws IOException {
-    	boolean reference = (parameterizedType & 0x04) != 0;
-    	int length0 = (parameterizedType & 0x03);
-    	
-    	ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-    	
-    	return readStringData(indexOrLength, reference);
+    	return readStringData(parameterizedType);
     }
 	
 	@Override
     public void skipString(int parameterizedType) throws IOException {
-    	boolean reference = (parameterizedType & 0x04) != 0;
-    	int length0 = (parameterizedType & 0x03);
-    	
-    	ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-    	
-    	skipStringData(indexOrLength, reference);
+    	skipStringData(parameterizedType);
 	}
 	
 	private void printString(SpearalPrinter printer, int parameterizedType) throws IOException {
-    	boolean reference = (parameterizedType & 0x04) != 0;
-    	int length0 = (parameterizedType & 0x03);
-    	
-    	ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-		
-    	printer.printString(getStringData(indexOrLength, reference));
+    	printer.printString(getStringData(parameterizedType));
 	}
     
     @Override
@@ -847,13 +831,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     @SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public Enum<?> readEnum(int parameterizedType) throws IOException {
-    	boolean reference = (parameterizedType & 0x04) != 0;
-    	int length0 = (parameterizedType & 0x03);
-    	
-		ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-    	
-    	String className = readStringData(indexOrLength, reference);
+    	String className = readStringData(parameterizedType);
 		Class<? extends Enum> cls = (Class<? extends Enum>)context.loadClass(className);
     	
     	ensureAvailable(1);
@@ -863,88 +841,47 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	}
 	
     private void printEnum(SpearalPrinter printer, int parameterizedType) throws IOException {
-    	boolean reference = (parameterizedType & 0x04) != 0;
-    	int length0 = (parameterizedType & 0x03);
-    	
-		ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-    	
-    	StringData className = getStringData(indexOrLength, reference);
+    	StringData className = getStringData(parameterizedType);
     	
     	ensureAvailable(1);
     	parameterizedType = (buffer[position++] & 0xff);
     	
-    	reference = (parameterizedType & 0x04) != 0;
-    	length0 = (parameterizedType & 0x03);
-
-    	ensureAvailable(length0 + 1);
-    	indexOrLength = readUnsignedIntegerValue(length0);
-    	
-    	StringData value = getStringData(indexOrLength, reference);
-
+    	StringData value = getStringData(parameterizedType);
     	printer.printEnum(className, value);
 	}
     
     @Override
     public void skipEnum(int parameterizedType) throws IOException {
-    	boolean reference = (parameterizedType & 0x04) != 0;
-    	int length0 = (parameterizedType & 0x03);
-    	
-		ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-    	
-    	skipStringData(indexOrLength, reference);
-    	
+    	skipStringData(parameterizedType);
     	ensureAvailable(1);
     	skipString(buffer[position++] & 0xff);
     }
 
 	@Override
 	public Class<?> readClass(int parameterizedType) throws IOException {
-		boolean reference = (parameterizedType & 0x04) != 0;
-		int length0 = (parameterizedType & 0x03);
-    	
-		ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-    	
-    	String className = readStringData(indexOrLength, reference);
+    	String className = readStringData(parameterizedType);
 		return context.loadClass(className);
 	}
 	
 	@Override
     public void skipClass(int parameterizedType) throws IOException {
-		boolean reference = (parameterizedType & 0x04) != 0;
-		int length0 = (parameterizedType & 0x03);
-    	
-		ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-    	
-    	skipStringData(indexOrLength, reference);
+    	skipStringData(parameterizedType);
 	}
 	
 	private void printClass(SpearalPrinter printer, int parameterizedType) throws IOException {
-		boolean reference = (parameterizedType & 0x04) != 0;
-		int length0 = (parameterizedType & 0x03);
-    	
-		ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-		
-		printer.printClass(getStringData(indexOrLength, reference));
+		printer.printClass(getStringData(parameterizedType));
 	}
 
 	@Override
     public Object readBean(int parameterizedType) throws IOException {
-    	boolean reference = (parameterizedType & 0x08) != 0;
     	int length0 = (parameterizedType & 0x03);
-    	
     	ensureAvailable(length0 + 1);
     	int indexOrLength = readUnsignedIntegerValue(length0);
     	
-    	if (reference)
+    	if ((parameterizedType & 0x08) != 0)
     		return sharedObjects.get(indexOrLength);
     	
-    	boolean classDescReference = (parameterizedType & 0x04) != 0;
-    	String classDescription = readStringData(indexOrLength, classDescReference);
+    	String classDescription = readStringData(parameterizedType, indexOrLength);
     	ClassDescriptor descriptor = descriptors.putIfAbsent(context, classDescription);
 
     	try {
@@ -978,13 +915,11 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     public void skipBean(int parameterizedType) throws IOException {
     	boolean reference = (parameterizedType & 0x08) != 0;
     	int length0 = (parameterizedType & 0x03);
-    	
     	ensureAvailable(length0 + 1);
     	int indexOrLength = readUnsignedIntegerValue(length0);
     	
     	if (!reference) {
-    		boolean classDescReference = (parameterizedType & 0x04) != 0;
-    		String classDescription = readStringData(indexOrLength, classDescReference);
+    		String classDescription = readStringData(parameterizedType, indexOrLength);
     		sharedObjects.add(null);
     		
     		int propertiesCount = ClassDescriptionUtil.propertiesCount(classDescription);
@@ -1003,8 +938,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	if (reference)
     		printer.printBeanReference(indexOrLength);
     	else {
-        	boolean classDescReference = (parameterizedType & 0x04) != 0;
-        	StringData classDescription = getStringData(indexOrLength, classDescReference);
+        	StringData classDescription = getStringData(parameterizedType, indexOrLength);
     		String[] classNames = ClassDescriptionUtil.splitClassNames(classDescription.value);
     		
     		sharedObjects.add(null);
@@ -1043,13 +977,21 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 		return v;
     }
     
-    private String readStringData(int indexOrLength, boolean reference) throws IOException {
-    	if (reference)
+    private String readStringData(int parameterizedType) throws IOException {
+    	int length0 = (parameterizedType & 0x03);
+    	ensureAvailable(length0 + 1);
+    	int indexOrLength = readUnsignedIntegerValue(length0);
+
+    	return readStringData(parameterizedType, indexOrLength);
+    }
+    
+    private String readStringData(int parameterizedType, int indexOrLength) throws IOException {
+    	if ((parameterizedType & 0x04) != 0)
     		return sharedStrings.get(indexOrLength);
     	
     	if (indexOrLength == 0)
     		return "";
-        
+    	
     	String value;
         if (indexOrLength <= buffer.length) {
         	ensureAvailable(indexOrLength);
@@ -1067,20 +1009,64 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
         return value;
     }
     
-    private void skipStringData(int indexOrLength, boolean reference) throws IOException {
-    	if (!reference) {
+    private void skipStringData(int parameterizedType) throws IOException {
+    	int length0 = (parameterizedType & 0x03);
+    	ensureAvailable(length0 + 1);
+    	int indexOrLength = readUnsignedIntegerValue(length0);
+    	
+    	if ((parameterizedType & 0x04) == 0) {
     		sharedStrings.add(null);
     		skipFully(indexOrLength);
     	}
     }
     
-    private StringData getStringData(int indexOrLength, boolean reference) throws IOException {
-    	if (reference)
+    private StringData getStringData(int parameterizedType) throws IOException {
+    	int length0 = (parameterizedType & 0x03);
+    	ensureAvailable(length0 + 1);
+    	int indexOrLength = readUnsignedIntegerValue(length0);
+    	
+    	return getStringData(parameterizedType, indexOrLength);
+    }
+    
+    private StringData getStringData(int parameterizedType, int indexOrLength) throws IOException {
+    	if ((parameterizedType & 0x04) != 0)
     		return new StringData(sharedStrings.get(indexOrLength), indexOrLength, true);
+    	
     	if (indexOrLength == 0)
     		return new StringData("", -1, false);
-    	String value = readStringData(indexOrLength, reference);
+    	
+    	String value = readStringData(parameterizedType, indexOrLength);
     	return new StringData(value, sharedStrings.size() - 1, false);
+    }
+	
+    private String readBigNumberData(int length) throws IOException {
+    	char[] chars = new char[length];
+    	
+    	final byte[] buffer = this.buffer;
+    	final int bufferLength = buffer.length;
+    	int position = this.position;
+    	int size = this.size;
+    	
+    	final int count = (length / 2) + (length % 2);
+    	int iChar = 0;
+    	for (int i = 0; i < count; i++) {
+    		if (position == size) {
+    			this.position = position;
+    			fillBuffer(Math.min(count - i, bufferLength));
+    			position = 0;
+    			size = this.size;
+    		}
+			int b = (buffer[position++] & 0xff);
+			chars[iChar++] = BIG_NUMBER_ALPHA[(b & 0xf0) >>> 4];
+			if (iChar == length)
+				break;
+			chars[iChar++] = BIG_NUMBER_ALPHA[b & 0x0f];
+    	}
+    	this.position = position;
+    	
+    	String representation = new String(chars);
+    	sharedStrings.add(representation);
+    	return representation;
     }
 
 	private long readLongData() {

@@ -17,6 +17,8 @@
  */
 package org.spearal.impl;
 
+import static org.spearal.impl.SharedConstants.BIG_NUMBER_ALPHA_MIRROR;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Array;
@@ -301,9 +303,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 			return;
 		}
 		
-		ensureCapacity(1);
-		buffer[position] = (byte)ITYPE_BIG_INTEGRAL;
-		writeStringData(value.toString(10));
+		writeBigNumberData(ITYPE_BIG_INTEGRAL, exponentize(value));
 	}
 
 	@Override
@@ -383,9 +383,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 
 	@Override
 	public void writeBigDecimal(BigDecimal value) throws IOException {
-		ensureCapacity(1);
-		buffer[position] = (byte)ITYPE_BIG_FLOATING;
-		writeStringData(value.toString());
+		writeBigNumberData(ITYPE_BIG_FLOATING, value.toString());
 	}
 	
 	@Override
@@ -395,10 +393,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 
 	@Override
 	public void writeString(String value) throws IOException {
-		ensureCapacity(1);
-		buffer[position] = ITYPE_STRING;
-		
-		writeStringData(value);
+		writeStringData(ITYPE_STRING, value);
 	}
 
 	@Override
@@ -491,18 +486,14 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 
 	@Override
 	public void writeEnum(Enum<?> value) throws IOException {
-		ensureCapacity(1);
-		buffer[position] = (byte)ITYPE_ENUM;
-		writeStringData(value.getClass().getName());
+		writeStringData(ITYPE_ENUM, value.getClass().getName());
 		
 		writeString(value.name());
 	}
 	
 	@Override
 	public void writeClass(Class<?> value) throws IOException {
-		ensureCapacity(1);
-		buffer[position] = (byte)ITYPE_CLASS;
-		writeStringData(value.getName());
+		writeStringData(ITYPE_CLASS, value.getName());
 	}
 
 	@Override
@@ -525,9 +516,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 					descriptors.put(cls, descriptor);
 			}
 			
-			ensureCapacity(1);
-			buffer[position] = (byte)ITYPE_BEAN;
-			writeStringData(descriptor.getDescription());
+			writeStringData(ITYPE_BEAN, descriptor.getDescription());
 			
 			for (Property property : descriptor.getProperties()) {
 				if (property == null)
@@ -545,12 +534,12 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 		}
 	}
     
-    private void writeStringData(String s) throws IOException {
+    private void writeStringData(int type, String s) throws IOException {
     	final int length = s.length();
 
     	if (length == 0) {
-    		position++;
-        	ensureCapacity(1);
+        	ensureCapacity(2);
+    		buffer[position++] = (byte)type;
         	buffer[position++] = 0;
             return;
         }
@@ -559,19 +548,16 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 
         if (index >= 0) {
         	int length0 = unsignedIntLength0(index);
-        	buffer[position++] |= (0x04 | length0);
-        	ensureCapacity(length0 + 1);
+        	ensureCapacity(length0 + 2);
+        	buffer[position++] = (byte)(type | 0x04 | length0);
         	writeUnsignedIntValue(index, length0);
         }
         else {
         	int count = utfByteCount(s);
-        	
         	int length0 = unsignedIntLength0(count);
-            if (length0 > 0)
-            	buffer[position++] |= length0;
-            else
-            	position++;
-            ensureCapacity(length0 + 1);
+        	
+            ensureCapacity(length0 + 2);
+        	buffer[position++] = (byte)(type | length0);
         	writeUnsignedIntValue(count, length0);
         	
         	final byte[] buffer = this.buffer;
@@ -674,20 +660,6 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 	        	}
 	        	while (total < count);
             }
-
-//        	private static final Charset UTF8 = Charset.forName("UTF-8");
-
-//        	byte[] bytes = s.getBytes(UTF8);
-//        	
-//        	int length0 = unsignedIntLength0(bytes.length);
-//          if (length0 > 0)
-//            	buffer[position++] |= length0;
-//          else
-//            	position++;
-//          ensureCapacity(length0 + 1);
-//        	writeUnsignedIntValue(bytes.length, length0);
-//        	
-//        	writeBytes(bytes);
         }
     }
 	
@@ -709,6 +681,56 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
         }
         return count;
     }
+	
+	private static String exponentize(BigInteger value) {
+		String representation = value.toString(10);
+		int length = representation.length();
+		int trailingZeros = 0;
+		for (int i = length - 1; i > 0 && representation.charAt(i) == '0'; i--)
+			trailingZeros++;
+		if (trailingZeros > 2)
+			representation = representation.substring(0, length - trailingZeros) + "E" + trailingZeros;
+		return representation;
+	}
+	
+	private void writeBigNumberData(int type, String representation) throws IOException {
+        int index = sharedStrings.putIfAbsent(representation);
+
+        if (index >= 0) {
+        	int length0 = unsignedIntLength0(index);
+        	ensureCapacity(length0 + 2);
+        	buffer[position++] = (byte)(type | 0x04 | length0);
+        	writeUnsignedIntValue(index, length0);
+        }
+        else {
+			final int length = representation.length();
+			final int length0 = unsignedIntLength0(length);
+			
+			ensureCapacity(length0 + 2);
+			buffer[position++] = (byte)(type | length0);
+			writeUnsignedIntValue(length, length0);
+			
+	    	final byte[] buffer = this.buffer;
+	    	final int bufferLength = buffer.length;
+	    	int position = this.position;
+	
+	    	for (int i = 0; i < length; ) {
+	    		if (position >= bufferLength) {
+	    			this.position = bufferLength;
+	    			flushBuffer();
+	    			position = 0;
+	    		}
+	    		int b = (BIG_NUMBER_ALPHA_MIRROR[representation.charAt(i++)] << 4);
+	    		if (i == length) {
+	    			buffer[position++] = (byte)b;
+	    			break;
+	    		}
+	    		b |= BIG_NUMBER_ALPHA_MIRROR[representation.charAt(i++)];
+	    		buffer[position++] = (byte)b;
+	    	}
+	    	this.position = position;
+        }
+	}
 
 	private static int unsignedLongLength0(long value) {
 		if (value <= 0xffffffffL) {
@@ -738,8 +760,10 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 	}
 
 	private static int unsignedIntLength0(int value) {
+		if (value <= 0xff)
+			return 0;
 		if (value <= 0xffff)
-			return (value <= 0xff ? 0 : 1);
+			return 1;
 		return (value <= 0xffffff ? 2 : 3);
 	}
 	

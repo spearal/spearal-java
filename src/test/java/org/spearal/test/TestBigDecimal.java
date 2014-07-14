@@ -44,22 +44,22 @@ public class TestBigDecimal extends AbstractSpearalTestUnit {
 
 	@Test
 	public void test() throws IOException {
-		encodeDecode(newBigDecimal(8000, 256, true), 9638);
-		encodeDecode(newBigDecimal(256, 256, true), 314);
+		encodeDecode(newBigDecimal(8000, 256, true), 4821);
+		encodeDecode(newBigDecimal(256, 256, true), 159);
 		
-		encodeDecode(new BigDecimal(Double.toString(-Double.MAX_VALUE)), 26);
+		encodeDecode(new BigDecimal(Double.toString(-Double.MAX_VALUE)), 14);
 		
-		encodeDecode(BigDecimal.TEN.negate(), 5);
-		encodeDecode(BigDecimal.ONE.negate(), 4);
+		encodeDecode(BigDecimal.TEN.negate(), 4);
+		encodeDecode(BigDecimal.ONE.negate(), 3);
 		encodeDecode(BigDecimal.ZERO.negate(), 3);
 		encodeDecode(BigDecimal.ZERO, 3);
 		encodeDecode(BigDecimal.ONE, 3);
-		encodeDecode(BigDecimal.TEN, 4);
+		encodeDecode(BigDecimal.TEN, 3);
 
-		encodeDecode(new BigDecimal(Double.toString(Double.MAX_VALUE)), 25);
+		encodeDecode(new BigDecimal(Double.toString(Double.MAX_VALUE)), 14);
 
-		encodeDecode(newBigDecimal(256, 256, false), 313);
-		encodeDecode(newBigDecimal(8000, 256, false), 9637);
+		encodeDecode(newBigDecimal(256, 256, false), 158);
+		encodeDecode(newBigDecimal(8000, 256, false), 4820);
 	}
 
 	private static BigDecimal newBigDecimal(int length, int scale, boolean negate) {
@@ -78,5 +78,6 @@ public class TestBigDecimal extends AbstractSpearalTestUnit {
 		if (expectedSize > 0)
 			Assert.assertEquals(expectedSize, data.length);
 		Assert.assertEquals(value, clone);
+		//Assert.assertTrue(value.compareTo(clone) == 0);
 	}
 }
