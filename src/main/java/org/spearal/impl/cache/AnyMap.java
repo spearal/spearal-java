@@ -22,7 +22,7 @@ import org.spearal.SpearalContext;
 /**
  * @author Franck WOLFF
  */
-public interface ValueMap<K, V> extends Cloneable {
+public interface AnyMap<K, V> extends Cloneable {
 
 	V get(K key);
 	
@@ -32,7 +32,7 @@ public interface ValueMap<K, V> extends Cloneable {
 	
 	void clear();
 	
-	ValueMap<K, V> clone();
+	AnyMap<K, V> clone();
 	
 	public interface ValueProvider<K, V> {
 		

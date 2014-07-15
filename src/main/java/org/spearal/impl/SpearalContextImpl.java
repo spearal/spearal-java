@@ -46,9 +46,9 @@ import org.spearal.configuration.TypeInstantiatorProvider;
 import org.spearal.configuration.TypeInstantiatorProvider.TypeInstantiator;
 import org.spearal.configuration.TypeLoader;
 import org.spearal.impl.cache.CopyOnWriteDualIdentityMap;
-import org.spearal.impl.cache.CopyOnWriteValueMap;
+import org.spearal.impl.cache.CopyOnWriteMap;
 import org.spearal.impl.cache.DualIdentityMap;
-import org.spearal.impl.cache.ValueMap.ValueProvider;
+import org.spearal.impl.cache.AnyMap.ValueProvider;
 
 /**
  * @author Franck WOLFF
@@ -62,16 +62,16 @@ public class SpearalContextImpl implements SpearalContext {
 	private AliasStrategy aliasStrategy;
 	
 	private final List<TypeInstantiatorProvider> typeInstantiatorProviders;
-	private final CopyOnWriteValueMap<Type, TypeInstantiator> typeInstantiatorsCache;
+	private final CopyOnWriteMap<Type, TypeInstantiator> typeInstantiatorsCache;
 
 	private final List<PropertyInstantiatorProvider> propertyInstantiatorProviders;
-	private final CopyOnWriteValueMap<Property, PropertyInstantiator> propertyInstantiatorsCache;
+	private final CopyOnWriteMap<Property, PropertyInstantiator> propertyInstantiatorsCache;
 	
 	private final List<ConverterProvider> converterProviders;
 	private final CopyOnWriteDualIdentityMap<Class<?>, Type, Converter<?>> convertersCache;
 	
 	private final List<CoderProvider> coderProviders;
-	private final CopyOnWriteValueMap<Class<?>, Coder> codersCache;
+	private final CopyOnWriteMap<Class<?>, Coder> codersCache;
 	
 	private final List<PropertyFactory> propertyFactories;
 	
@@ -79,7 +79,7 @@ public class SpearalContextImpl implements SpearalContext {
 	
 	public SpearalContextImpl() {
 		this.typeInstantiatorProviders = new ArrayList<TypeInstantiatorProvider>();
-		this.typeInstantiatorsCache = new CopyOnWriteValueMap<Type, TypeInstantiator>(true,
+		this.typeInstantiatorsCache = new CopyOnWriteMap<Type, TypeInstantiator>(true,
 			new ValueProvider<Type, TypeInstantiator>() {
 				@Override
 				public TypeInstantiator createValue(SpearalContext context, Type key) {
@@ -94,7 +94,7 @@ public class SpearalContextImpl implements SpearalContext {
 		);
 
 		this.propertyInstantiatorProviders = new ArrayList<PropertyInstantiatorProvider>();
-		this.propertyInstantiatorsCache = new CopyOnWriteValueMap<Property, PropertyInstantiator>(false,
+		this.propertyInstantiatorsCache = new CopyOnWriteMap<Property, PropertyInstantiator>(false,
 			new ValueProvider<Property, PropertyInstantiator>() {
 				@Override
 				public PropertyInstantiator createValue(SpearalContext context, Property key) {
@@ -124,7 +124,7 @@ public class SpearalContextImpl implements SpearalContext {
 		);
 		
 		this.coderProviders = new ArrayList<CoderProvider>();
-		this.codersCache = new CopyOnWriteValueMap<Class<?>, Coder>(true,
+		this.codersCache = new CopyOnWriteMap<Class<?>, Coder>(true,
 			new ValueProvider<Class<?>, Coder>() {
 				@Override
 				public Coder createValue(SpearalContext context, Class<?> key) {

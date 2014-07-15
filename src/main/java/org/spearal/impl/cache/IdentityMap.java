@@ -22,25 +22,24 @@ import org.spearal.SpearalContext;
 /**
  * @author Franck WOLFF
  */
-public class EqualityValueMap<K, V> extends AbstractValueMap<K, V> {
+public class IdentityMap<K, V> extends AbstractAnyMap<K, V> {
 
-	public EqualityValueMap(ValueProvider<K, V> provider) {
+	public IdentityMap(ValueProvider<K, V> provider) {
 		super(provider);
 	}
 
-	public EqualityValueMap(ValueProvider<K, V> provider, int capacity) {
+	public IdentityMap(ValueProvider<K, V> provider, int capacity) {
 		super(provider, capacity);
 	}
 
 	@Override
 	public V get(K key) {
-		int hash = key.hashCode();
 		Entry<K, V>[] entries = this.entries;
-		for (Entry<K, V> entry = entries[hash & (entries.length - 1)];
+		for (Entry<K, V> entry = entries[System.identityHashCode(key) & (entries.length - 1)];
 			entry != null;
 			entry = entry.next) {
 			
-			if (hash == entry.hash && key.equals(entry.key))
+			if (key == entry.key)
 				return entry.value;
 		}
 		return null;
@@ -50,14 +49,14 @@ public class EqualityValueMap<K, V> extends AbstractValueMap<K, V> {
 	public V putIfAbsent(SpearalContext context, K key) {
 		Entry<K, V>[] entries = this.entries;
 
-		int hash = key.hashCode();
+		int hash = System.identityHashCode(key);
 		int index = hash & (entries.length - 1);
 		Entry<K, V> head = entries[index];
 		
 		if (head != null) {
 			Entry<K, V> entry = head;
 			do {
-				if (hash == entry.hash && key.equals(entry.key))
+				if (key == entry.key)
 					return entry.value;
 				entry = entry.next;
 			}
@@ -77,7 +76,7 @@ public class EqualityValueMap<K, V> extends AbstractValueMap<K, V> {
 	}
 
 	@Override
-	protected AbstractValueMap<K, V> create(ValueProvider<K, V> provider, int capacity) {
-		return new EqualityValueMap<K, V>(provider, capacity);
+	protected AbstractAnyMap<K, V> create(ValueProvider<K, V> provider, int capacity) {
+		return new IdentityMap<K, V>(provider, capacity);
 	}
 }

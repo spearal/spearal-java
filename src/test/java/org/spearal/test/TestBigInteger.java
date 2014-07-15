@@ -46,20 +46,24 @@ public class TestBigInteger extends AbstractSpearalTestUnit {
 		encodeDecode(newBigInteger(8000, true), 4820);
 		encodeDecode(newBigInteger(256, true), 158);
 		
+		encodeDecode(new BigInteger("-10000000000000000000000"), 5);
+		
 		encodeDecode(BigInteger.valueOf(Long.MIN_VALUE).subtract(BigInteger.ONE), 12);
 		
-		encodeDecode(BigInteger.valueOf(Long.MIN_VALUE), 9);
-		encodeDecode(BigInteger.valueOf(Long.MIN_VALUE + 1), 9);
-		encodeDecode(BigInteger.TEN.negate(), 2);
-		encodeDecode(BigInteger.ONE.negate(), 2);
-		encodeDecode(BigInteger.ZERO.negate(), 2);
-		encodeDecode(BigInteger.ZERO, 2);
-		encodeDecode(BigInteger.ONE, 2);
-		encodeDecode(BigInteger.TEN, 2);
-		encodeDecode(BigInteger.valueOf(Long.MAX_VALUE - 1), 9);
-		encodeDecode(BigInteger.valueOf(Long.MAX_VALUE), 9);
+		encodeDecode(BigInteger.valueOf(Long.MIN_VALUE), 12);
+		encodeDecode(BigInteger.valueOf(Long.MIN_VALUE + 1), 12);
+		encodeDecode(BigInteger.TEN.negate(), 4);
+		encodeDecode(BigInteger.ONE.negate(), 3);
+		encodeDecode(BigInteger.ZERO.negate(), 3);
+		encodeDecode(BigInteger.ZERO, 3);
+		encodeDecode(BigInteger.ONE, 3);
+		encodeDecode(BigInteger.TEN, 3);
+		encodeDecode(BigInteger.valueOf(Long.MAX_VALUE - 1), 12);
+		encodeDecode(BigInteger.valueOf(Long.MAX_VALUE), 12);
 		
 		encodeDecode(BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE), 12);
+
+		encodeDecode(new BigInteger("10000000000000000000000"), 4);
 
 		encodeDecode(newBigInteger(256, false), 158);
 		encodeDecode(newBigInteger(8000, false), 4820);

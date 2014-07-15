@@ -18,6 +18,7 @@
 package org.spearal.impl;
 
 import static org.spearal.impl.SharedConstants.BIG_NUMBER_ALPHA_MIRROR;
+import static org.spearal.impl.SharedConstants.UTF8;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -293,16 +294,8 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 		this.position = position;
 	}
 	
-	private static final BigInteger LONG_MIN_VALUE = BigInteger.valueOf(Long.MIN_VALUE);
-	private static final BigInteger LONG_MAX_VALUE = BigInteger.valueOf(Long.MAX_VALUE);
-	
 	@Override
 	public void writeBigInteger(BigInteger value) throws IOException {
-		if (value.compareTo(LONG_MIN_VALUE) >= 0 && value.compareTo(LONG_MAX_VALUE) <= 0) {
-			writeLong(value.longValue());
-			return;
-		}
-		
 		writeBigNumberData(ITYPE_BIG_INTEGRAL, exponentize(value));
 	}
 
@@ -388,52 +381,27 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 	
 	@Override
 	public void writeChar(char value) throws IOException {
-		writeString(String.valueOf(value));
+		writeStringData(ITYPE_STRING, String.valueOf(value));
 	}
 
 	@Override
-	public void writeString(String value) throws IOException {
+	public final void writeString(String value) throws IOException {
 		writeStringData(ITYPE_STRING, value);
 	}
 
 	@Override
 	public void writeByteArray(byte[] value) throws IOException {
-		
-		int reference = sharedObjects.putIfAbsent(value);
-		
-		if (reference != -1) {
-			int length0 = unsignedIntLength0(reference);
-			ensureCapacity(length0 + 2);
-			buffer[position++] = (byte)(ITYPE_BYTE_ARRAY | 0x08 | length0);
-			writeUnsignedIntValue(reference, length0);
-		}
-		else {
-			int length0 = unsignedIntLength0(value.length);
-			
-			ensureCapacity(length0 + 2);
-			buffer[position++] = (byte)(ITYPE_BYTE_ARRAY | length0);
-			writeUnsignedIntValue(value.length, length0);
-	
+		if (!putAndWriteObjectReference(ITYPE_BYTE_ARRAY, value)) {
+			writeTypeUint(ITYPE_BYTE_ARRAY, value.length);
 			writeBytes(value);
 		}
 	}
 
 	@Override
 	public void writeArray(Object value) throws IOException {
-		int reference = sharedObjects.putIfAbsent(value);
-		
-		if (reference != -1) {
-			int length0 = unsignedIntLength0(reference);
-			ensureCapacity(length0 + 2);
-			buffer[position++] = (byte)(ITYPE_COLLECTION | 0x08 | length0);
-			writeUnsignedIntValue(reference, length0);
-		}
-		else {
-			int size = Array.getLength(value);
-			int length0 = unsignedIntLength0(size);
-			ensureCapacity(length0 + 2);
-			buffer[position++] = (byte)(ITYPE_COLLECTION | length0);
-			writeUnsignedIntValue(size, length0);
+		if (!putAndWriteObjectReference(ITYPE_COLLECTION, value)) {
+			final int size = Array.getLength(value);
+			writeTypeUint(ITYPE_COLLECTION, size);
 			for (int i = 0; i < size; i++)
 				writeAny(Array.get(value, i));
 		}
@@ -441,21 +409,9 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 
 	@Override
 	public void writeCollection(Collection<?> value) throws IOException {
-		int reference = sharedObjects.putIfAbsent(value);
-		
-		if (reference != -1) {
-			int length0 = unsignedIntLength0(reference);
-			ensureCapacity(length0 + 2);
-			buffer[position++] = (byte)(ITYPE_COLLECTION | 0x08 | length0);
-			writeUnsignedIntValue(reference, length0);
-		}
-		else {
-			int size = value.size();
-			int length0 = unsignedIntLength0(size);
-			ensureCapacity(length0 + 2);
-			buffer[position++] = (byte)(ITYPE_COLLECTION | length0);
-			writeUnsignedIntValue(size, length0);
-			
+		if (!putAndWriteObjectReference(ITYPE_COLLECTION, value)) {
+			final int size = value.size();
+			writeTypeUint(ITYPE_COLLECTION, size);
 			for (Object item : value)
 				writeAny(item);
 		}
@@ -463,20 +419,9 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 
 	@Override
 	public void writeMap(Map<?, ?> value) throws IOException {
-		int reference = sharedObjects.putIfAbsent(value);
-		
-		if (reference != -1) {
-			int length0 = unsignedIntLength0(reference);
-			ensureCapacity(length0 + 2);
-			buffer[position++] = (byte)(ITYPE_MAP | 0x08 | length0);
-			writeUnsignedIntValue(reference, length0);
-		}
-		else {
-			int size = value.size();
-			int length0 = unsignedIntLength0(size);
-			ensureCapacity(length0 + 2);
-			buffer[position++] = (byte)(ITYPE_MAP | length0);
-			writeUnsignedIntValue(size, length0);
+		if (!putAndWriteObjectReference(ITYPE_MAP, value)) {
+			final int size = value.size();
+			writeTypeUint(ITYPE_MAP, size);
 			for (Map.Entry<?, ?> entry : value.entrySet()) {
 				writeAny(entry.getKey());
 				writeAny(entry.getValue());
@@ -487,8 +432,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 	@Override
 	public void writeEnum(Enum<?> value) throws IOException {
 		writeStringData(ITYPE_ENUM, value.getClass().getName());
-		
-		writeString(value.name());
+		writeStringData(ITYPE_STRING, value.name());
 	}
 	
 	@Override
@@ -498,15 +442,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 
 	@Override
 	public void writeBean(Object value) throws IOException {
-
-		int reference = sharedObjects.putIfAbsent(value);
-		if (reference != -1) {
-			int length0 = unsignedIntLength0(reference);
-			ensureCapacity(length0 + 2);
-			buffer[position++] = (byte)(ITYPE_BEAN | 0x08 | length0);
-			writeUnsignedIntValue(reference, length0);
-		}
-		else {
+		if (!putAndWriteObjectReference(ITYPE_BEAN, value)) {
 			Class<?> cls = value.getClass();
 			
 			EncoderBeanDescriptor descriptor = descriptors.get(cls);
@@ -533,7 +469,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 			}
 		}
 	}
-    
+	
     private void writeStringData(int type, String s) throws IOException {
     	final int length = s.length();
 
@@ -543,173 +479,32 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
         	buffer[position++] = 0;
             return;
         }
-
-        int index = sharedStrings.putIfAbsent(s);
-
-        if (index >= 0) {
-        	int length0 = unsignedIntLength0(index);
-        	ensureCapacity(length0 + 2);
-        	buffer[position++] = (byte)(type | 0x04 | length0);
-        	writeUnsignedIntValue(index, length0);
-        }
-        else {
-        	int count = utfByteCount(s);
-        	int length0 = unsignedIntLength0(count);
-        	
-            ensureCapacity(length0 + 2);
-        	buffer[position++] = (byte)(type | length0);
-        	writeUnsignedIntValue(count, length0);
-        	
-        	final byte[] buffer = this.buffer;
-        	final int bufferLength = buffer.length;
-            
-        	int position = this.position;
-            
-            // String chars are in [0x0000, 0x007f]: write them directly as bytes.
-            if (count == length) {
-                if (length <= bufferLength - position) {
-                	for (int i = 0; i < length; i++)
-                		buffer[position++] = (byte)s.charAt(i);
-                	this.position = position;
-                }
-                else {
-    	        	
-    	        	int i = 0;
-    	        	while (position < bufferLength)
-    	        		buffer[position++] = (byte)s.charAt(i++);
-    	        	this.position = position;
-    	        	
-    	        	do {
-    		        	flushBuffer();
-    		        	position = 0;
-
-    		        	int max = Math.min(bufferLength, length - i);
-    		        	while (position < max)
-    		        		buffer[position++] = (byte)s.charAt(i++);
-    		        	this.position = position;
-    	        	}
-    	        	while (i < length);
-                }
-            }
-            // We have at least one char > 0x007f but enough buffer to write them all.
-            else if (count <= bufferLength - position) {
-            	
-            	for (int i = 0; i < length; i++) {
-                	char c = s.charAt(i);
-                	if (c <= 0x007f)
-                    	buffer[position++] = (byte)c;
-                    else if (c > 0x07ff) {
-                    	if (c >= 0xd800 && c <= 0xdbff) {
-                			int uc = (((c & 0x3ff) << 10) | (s.charAt(++i) & 0x3ff)) + 0x10000;
-                			buffer[position++] = (byte)(0xf0 | ((uc >>> 18)));
-                			buffer[position++] = (byte)(0x80 | ((uc >>> 12) & 0x3f));
-                			buffer[position++] = (byte)(0x80 | ((uc >>> 06) & 0x3f));
-                			buffer[position++] = (byte)(0x80 | (uc & 0x3f));
-                		}
-                		else {
-	                    	buffer[position++] = (byte)(0xE0 | (c >>> 12));
-	                    	buffer[position++] = (byte)(0x80 | ((c >>> 6) & 0x3f));
-	                    	buffer[position++] = (byte)(0x80 | (c & 0x3f));
-                		}
-                    }
-                    else {
-                    	buffer[position++] = (byte)(0xC0 | ((c >>> 6) & 0x1f));
-                    	buffer[position++] = (byte)(0x80 | (c & 0x3f));
-                    }
-                }
-                
-                this.position = position;
-            }
-            // We have at least one char > 0x007f and not enough buffer to write them all.
-            else {
-	        	final int bufferLengthMinus3 = buffer.length - 3;
-            	
-            	int i = 0, total = 0;
-	        	do {
-	            	flushBuffer();
-
-	            	position = 0;
-	            	final int max = Math.min(count - total, bufferLengthMinus3);
-	            	
-	            	while (position < max) {
-	            		char c = s.charAt(i++);
-		            	if (c <= 0x007f)
-		                	buffer[position++] = (byte)c;
-		                else if (c > 0x07ff) {
-		                	if (c >= 0xd800 && c <= 0xdbff) {
-	                			int uc = (((c & 0x3ff) << 10) | (s.charAt(i++) & 0x3ff)) + 0x10000;
-	                			buffer[position++] = (byte)(0xf0 | ((uc >>> 18)));
-	                			buffer[position++] = (byte)(0x80 | ((uc >>> 12) & 0x3f));
-	                			buffer[position++] = (byte)(0x80 | ((uc >>> 06) & 0x3f));
-	                			buffer[position++] = (byte)(0x80 | (uc & 0x3f));
-	                		}
-	                		else {
-			                	buffer[position++] = (byte)(0xE0 | (c >>> 12));
-			                	buffer[position++] = (byte)(0x80 | ((c >>> 6) & 0x3f));
-			                	buffer[position++] = (byte)(0x80 | (c & 0x3f));
-	                		}
-		                }
-		                else {
-		                	buffer[position++] = (byte)(0xC0 | ((c >>> 6) & 0x1f));
-		                	buffer[position++] = (byte)(0x80 | (c & 0x3f));
-		                }
-	            	}
-	            	
-	            	total += position;
-	            	this.position = position;
-	        	}
-	        	while (total < count);
-            }
-        }
-    }
-	
-	private static int utfByteCount(String s) {
-    	final int length = s.length();
     	
-    	int count = length;
-        for (int i = 0; i < length; i++) {
-        	char c = s.charAt(i);
-        	if (c > 0x007f) {
-        		if (c > 0x07ff) {
-        			if (c >= 0xd800 && c <= 0xdbff)
-        				i++;
-        			count += 2;
-        		}
-        		else
-        			count++;
-        	}
+    	if (!putAndWriteStringReference(type, s)) {
+        	byte[] bytes = s.getBytes(UTF8);
+        	writeTypeUint(type, bytes.length);
+        	writeBytes(bytes);
         }
-        return count;
     }
 	
 	private static String exponentize(BigInteger value) {
 		String representation = value.toString(10);
-		int length = representation.length();
-		int trailingZeros = 0;
-		for (int i = length - 1; i > 0 && representation.charAt(i) == '0'; i--)
-			trailingZeros++;
-		if (trailingZeros > 2)
-			representation = representation.substring(0, length - trailingZeros) + "E" + trailingZeros;
+		final int length = representation.length();
+		if (length > 3) {
+			int trailingZeros = 0;
+			for (int i = length - 1; i > 0 && representation.charAt(i) == '0'; i--)
+				trailingZeros++;
+			if (trailingZeros > 2)
+				representation = representation.substring(0, length - trailingZeros) + "E" + trailingZeros;
+		}
 		return representation;
 	}
 	
 	private void writeBigNumberData(int type, String representation) throws IOException {
-        int index = sharedStrings.putIfAbsent(representation);
-
-        if (index >= 0) {
-        	int length0 = unsignedIntLength0(index);
-        	ensureCapacity(length0 + 2);
-        	buffer[position++] = (byte)(type | 0x04 | length0);
-        	writeUnsignedIntValue(index, length0);
-        }
-        else {
-			final int length = representation.length();
-			final int length0 = unsignedIntLength0(length);
-			
-			ensureCapacity(length0 + 2);
-			buffer[position++] = (byte)(type | length0);
-			writeUnsignedIntValue(length, length0);
-			
+        if (!putAndWriteStringReference(type, representation)) {
+        	final int length = representation.length();
+        	writeTypeUint(type, length);
+        	
 	    	final byte[] buffer = this.buffer;
 	    	final int bufferLength = buffer.length;
 	    	int position = this.position;
@@ -730,6 +525,39 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 	    	}
 	    	this.position = position;
         }
+	}
+	
+	private boolean putAndWriteObjectReference(int type, Object o) throws IOException {
+		int index = sharedObjects.putIfAbsent(o);
+		
+		if (index == -1)
+			return false;
+        
+		int length0 = unsignedIntLength0(index);
+		ensureCapacity(length0 + 2);
+		buffer[position++] = (byte)(type | 0x08 | length0);
+		writeUnsignedIntValue(index, length0);
+		return true;
+	}
+	
+	private boolean putAndWriteStringReference(int type, String s) throws IOException {
+		int index = sharedStrings.putIfAbsent(s);
+		
+		if (index == -1)
+			return false;
+        
+		int length0 = unsignedIntLength0(index);
+		ensureCapacity(length0 + 2);
+		buffer[position++] = (byte)(type | 0x04 | length0);
+		writeUnsignedIntValue(index, length0);
+		return true;
+	}
+	
+	private void writeTypeUint(int type, int uint) throws IOException {
+		final int length0 = unsignedIntLength0(uint);
+		ensureCapacity(length0 + 2);
+		buffer[position++] = (byte)(type | length0);
+		writeUnsignedIntValue(uint, length0);
 	}
 
 	private static int unsignedLongLength0(long value) {

@@ -37,8 +37,8 @@ import org.spearal.SpearalContext;
 import org.spearal.SpearalPrinter;
 import org.spearal.SpearalPrinter.StringData;
 import org.spearal.configuration.PropertyFactory.Property;
-import org.spearal.impl.cache.EqualityValueMap;
-import org.spearal.impl.cache.ValueMap.ValueProvider;
+import org.spearal.impl.cache.EqualityMap;
+import org.spearal.impl.cache.AnyMap.ValueProvider;
 import org.spearal.impl.util.ClassDescriptionUtil;
 import org.spearal.impl.util.TypeUtil;
 
@@ -49,7 +49,9 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
 	private final List<String> sharedStrings;
 	private final List<Object> sharedObjects;
-	private final EqualityValueMap<String, ClassDescriptor> descriptors;
+	private final EqualityMap<String, ClassDescriptor> descriptors;
+	private final EqualityMap<String, BigInteger> bigIntegers;
+	private final EqualityMap<String, BigDecimal> bigDecimals;
 
     private final SpearalContext context;
 	
@@ -66,10 +68,32 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	public SpearalDecoderImpl(final SpearalContext context, InputStream in, int capacity) {
         this.sharedStrings = new ArrayList<String>(64);
         this.sharedObjects = new ArrayList<Object>(64);
-        this.descriptors = new EqualityValueMap<String, ClassDescriptor>(new ValueProvider<String, ClassDescriptor>() {
+        this.descriptors = new EqualityMap<String, ClassDescriptor>(new ValueProvider<String, ClassDescriptor>() {
 			@Override
 			public ClassDescriptor createValue(SpearalContext context, String key) {
 				return ClassDescriptor.forDescription(context, key);
+			}
+		});
+        this.bigIntegers = new EqualityMap<String, BigInteger>(new ValueProvider<String, BigInteger>() {
+			@Override
+			public BigInteger createValue(SpearalContext context, String key) {
+				final int exponentIndex = key.indexOf('E');
+
+		    	BigInteger bigInteger;
+		    	if (exponentIndex == -1)
+		    		bigInteger = new BigInteger(key);
+		    	else {
+		    		bigInteger = new BigInteger(key.substring(0, exponentIndex));
+		    		int exponent = Integer.parseInt(key.substring(exponentIndex + 1));
+		    		bigInteger = bigInteger.multiply(BigInteger.TEN.pow(exponent));
+		    	}
+				return bigInteger;
+			}
+		});
+        this.bigDecimals = new EqualityMap<String, BigDecimal>(new ValueProvider<String, BigDecimal>() {
+			@Override
+			public BigDecimal createValue(SpearalContext context, String key) {
+				return new BigDecimal(key);
 			}
 		});
 
@@ -441,7 +465,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     		representation = sharedStrings.get(indexOrLength);
     	else
         	representation = readBigNumberData(indexOrLength);
-		return new BigInteger(representation);
+    	return bigIntegers.putIfAbsent(context, representation);
 	}
 
     @Override
@@ -513,7 +537,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     		representation = sharedStrings.get(indexOrLength);
     	else
         	representation = readBigNumberData(indexOrLength);
-		return new BigDecimal(representation);
+		return bigDecimals.putIfAbsent(context, representation);
 	}
 	
 	@Override

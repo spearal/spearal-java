@@ -38,8 +38,8 @@ import org.spearal.annotation.Exclude;
 import org.spearal.annotation.Include;
 import org.spearal.configuration.Introspector;
 import org.spearal.configuration.PropertyFactory.Property;
-import org.spearal.impl.cache.CopyOnWriteValueMap;
-import org.spearal.impl.cache.ValueMap.ValueProvider;
+import org.spearal.impl.cache.CopyOnWriteMap;
+import org.spearal.impl.cache.AnyMap.ValueProvider;
 
 /**
  * @author Franck WOLFF
@@ -48,10 +48,10 @@ public class IntrospectorImpl implements Introspector {
 	
 	private static Logger logger = Logger.getLogger(IntrospectorImpl.class.getName());
 
-	private final CopyOnWriteValueMap<Class<?>, Property[]> cache;
+	private final CopyOnWriteMap<Class<?>, Property[]> cache;
 
 	public IntrospectorImpl() {
-		this.cache = new CopyOnWriteValueMap<Class<?>, Property[]>(true,
+		this.cache = new CopyOnWriteMap<Class<?>, Property[]>(true,
 			new ValueProvider<Class<?>, Property[]>() {
 				@Override
 				public Property[] createValue(SpearalContext context, Class<?> key) {

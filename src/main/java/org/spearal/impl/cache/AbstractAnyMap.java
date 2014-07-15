@@ -20,16 +20,16 @@ package org.spearal.impl.cache;
 /**
  * @author Franck WOLFF
  */
-public abstract class AbstractValueMap<K, V> extends AbstractMap implements ValueMap<K, V> {
+public abstract class AbstractAnyMap<K, V> extends AbstractMap implements AnyMap<K, V> {
 
 	protected ValueProvider<K, V> provider;
 	protected Entry<K, V>[] entries;
 
-	public AbstractValueMap(ValueProvider<K, V> provider) {
+	public AbstractAnyMap(ValueProvider<K, V> provider) {
 		this.provider = provider;
 	}
 
-	public AbstractValueMap(ValueProvider<K, V> provider, int capacity) {
+	public AbstractAnyMap(ValueProvider<K, V> provider, int capacity) {
 		super(capacity);
 		this.provider = provider;
 	}
@@ -73,13 +73,13 @@ public abstract class AbstractValueMap<K, V> extends AbstractMap implements Valu
 		return sb.toString();
 	}
 
-	protected abstract AbstractValueMap<K, V> create(ValueProvider<K, V> provider, int capacity);
+	protected abstract AbstractAnyMap<K, V> create(ValueProvider<K, V> provider, int capacity);
 	
 	@Override
-	public ValueMap<K, V> clone() {
+	public AnyMap<K, V> clone() {
 		Entry<K, V>[] entries = this.entries;
 
-		AbstractValueMap<K, V> clone = create(provider, entries.length);
+		AbstractAnyMap<K, V> clone = create(provider, entries.length);
 		
 		clone.threshold = threshold;
 		clone.size = size;

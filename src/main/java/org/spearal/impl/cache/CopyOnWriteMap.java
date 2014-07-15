@@ -18,20 +18,20 @@
 package org.spearal.impl.cache;
 
 import org.spearal.SpearalContext;
-import org.spearal.impl.cache.ValueMap.ValueProvider;
+import org.spearal.impl.cache.AnyMap.ValueProvider;
 
 /**
  * @author Franck WOLFF
  */
-public final class CopyOnWriteValueMap<K, V> {
+public final class CopyOnWriteMap<K, V> {
 
-	protected volatile ValueMap<K, V> map;
+	protected volatile AnyMap<K, V> map;
 	
-	public CopyOnWriteValueMap(boolean identity, ValueProvider<K, V> provider) {
+	public CopyOnWriteMap(boolean identity, ValueProvider<K, V> provider) {
 		if (identity)
-			 this.map = new IdentityValueMap<K, V>(provider, 1);
+			 this.map = new IdentityMap<K, V>(provider, 1);
 		else
-			 this.map = new EqualityValueMap<K, V>(provider, 1);
+			 this.map = new EqualityMap<K, V>(provider, 1);
 	}
 	
 	public V get(K key) {
@@ -39,7 +39,7 @@ public final class CopyOnWriteValueMap<K, V> {
 	}
 	
 	public synchronized V putIfAbsent(SpearalContext context, K key) {
-		ValueMap<K, V> map = get();
+		AnyMap<K, V> map = get();
 		
 		V value = map.get(key);
 		if (value == null) {
@@ -64,11 +64,11 @@ public final class CopyOnWriteValueMap<K, V> {
 		return get().toString();
 	}
 
-	private ValueMap<K, V> get() {
+	private AnyMap<K, V> get() {
 		return map;
 	}
 	
-	private void set(ValueMap<K, V> map) {
+	private void set(AnyMap<K, V> map) {
 		this.map = map;
 	}
 }
