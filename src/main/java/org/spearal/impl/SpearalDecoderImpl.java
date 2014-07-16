@@ -49,6 +49,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
 	private final List<String> sharedStrings;
 	private final List<Object> sharedObjects;
+	
 	private final EqualityMap<String, ClassDescriptor> descriptors;
 	private final EqualityMap<String, BigInteger> bigIntegers;
 	private final EqualityMap<String, BigDecimal> bigDecimals;
@@ -68,6 +69,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	public SpearalDecoderImpl(final SpearalContext context, InputStream in, int capacity) {
         this.sharedStrings = new ArrayList<String>(64);
         this.sharedObjects = new ArrayList<Object>(64);
+        
         this.descriptors = new EqualityMap<String, ClassDescriptor>(new ValueProvider<String, ClassDescriptor>() {
 			@Override
 			public ClassDescriptor createValue(SpearalContext context, String key) {
@@ -112,15 +114,13 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
 	@Override
     public Object readAny() throws IOException {
-    	ensureAvailable(1);
-        return readAny(buffer[position++] & 0xff);
+        return readAny(readNextByte());
     }
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T readAny(Type targetType) throws IOException {
-    	ensureAvailable(1);
-    	int parameterizedType = (buffer[position++] & 0xff);
+    	int parameterizedType = readNextByte();
     	if (targetType == null)
     		return (T)readAny(parameterizedType);
         return (T)readAny(parameterizedType, targetType);
@@ -128,14 +128,12 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
 	@Override
 	public void skipAny()  throws IOException {
-    	ensureAvailable(1);
-        skipAny(buffer[position++] & 0xff);
+        skipAny(readNextByte());
 	}
 	
 	@Override
 	public void printAny(SpearalPrinter printer) throws IOException {
-    	ensureAvailable(1);
-        printAny(printer, buffer[position++] & 0xff);
+        printAny(printer, readNextByte());
 	}
 
 	@Override
@@ -456,12 +454,9 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     
     @Override
 	public BigInteger readBigIntegral(int parameterizedType) throws IOException {
-		int length0 = (parameterizedType & 0x03);
-		ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-    	
+    	final int indexOrLength = readIndexOrLength(parameterizedType);
     	String representation;
-    	if ((parameterizedType & 0x04) != 0)
+    	if (isStringReference(parameterizedType))
     		representation = sharedStrings.get(indexOrLength);
     	else
         	representation = readBigNumberData(indexOrLength);
@@ -470,11 +465,8 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
     @Override
     public void skipBigIntegral(int parameterizedType) throws IOException {
-		int length0 = (parameterizedType & 0x03);
-		ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-
-    	if ((parameterizedType & 0x04) == 0)
+    	final int indexOrLength = readIndexOrLength(parameterizedType);
+    	if (!isStringReference(parameterizedType))
     		skipFully((indexOrLength / 2) + (indexOrLength % 2));
     }
 
@@ -528,12 +520,9 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
 	@Override
 	public BigDecimal readBigFloating(int parameterizedType) throws IOException {
-		int length0 = (parameterizedType & 0x03);
-		ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-    	
+		final int indexOrLength = readIndexOrLength(parameterizedType);
     	String representation;
-    	if ((parameterizedType & 0x04) != 0)
+    	if (isStringReference(parameterizedType))
     		representation = sharedStrings.get(indexOrLength);
     	else
         	representation = readBigNumberData(indexOrLength);
@@ -542,11 +531,8 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	
 	@Override
     public void skipBigFloating(int parameterizedType) throws IOException {
-		int length0 = (parameterizedType & 0x03);
-		ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-    	
-    	if ((parameterizedType & 0x04) == 0)
+		final int indexOrLength = readIndexOrLength(parameterizedType);
+    	if (!isStringReference(parameterizedType))
     		skipFully((indexOrLength / 2) + (indexOrLength % 2));
 	}
 
@@ -566,13 +552,9 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     
     @Override
 	public byte[] readByteArray(int parameterizedType) throws IOException {
-    	boolean reference = (parameterizedType & 0x08) != 0;
-    	int length0 = (parameterizedType & 0x03);
-    	
-    	ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-    	
-    	if (reference)
+    	final int indexOrLength = readIndexOrLength(parameterizedType);
+
+    	if (isObjectReference(parameterizedType))
     		return (byte[])sharedObjects.get(indexOrLength);
     	
     	byte[] bytes = new byte[indexOrLength];
@@ -583,26 +565,18 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     
     @Override
     public void skipByteArray(int parameterizedType) throws IOException {
-    	boolean reference = (parameterizedType & 0x08) != 0;
-    	int length0 = (parameterizedType & 0x03);
+    	final int indexOrLength = readIndexOrLength(parameterizedType);
     	
-    	ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-    	
-    	if (!reference) {
+    	if (!isObjectReference(parameterizedType)) {
     		sharedObjects.add(null);
     		skipFully(indexOrLength);
     	}
     }
     
     private void printByteArray(SpearalPrinter printer, int parameterizedType) throws IOException {
-    	boolean reference = (parameterizedType & 0x08) != 0;
-    	int length0 = (parameterizedType & 0x03);
-    	
-    	ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
+    	final int indexOrLength = readIndexOrLength(parameterizedType);
 
-    	if (reference)
+    	if (isObjectReference(parameterizedType))
     		printer.printByteArray((byte[])sharedObjects.get(indexOrLength), indexOrLength, true);
     	else {
         	byte[] bytes = new byte[indexOrLength];
@@ -675,13 +649,9 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
 	@Override
 	public Collection<?> readCollection(int parameterizedType) throws IOException {
-    	boolean reference = (parameterizedType & 0x08) != 0;
-    	int length0 = (parameterizedType & 0x03);
-    	
-    	ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-    	
-    	if (reference)
+		final int indexOrLength = readIndexOrLength(parameterizedType);
+		
+    	if (isObjectReference(parameterizedType))
     		return (List<?>)sharedObjects.get(indexOrLength);
     	
     	List<Object> value = new ArrayList<Object>(indexOrLength);
@@ -695,13 +665,9 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	
 	@Override
     public void skipCollection(int parameterizedType) throws IOException {
-		boolean reference = (parameterizedType & 0x08) != 0;
-    	int length0 = (parameterizedType & 0x03);
+		final int indexOrLength = readIndexOrLength(parameterizedType);
     	
-    	ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-    	
-    	if (!reference) {
+    	if (!isObjectReference(parameterizedType)) {
 			sharedObjects.add(null);
     		for (int i = 0; i < indexOrLength; i++)
     			skipAny();
@@ -709,13 +675,9 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	}
 	
 	private void printCollection(SpearalPrinter printer, int parameterizedType) throws IOException {
-    	boolean reference = (parameterizedType & 0x08) != 0;
-    	int length0 = (parameterizedType & 0x03);
+		final int indexOrLength = readIndexOrLength(parameterizedType);
     	
-    	ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-    	
-    	if (reference)
+    	if (isObjectReference(parameterizedType))
     		printer.printCollectionReference(indexOrLength);
     	else {
     		printer.printCollectionStart(sharedObjects.size(), indexOrLength);
@@ -736,13 +698,9 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	public void readCollection(int parameterizedType, Object holder, Property property)
 		throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException {
     	
-    	boolean reference = (parameterizedType & 0x08) != 0;
-    	int length0 = (parameterizedType & 0x03);
+    	final int indexOrLength = readIndexOrLength(parameterizedType);
     	
-    	ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-    	
-    	if (reference) {
+    	if (isObjectReference(parameterizedType)) {
     		property.set(holder, sharedObjects.get(indexOrLength));
     		return;
     	}
@@ -761,13 +719,9 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
 	@Override
 	public Map<?, ?> readMap(int parameterizedType) throws IOException {
-    	boolean reference = (parameterizedType & 0x08) != 0;
-    	int length0 = (parameterizedType & 0x03);
+		final int indexOrLength = readIndexOrLength(parameterizedType);
     	
-    	ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-    	
-    	if (reference)
+    	if (isObjectReference(parameterizedType))
     		return (Map<?, ?>)sharedObjects.get(indexOrLength);
     	
     	Map<Object, Object> value = new LinkedHashMap<Object, Object>(indexOrLength);
@@ -783,13 +737,9 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	}
 	
 	private void printMap(SpearalPrinter printer, int parameterizedType) throws IOException {
-    	boolean reference = (parameterizedType & 0x08) != 0;
-    	int length0 = (parameterizedType & 0x03);
+		final int indexOrLength = readIndexOrLength(parameterizedType);
     	
-    	ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-    	
-    	if (reference)
+    	if (isObjectReference(parameterizedType))
     		printer.printMapReference(indexOrLength);
     	else {
     		printer.printMapStart(sharedObjects.size(), indexOrLength);
@@ -811,13 +761,9 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	
 	@Override
     public void skipMap(int parameterizedType) throws IOException {
-		boolean reference = (parameterizedType & 0x08) != 0;
-    	int length0 = (parameterizedType & 0x03);
+		final int indexOrLength = readIndexOrLength(parameterizedType);
     	
-    	ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-    	
-    	if (!reference) {
+    	if (!isObjectReference(parameterizedType)) {
 			sharedObjects.add(null);
     		for (int i = 0; i < indexOrLength; i++) {
     			skipAny();
@@ -831,13 +777,9 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	public void readMap(int parameterizedType, Object holder, Property property)
 		throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException {
     	
-		boolean reference = (parameterizedType & 0x08) != 0;
-    	int length0 = (parameterizedType & 0x03);
+		final int indexOrLength = readIndexOrLength(parameterizedType);
     	
-    	ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-    	
-    	if (reference) {
+    	if (isObjectReference(parameterizedType)) {
     		property.set(holder, sharedObjects.get(indexOrLength));
     		return;
     	}
@@ -865,19 +807,13 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	public Enum<?> readEnum(int parameterizedType) throws IOException {
     	String className = readStringData(parameterizedType);
 		Class<? extends Enum> cls = (Class<? extends Enum>)context.loadClass(className);
-    	
-    	ensureAvailable(1);
-    	String value = readString(buffer[position++] & 0xff);
-    	
+    	String value = readString(readNextByte());
     	return Enum.valueOf(cls, value);
 	}
 	
     private void printEnum(SpearalPrinter printer, int parameterizedType) throws IOException {
     	StringData className = getStringData(parameterizedType);
-    	
-    	ensureAvailable(1);
-    	parameterizedType = (buffer[position++] & 0xff);
-    	
+    	parameterizedType = readNextByte();
     	StringData value = getStringData(parameterizedType);
     	printer.printEnum(className, value);
 	}
@@ -885,8 +821,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     @Override
     public void skipEnum(int parameterizedType) throws IOException {
     	skipStringData(parameterizedType);
-    	ensureAvailable(1);
-    	skipString(buffer[position++] & 0xff);
+    	skipString(readNextByte());
     }
 
 	@Override
@@ -906,11 +841,9 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
 	@Override
     public Object readBean(int parameterizedType) throws IOException {
-    	int length0 = (parameterizedType & 0x03);
-    	ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
+		final int indexOrLength = readIndexOrLength(parameterizedType);
     	
-    	if ((parameterizedType & 0x08) != 0)
+    	if (isObjectReference(parameterizedType))
     		return sharedObjects.get(indexOrLength);
     	
     	String classDescription = readStringData(parameterizedType, indexOrLength);
@@ -927,9 +860,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	    	sharedObjects.add(value);
 	    	
 	    	for (Property property : descriptor.properties) {
-	    		ensureAvailable(1);
-	    		int propertyType = (buffer[position++] & 0xff);
-	    		
+	    		int propertyType = readNextByte();
 	    		if (property != null)
 	    			property.read(this, value, propertyType);
 	    		else
@@ -945,12 +876,9 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	
 	@Override
     public void skipBean(int parameterizedType) throws IOException {
-    	boolean reference = (parameterizedType & 0x08) != 0;
-    	int length0 = (parameterizedType & 0x03);
-    	ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
+		final int indexOrLength = readIndexOrLength(parameterizedType);
     	
-    	if (!reference) {
+    	if (!isObjectReference(parameterizedType)) {
     		String classDescription = readStringData(parameterizedType, indexOrLength);
     		sharedObjects.add(null);
     		
@@ -961,13 +889,9 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	}
 	
 	private void printBean(SpearalPrinter printer, int parameterizedType) throws IOException {
-    	boolean reference = (parameterizedType & 0x08) != 0;
-    	int length0 = (parameterizedType & 0x03);
+		final int indexOrLength = readIndexOrLength(parameterizedType);
     	
-    	ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-    	
-    	if (reference)
+    	if (isObjectReference(parameterizedType))
     		printer.printBeanReference(indexOrLength);
     	else {
         	StringData classDescription = getStringData(parameterizedType, indexOrLength);
@@ -990,11 +914,19 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	}
 	}
     
+    private int readNextByte() throws IOException {
+    	ensureAvailable(1);
+        return (buffer[position++] & 0xff);
+    }
+    
+    private int readIndexOrLength(int parameterizedType) throws IOException {
+		int length0 = (parameterizedType & 0x03);
+		ensureAvailable(length0 + 1);
+    	return readUnsignedIntegerValue(length0);
+    }
+    
     private int readUnsignedIntegerValue(int length0) {
 		int v = 0;
-		
-    	final byte[] buffer = this.buffer;
-    	int position = this.position;
 
     	switch (length0) {
 		case 3:
@@ -1007,21 +939,16 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 			v |= (buffer[position++] & 0xff);
 		}
 		
-    	this.position = position;
-		
 		return v;
     }
     
     private String readStringData(int parameterizedType) throws IOException {
-    	int length0 = (parameterizedType & 0x03);
-    	ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-
+    	int indexOrLength = readIndexOrLength(parameterizedType);
     	return readStringData(parameterizedType, indexOrLength);
     }
     
     private String readStringData(int parameterizedType, int indexOrLength) throws IOException {
-    	if ((parameterizedType & 0x04) != 0)
+    	if (isStringReference(parameterizedType))
     		return sharedStrings.get(indexOrLength);
     	
     	if (indexOrLength == 0)
@@ -1045,26 +972,20 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     }
     
     private void skipStringData(int parameterizedType) throws IOException {
-    	int length0 = (parameterizedType & 0x03);
-    	ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-    	
-    	if ((parameterizedType & 0x04) == 0) {
+    	int indexOrLength = readIndexOrLength(parameterizedType);
+    	if (!isStringReference(parameterizedType)) {
     		sharedStrings.add(null);
     		skipFully(indexOrLength);
     	}
     }
     
     private StringData getStringData(int parameterizedType) throws IOException {
-    	int length0 = (parameterizedType & 0x03);
-    	ensureAvailable(length0 + 1);
-    	int indexOrLength = readUnsignedIntegerValue(length0);
-    	
+    	int indexOrLength = readIndexOrLength(parameterizedType);
     	return getStringData(parameterizedType, indexOrLength);
     }
     
     private StringData getStringData(int parameterizedType, int indexOrLength) throws IOException {
-    	if ((parameterizedType & 0x04) != 0)
+    	if (isStringReference(parameterizedType))
     		return new StringData(sharedStrings.get(indexOrLength), indexOrLength, true);
     	
     	if (indexOrLength == 0)
@@ -1219,6 +1140,14 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 			size += read;
 		}
 		while (size < count);
+	}
+	
+	private static boolean isObjectReference(int parameterizedType) {
+		return ((parameterizedType & 0x08) != 0);
+	}
+	
+	private static boolean isStringReference(int parameterizedType) {
+		return ((parameterizedType & 0x04) != 0);
 	}
 	
 	private static class ClassDescriptor {
