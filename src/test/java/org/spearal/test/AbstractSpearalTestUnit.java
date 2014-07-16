@@ -98,6 +98,7 @@ public abstract class AbstractSpearalTestUnit {
 		bais.reset();
 		in = factory.newDecoder(bais);
 		in.printAny(factory.newPrinter(printStream));
+		printStream.println();
 		
 		bais.reset();
 		in = factory.newDecoder(bais);

@@ -63,6 +63,30 @@ public class TestMap extends AbstractSpearalTestUnit {
 			));
 		}
 		encodeDecode(map, -1);
+		
+		Map<SimpleBean, SimpleBean> map2 = new HashMap<SimpleBean, SimpleBean>();
+		for (int i = 0; i < 20; i++) {
+			map2.put(
+				new SimpleBean(
+					random.nextBoolean(),
+					random.nextInt(),
+					random.nextDouble(),
+					"string" + i
+				),
+				new SimpleBean(
+					random.nextBoolean(),
+					random.nextInt(),
+					random.nextDouble(),
+					"string" + i
+				)
+			);
+		}
+		encodeDecode(map2, -1);
+		
+		Map<String, String> map3 = new HashMap<String, String>();
+		for (int i = 0; i < 20; i++)
+			map3.put("key" + i, "value" + i);
+		encodeDecode(map3, -1);
 	}
 	
 	private void encodeDecode(Map<?, ?> value, int expectedSize) throws IOException {

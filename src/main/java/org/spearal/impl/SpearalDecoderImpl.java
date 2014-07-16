@@ -721,8 +721,11 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     		printer.printCollectionStart(sharedObjects.size(), indexOrLength);
     		sharedObjects.add(null);
     		
-    		for (int i = 0; i < indexOrLength; i++)
+    		for (int i = 0; i < indexOrLength; i++) {
+    			printer.printCollectionItemStart(i);
     			printAny(printer);
+    			printer.printCollectionItemEnd(i);
+    		}
     		
     		printer.printCollectionEnd();
     	}
@@ -793,8 +796,13 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     		sharedObjects.add(null);
     		
     		for (int i = 0; i < indexOrLength; i++) {
+    			printer.printMapKeyStart(i);
     			printAny(printer);
+    			printer.printMapKeyEnd(i);
+    			
+    			printer.printMapValueStart(i);
     			printAny(printer);
+    			printer.printMapValueEnd(i);
     		}
     		
     		printer.printMapEnd();
@@ -969,8 +977,11 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     		printer.printBeanStart(sharedObjects.size() - 1, classDescription, classNames);
     		
     		String[] propertyNames = ClassDescriptionUtil.splitPropertyNames(classDescription.value);
+    		boolean first = true;
     		for (String propertyName : propertyNames) {
-    			printer.printBeanPropertyStart(propertyName);
+    			printer.printBeanPropertyStart(propertyName, first);
+    			if (first)
+    				first = false;
     			printAny(printer);
     			printer.printBeanPropertyEnd();
     		}

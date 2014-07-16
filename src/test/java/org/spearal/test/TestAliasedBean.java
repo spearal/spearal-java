@@ -89,6 +89,7 @@ public class TestAliasedBean extends AbstractSpearalTestUnit {
 		ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
 		SpearalDecoder decoder = clientFactory.newDecoder(bais);
 		decoder.printAny(clientFactory.newPrinter(printStream));
+		printStream.println();
 		
 		bais.reset();
 		decoder = clientFactory.newDecoder(bais);
@@ -107,6 +108,7 @@ public class TestAliasedBean extends AbstractSpearalTestUnit {
 		bais = new ByteArrayInputStream(bytes);
 		decoder = serverFactory.newDecoder(bais);
 		decoder.printAny(serverFactory.newPrinter(printStream));
+		printStream.println();
 		
 		bais.reset();
 		decoder = serverFactory.newDecoder(bais);
