@@ -139,4 +139,19 @@ public class SpearalFactory {
 	public SpearalPrinter newPrinter(PrintStream out) {
 		return new SpearalPrinterImpl(out);
 	}
+	
+	
+	private static SpearalFactory instance = null;
+	
+	public static SpearalFactory getInstance() {
+		return instance;
+	}
+	
+	public static void clearInstance() {
+		instance = null;
+	}
+	
+	public void setInstance() {
+		SpearalFactory.instance = this;
+	}
 }

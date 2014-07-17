@@ -50,10 +50,17 @@ public class SpearalPropertyFilterImpl implements SpearalPropertyFilter {
 			for (String propertyName : propertyNames)
 				propertyNamesSet.add(propertyName);
 			
+			String[] unfilterableProperties = context.getUnfilterableProperties(cls);
+			if (unfilterableProperties != null) {
+				for (String propertyName : unfilterableProperties)
+					propertyNamesSet.add(propertyName);
+			}
+			
 			Property[] properties = context.getProperties(cls).clone();
-			for (int i = 0; i < properties.length; i++)
+			for (int i = 0; i < properties.length; i++) {
 				if (!propertyNamesSet.contains(properties[i].getName()))
 					properties[i] = null;
+			}
 			this.propertiesMap.put(cls, properties);
 		}
 	}

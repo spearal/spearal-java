@@ -45,13 +45,15 @@ import org.spearal.configuration.Securizer;
 import org.spearal.configuration.TypeInstantiatorProvider;
 import org.spearal.configuration.TypeInstantiatorProvider.TypeInstantiator;
 import org.spearal.configuration.TypeLoader;
+import org.spearal.configuration.UnfilterablePropertiesProvider;
+import org.spearal.impl.cache.AnyMap.ValueProvider;
 import org.spearal.impl.cache.CopyOnWriteDualIdentityMap;
 import org.spearal.impl.cache.CopyOnWriteMap;
 import org.spearal.impl.cache.DualIdentityMap;
-import org.spearal.impl.cache.AnyMap.ValueProvider;
 
 /**
  * @author Franck WOLFF
+ * @author William DRAI
  */
 public class SpearalContextImpl implements SpearalContext {
 	
@@ -73,9 +75,15 @@ public class SpearalContextImpl implements SpearalContext {
 	private final List<CoderProvider> coderProviders;
 	private final CopyOnWriteMap<Class<?>, Object, Coder> codersCache;
 	
+	private final List<UnfilterablePropertiesProvider> unfilterablePropertiesProviders;
+	private final CopyOnWriteMap<Class<?>, Object, String[]> unfilterablePropertiesCache;
+	
 	private final List<PropertyFactory> propertyFactories;
 	
 	private final List<EncoderBeanDescriptorFactory> descriptorFactories;
+	
+	private static final String[] EMPTY_STRING_ARRAY = new String[] {};
+	
 	
 	public SpearalContextImpl() {
 		this.typeInstantiatorProviders = new ArrayList<TypeInstantiatorProvider>();
@@ -138,6 +146,22 @@ public class SpearalContextImpl implements SpearalContext {
 			}
 		);
 		
+		this.unfilterablePropertiesProviders = new ArrayList<UnfilterablePropertiesProvider>();
+		this.unfilterablePropertiesCache = new CopyOnWriteMap<Class<?>, Object, String[]>(true,
+			new ValueProvider<Class<?>, Object, String[]>() {
+				
+				@Override
+				public String[] createValue(SpearalContext context, Class<?> key, Object unused) {
+					for (UnfilterablePropertiesProvider unfilterablePropertiesProvider : unfilterablePropertiesProviders) {
+						String[] unfilterableProperties = unfilterablePropertiesProvider.getUnfilterableProperties(key);
+						if (unfilterableProperties != null)
+							return unfilterableProperties;
+					}
+					return EMPTY_STRING_ARRAY;
+				}
+			}
+		);
+		
 		this.propertyFactories = new ArrayList<PropertyFactory>();
 		
 		this.descriptorFactories = new ArrayList<EncoderBeanDescriptorFactory>();
@@ -175,6 +199,11 @@ public class SpearalContextImpl implements SpearalContext {
 			
 			if (configurable instanceof CoderProvider) {
 				coderProviders.add((append ? coderProviders.size() : 0), (CoderProvider)configurable);
+				added = true;
+			}
+			
+			if (configurable instanceof UnfilterablePropertiesProvider) {
+				unfilterablePropertiesProviders.add((append ? unfilterablePropertiesProviders.size() : 0), (UnfilterablePropertiesProvider)configurable);
 				added = true;
 			}
 			
@@ -270,6 +299,11 @@ public class SpearalContextImpl implements SpearalContext {
 	@Override
 	public Coder getCoder(Class<?> valueClass) {
 		return codersCache.getOrPutIfAbsent(this, valueClass);
+	}
+	
+	@Override
+	public String[] getUnfilterableProperties(Class<?> valueClass) {
+		return unfilterablePropertiesCache.getOrPutIfAbsent(this, valueClass);
 	}
 	
 	@Override

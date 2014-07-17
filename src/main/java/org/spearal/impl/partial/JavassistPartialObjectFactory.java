@@ -106,14 +106,14 @@ public class JavassistPartialObjectFactory implements PartialObjectFactory, Valu
 			this.partialProperties = partialProperties;
 			
 			this.partialGetters = new HashSet<Method>(partialProperties.length);
+			this.partialPropertiesNames = new HashSet<String>(partialProperties.length);
 			for (Property property : partialProperties) {
+				if (property == null)
+					continue;
+				partialPropertiesNames.add(property.getName());
 				if (property.getGetter() != null)
 					partialGetters.add(property.getGetter());
 			}
-			
-			this.partialPropertiesNames = new HashSet<String>(partialProperties.length);
-			for (Property property : partialProperties)
-				partialPropertiesNames.add(property.getName());
 		}
 
 		public Object invoke(Object obj, Method method, Method proceed, Object[] args) throws Exception {

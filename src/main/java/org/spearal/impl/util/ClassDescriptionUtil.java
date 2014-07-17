@@ -88,6 +88,35 @@ public class ClassDescriptionUtil {
 		return sb.toString();
 	}
 	
+	public static String createAliasedDescription(SpearalContext context, Class<?> cls, String[] properties) {
+		StringBuilder sb = new StringBuilder(64);
+
+		if (!Proxy.isProxyClass(cls))
+			sb.append(context.alias(cls)).append('#');
+		else {
+			Class<?>[] interfaces = cls.getInterfaces();
+			if (interfaces.length > 0) {
+				sb.append(context.alias(interfaces[0]));
+				for (int i = 1; i < interfaces.length; i++)
+					sb.append(',').append(context.alias(interfaces[i]));
+			}
+			sb.append('#');
+		}
+
+		boolean first = true;
+		for (String property : properties) {
+			if (property == null)
+				continue;
+			if (first)
+				first = false;
+			else
+				sb.append(',');
+			sb.append(property);
+		}
+
+		return sb.toString();
+	}
+	
 	private static String[] split(String s, int from, int to) {
 		int count = 1;
 		for (int i = from; i < to; i++) {
