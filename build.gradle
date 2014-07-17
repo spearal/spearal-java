@@ -44,6 +44,15 @@ dependencies {
     testCompile "junit:junit:4.11"
 }
 
+task sourcesJar(type: Jar, dependsOn: 'classes') {
+	classifier = 'sources'
+	from sourceSets.main.allSource
+}
+
+artifacts {
+	archives sourcesJar
+}
+
 task wrapper(type: Wrapper) {
     gradleVersion = '1.12'
 }
