@@ -49,6 +49,7 @@ import org.spearal.impl.util.ServiceLoader;
 
 /**
  * @author Franck WOLFF
+ * @author William DRAI
  */
 public class SpearalFactory {
 	
@@ -151,7 +152,8 @@ public class SpearalFactory {
 		instance = null;
 	}
 	
-	public void setInstance() {
+	public SpearalFactory setInstance() {
 		SpearalFactory.instance = this;
+		return this;
 	}
 }
