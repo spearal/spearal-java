@@ -40,7 +40,7 @@ public interface SpearalContext {
 	String alias(Class<?> cls);
 	String unalias(String aliasedClassName);
 	
-	Class<?> loadClass(String classNames)
+	Class<?> loadClass(String classNames, Type target)
 		throws SecurityException;
 	
 	Property[] getProperties(Class<?> cls);

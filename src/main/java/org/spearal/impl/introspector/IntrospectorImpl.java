@@ -48,13 +48,13 @@ public class IntrospectorImpl implements Introspector {
 	
 	private static Logger logger = Logger.getLogger(IntrospectorImpl.class.getName());
 
-	private final CopyOnWriteMap<Class<?>, Property[]> cache;
+	private final CopyOnWriteMap<Class<?>, Object, Property[]> cache;
 
 	public IntrospectorImpl() {
-		this.cache = new CopyOnWriteMap<Class<?>, Property[]>(true,
-			new ValueProvider<Class<?>, Property[]>() {
+		this.cache = new CopyOnWriteMap<Class<?>, Object, Property[]>(true,
+			new ValueProvider<Class<?>, Object, Property[]>() {
 				@Override
-				public Property[] createValue(SpearalContext context, Class<?> key) {
+				public Property[] createValue(SpearalContext context, Class<?> key, Object unused) {
 					return (
 						Proxy.isProxyClass(key)
 						? introspectProxyProperties(context, key)
@@ -69,7 +69,7 @@ public class IntrospectorImpl implements Introspector {
 	public Property[] getProperties(SpearalContext context, Class<?> cls) {
 		Property[] properties = cache.get(cls);
 		if (properties == null)
-			properties = cache.putIfAbsent(context, cls);
+			properties = cache.putIfAbsent(context, cls, null);
 		return properties;
 	}
 	

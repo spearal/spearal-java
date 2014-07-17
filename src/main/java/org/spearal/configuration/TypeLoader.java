@@ -17,6 +17,8 @@
  */
 package org.spearal.configuration;
 
+import java.lang.reflect.Type;
+
 import org.spearal.SpearalContext;
 
 /**
@@ -24,5 +26,5 @@ import org.spearal.SpearalContext;
  */
 public interface TypeLoader extends Configurable {
 
-	Class<?> loadClass(SpearalContext context, String classNames) throws SecurityException;
+	Class<?> loadClass(SpearalContext context, String classNames, Type target) throws SecurityException;
 }

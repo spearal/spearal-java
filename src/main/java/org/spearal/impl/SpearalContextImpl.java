@@ -62,16 +62,16 @@ public class SpearalContextImpl implements SpearalContext {
 	private AliasStrategy aliasStrategy;
 	
 	private final List<TypeInstantiatorProvider> typeInstantiatorProviders;
-	private final CopyOnWriteMap<Type, TypeInstantiator> typeInstantiatorsCache;
+	private final CopyOnWriteMap<Type, Object, TypeInstantiator> typeInstantiatorsCache;
 
 	private final List<PropertyInstantiatorProvider> propertyInstantiatorProviders;
-	private final CopyOnWriteMap<Property, PropertyInstantiator> propertyInstantiatorsCache;
+	private final CopyOnWriteMap<Property, Object, PropertyInstantiator> propertyInstantiatorsCache;
 	
 	private final List<ConverterProvider> converterProviders;
 	private final CopyOnWriteDualIdentityMap<Class<?>, Type, Converter<?>> convertersCache;
 	
 	private final List<CoderProvider> coderProviders;
-	private final CopyOnWriteMap<Class<?>, Coder> codersCache;
+	private final CopyOnWriteMap<Class<?>, Object, Coder> codersCache;
 	
 	private final List<PropertyFactory> propertyFactories;
 	
@@ -79,10 +79,10 @@ public class SpearalContextImpl implements SpearalContext {
 	
 	public SpearalContextImpl() {
 		this.typeInstantiatorProviders = new ArrayList<TypeInstantiatorProvider>();
-		this.typeInstantiatorsCache = new CopyOnWriteMap<Type, TypeInstantiator>(true,
-			new ValueProvider<Type, TypeInstantiator>() {
+		this.typeInstantiatorsCache = new CopyOnWriteMap<Type, Object, TypeInstantiator>(true,
+			new ValueProvider<Type, Object, TypeInstantiator>() {
 				@Override
-				public TypeInstantiator createValue(SpearalContext context, Type key) {
+				public TypeInstantiator createValue(SpearalContext context, Type key, Object unused) {
 					for (TypeInstantiatorProvider provider : typeInstantiatorProviders) {
 						TypeInstantiator instantiator = provider.getInstantiator(key);
 						if (instantiator != null)
@@ -94,10 +94,10 @@ public class SpearalContextImpl implements SpearalContext {
 		);
 
 		this.propertyInstantiatorProviders = new ArrayList<PropertyInstantiatorProvider>();
-		this.propertyInstantiatorsCache = new CopyOnWriteMap<Property, PropertyInstantiator>(false,
-			new ValueProvider<Property, PropertyInstantiator>() {
+		this.propertyInstantiatorsCache = new CopyOnWriteMap<Property, Object, PropertyInstantiator>(false,
+			new ValueProvider<Property, Object, PropertyInstantiator>() {
 				@Override
-				public PropertyInstantiator createValue(SpearalContext context, Property key) {
+				public PropertyInstantiator createValue(SpearalContext context, Property key, Object unused) {
 					for (PropertyInstantiatorProvider provider : propertyInstantiatorProviders) {
 						PropertyInstantiator instantiator = provider.getInstantiator(key);
 						if (instantiator != null)
@@ -124,10 +124,10 @@ public class SpearalContextImpl implements SpearalContext {
 		);
 		
 		this.coderProviders = new ArrayList<CoderProvider>();
-		this.codersCache = new CopyOnWriteMap<Class<?>, Coder>(true,
-			new ValueProvider<Class<?>, Coder>() {
+		this.codersCache = new CopyOnWriteMap<Class<?>, Object, Coder>(true,
+			new ValueProvider<Class<?>, Object, Coder>() {
 				@Override
-				public Coder createValue(SpearalContext context, Class<?> key) {
+				public Coder createValue(SpearalContext context, Class<?> key, Object param) {
 					for (CoderProvider provider : coderProviders) {
 						Coder coder = provider.getCoder(key);
 						if (coder != null)
@@ -230,8 +230,8 @@ public class SpearalContextImpl implements SpearalContext {
 	}
 
 	@Override
-	public Class<?> loadClass(String classNames) throws SecurityException {
-		return loader.loadClass(this, classNames);
+	public Class<?> loadClass(String classNames, Type target) throws SecurityException {
+		return loader.loadClass(this, classNames, target);
 	}
 
 	@Override

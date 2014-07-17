@@ -22,13 +22,13 @@ import org.spearal.SpearalContext;
 /**
  * @author Franck WOLFF
  */
-public class IdentityMap<K, V> extends AbstractAnyMap<K, V> {
+public class IdentityMap<K, P, V> extends AbstractAnyMap<K, P, V> {
 
-	public IdentityMap(ValueProvider<K, V> provider) {
+	public IdentityMap(ValueProvider<K, P, V> provider) {
 		super(provider);
 	}
 
-	public IdentityMap(ValueProvider<K, V> provider, int capacity) {
+	public IdentityMap(ValueProvider<K, P, V> provider, int capacity) {
 		super(provider, capacity);
 	}
 
@@ -47,6 +47,12 @@ public class IdentityMap<K, V> extends AbstractAnyMap<K, V> {
 
 	@Override
 	public V putIfAbsent(SpearalContext context, K key) {
+		return putIfAbsent(context, key, null);
+	}
+
+
+	@Override
+	public V putIfAbsent(SpearalContext context, K key, P param) {
 		Entry<K, V>[] entries = this.entries;
 
 		int hash = System.identityHashCode(key);
@@ -69,14 +75,14 @@ public class IdentityMap<K, V> extends AbstractAnyMap<K, V> {
 			}
 		}
 
-		V value = provider.createValue(context, key);
+		V value = provider.createValue(context, key, param);
         entries[index] = new Entry<K, V>(key, hash, value, head);
         size++;
 		return value;
 	}
 
 	@Override
-	protected AbstractAnyMap<K, V> create(ValueProvider<K, V> provider, int capacity) {
-		return new IdentityMap<K, V>(provider, capacity);
+	protected AbstractAnyMap<K, P, V> create(ValueProvider<K, P, V> provider, int capacity) {
+		return new IdentityMap<K, P, V>(provider, capacity);
 	}
 }

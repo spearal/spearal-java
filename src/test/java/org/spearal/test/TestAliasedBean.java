@@ -29,6 +29,7 @@ import org.spearal.SpearalDecoder;
 import org.spearal.SpearalEncoder;
 import org.spearal.SpearalFactory;
 import org.spearal.configuration.AliasStrategy;
+import org.spearal.impl.SpearalDecoderImpl.ClassNotFound;
 import org.spearal.test.model.AliasedSimpleBean;
 import org.spearal.test.model.SimpleBean;
 
@@ -118,5 +119,56 @@ public class TestAliasedBean extends AbstractSpearalTestUnit {
 		Assert.assertEquals(bean.getIntValue(), serverBean.getIntValue());
 		Assert.assertEquals(bean.getDoubleValue(), serverBean.getDoubleValue(), 0.0);
 		Assert.assertEquals(bean.getStringValue(), serverBean.getStringValue());
+	}
+	
+	@SuppressWarnings("boxing")
+	@Test
+	public void testClassNotFoundBean() throws IOException {
+		SimpleBean bean = new SimpleBean(true, 1, 0.1, "blabla");
+		
+		SpearalFactory serverFactory = new SpearalFactory();
+		serverFactory.getContext().configure(new AliasStrategy() {
+			
+			@Override
+			public String alias(Class<?> cls) {
+				return "org.error." + cls.getSimpleName();
+			}
+			
+			@Override
+			public String unalias(String aliasedClassName) {
+				return aliasedClassName;
+			}
+		});
+		
+		SpearalFactory clientFactory = new SpearalFactory();
+
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		SpearalEncoder encoder = serverFactory.newEncoder(baos);
+		encoder.writeAny(bean);
+		
+		byte[] bytes = baos.toByteArray();
+		
+		ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+		SpearalDecoder decoder = clientFactory.newDecoder(bais);
+		decoder.printAny(clientFactory.newPrinter(printStream));
+		printStream.println();
+		
+		bais.reset();
+		decoder = clientFactory.newDecoder(bais);
+		ClassNotFound clientBean = (ClassNotFound)decoder.readAny();
+		
+		Assert.assertEquals(
+			clientBean.getClassNotFoundDescription(),
+			"org.error.SimpleBean#booleanValue,doubleValue,intValue,stringValue"
+		);
+		Assert.assertEquals(bean.isBooleanValue(), clientBean.get("booleanValue"));
+		Assert.assertEquals(Long.valueOf(bean.getIntValue()), clientBean.get("intValue"));
+		Assert.assertEquals(bean.getDoubleValue(), clientBean.get("doubleValue"));
+		Assert.assertEquals(bean.getStringValue(), clientBean.get("stringValue"));
+		
+		bais.reset();
+		decoder = clientFactory.newDecoder(bais);
+		SimpleBean copy = decoder.readAny(SimpleBean.class);
+		Assert.assertEquals(bean, copy);
 	}
 }

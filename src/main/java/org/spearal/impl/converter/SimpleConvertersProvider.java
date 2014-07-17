@@ -603,7 +603,7 @@ public class SimpleConvertersProvider implements ConverterProvider {
 					return ((Class<?>)value);
 
 				try {
-					return decoder.getContext().loadClass(value.toString());
+					return decoder.getContext().loadClass(value.toString(), targetType);
 				}
 				catch (Exception e) {
 					return null;

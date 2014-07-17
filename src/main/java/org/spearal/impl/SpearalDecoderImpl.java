@@ -23,12 +23,16 @@ import static org.spearal.impl.SharedConstants.UTF8;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,8 +41,8 @@ import org.spearal.SpearalContext;
 import org.spearal.SpearalPrinter;
 import org.spearal.SpearalPrinter.StringData;
 import org.spearal.configuration.PropertyFactory.Property;
-import org.spearal.impl.cache.EqualityMap;
 import org.spearal.impl.cache.AnyMap.ValueProvider;
+import org.spearal.impl.cache.EqualityMap;
 import org.spearal.impl.util.ClassDescriptionUtil;
 import org.spearal.impl.util.TypeUtil;
 
@@ -50,9 +54,9 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	private final List<String> sharedStrings;
 	private final List<Object> sharedObjects;
 	
-	private final EqualityMap<String, ClassDescriptor> descriptors;
-	private final EqualityMap<String, BigInteger> bigIntegers;
-	private final EqualityMap<String, BigDecimal> bigDecimals;
+	private final EqualityMap<String, Type, ClassDescriptor> descriptors;
+	private final EqualityMap<String, Object, BigInteger> bigIntegers;
+	private final EqualityMap<String, Object, BigDecimal> bigDecimals;
 
     private final SpearalContext context;
 	
@@ -70,15 +74,15 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
         this.sharedStrings = new ArrayList<String>(64);
         this.sharedObjects = new ArrayList<Object>(64);
         
-        this.descriptors = new EqualityMap<String, ClassDescriptor>(new ValueProvider<String, ClassDescriptor>() {
+        this.descriptors = new EqualityMap<String, Type, ClassDescriptor>(new ValueProvider<String, Type, ClassDescriptor>() {
 			@Override
-			public ClassDescriptor createValue(SpearalContext context, String key) {
-				return ClassDescriptor.forDescription(context, key);
+			public ClassDescriptor createValue(SpearalContext context, String key, Type targetType) {
+				return ClassDescriptor.forDescription(context, key, targetType);
 			}
 		});
-        this.bigIntegers = new EqualityMap<String, BigInteger>(new ValueProvider<String, BigInteger>() {
+        this.bigIntegers = new EqualityMap<String, Object, BigInteger>(new ValueProvider<String, Object, BigInteger>() {
 			@Override
-			public BigInteger createValue(SpearalContext context, String key) {
+			public BigInteger createValue(SpearalContext context, String key, Object unsused) {
 				final int exponentIndex = key.indexOf('E');
 
 		    	BigInteger bigInteger;
@@ -92,9 +96,9 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 				return bigInteger;
 			}
 		});
-        this.bigDecimals = new EqualityMap<String, BigDecimal>(new ValueProvider<String, BigDecimal>() {
+        this.bigDecimals = new EqualityMap<String, Object, BigDecimal>(new ValueProvider<String, Object, BigDecimal>() {
 			@Override
-			public BigDecimal createValue(SpearalContext context, String key) {
+			public BigDecimal createValue(SpearalContext context, String key, Object unsused) {
 				return new BigDecimal(key);
 			}
 		});
@@ -173,11 +177,11 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
         	return readMap(parameterizedType);
             
         case ENUM:
-        	return readEnum(parameterizedType);
+        	return readEnum(parameterizedType, null);
         case CLASS:
-        	return readClass(parameterizedType);
+        	return readClass(parameterizedType, null);
         case BEAN:
-        	return readBean(parameterizedType);
+        	return readBean(parameterizedType, null);
         }
         
         throw new RuntimeException("Unexpected type: " + parameterizedType);
@@ -257,19 +261,19 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
         	break;
             
         case ENUM:
-        	value = readEnum(parameterizedType);
+        	value = readEnum(parameterizedType, targetType);
         	if (value.getClass() == targetType)
         		return value;
         	break;
         	
         case CLASS:
-        	value = readClass(parameterizedType);
+        	value = readClass(parameterizedType, targetType);
         	if (Class.class == targetType)
         		return value;
         	break;
         	
         case BEAN:
-        	value = readBean(parameterizedType);
+        	value = readBean(parameterizedType, targetType);
         	if (value == null) {
         		if (!(targetType instanceof Class<?>) || !((Class<?>)targetType).isPrimitive())
         			return null;
@@ -804,9 +808,9 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	public Enum<?> readEnum(int parameterizedType) throws IOException {
+	public Enum<?> readEnum(int parameterizedType, Type targetType) throws IOException {
     	String className = readStringData(parameterizedType);
-		Class<? extends Enum> cls = (Class<? extends Enum>)context.loadClass(className);
+		Class<? extends Enum> cls = (Class<? extends Enum>)context.loadClass(className, targetType);
     	String value = readString(readNextByte());
     	return Enum.valueOf(cls, value);
 	}
@@ -825,9 +829,9 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     }
 
 	@Override
-	public Class<?> readClass(int parameterizedType) throws IOException {
+	public Class<?> readClass(int parameterizedType, Type targetType) throws IOException {
     	String className = readStringData(parameterizedType);
-		return context.loadClass(className);
+		return context.loadClass(className, targetType);
 	}
 	
 	@Override
@@ -840,23 +844,25 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	}
 
 	@Override
-    public Object readBean(int parameterizedType) throws IOException {
+    public Object readBean(int parameterizedType, Type targetType) throws IOException {
 		final int indexOrLength = readIndexOrLength(parameterizedType);
     	
     	if (isObjectReference(parameterizedType))
     		return sharedObjects.get(indexOrLength);
     	
     	String classDescription = readStringData(parameterizedType, indexOrLength);
-    	ClassDescriptor descriptor = descriptors.putIfAbsent(context, classDescription);
+    	ClassDescriptor descriptor = descriptors.putIfAbsent(context, classDescription, targetType);
 
     	try {
 	    	Class<?> cls = descriptor.cls;
-
-	    	Object value = (
-	    		descriptor.partial
-	    		? context.instantiatePartial(this, cls, descriptor.properties)
-	    		: context.instantiate(this, cls)
-	    	);
+	    	
+	    	Object value;
+	    	if (cls == ClassNotFound.class)
+	    		value = new ClassNotFound(classDescription);
+	    	else if (descriptor.partial)
+	    		value = context.instantiatePartial(this, cls, descriptor.properties);
+	    	else
+	    		value = context.instantiate(this, cls);
 	    	sharedObjects.add(value);
 	    	
 	    	for (Property property : descriptor.properties) {
@@ -1156,11 +1162,21 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 		public final Property[] properties;
 		public final boolean partial;
 
-		public static ClassDescriptor forDescription(SpearalContext context, String description) {
+		public static ClassDescriptor forDescription(SpearalContext context, String description, Type targetType) {
 			String classNames = ClassDescriptionUtil.classNames(description);
 			String[] propertyNames = ClassDescriptionUtil.splitPropertyNames(description);
 
-			Class<?> cls = context.loadClass(classNames);
+			Class<?> cls = context.loadClass(classNames, targetType);
+			
+			if (cls == null) {
+				Property[] classNotFoundProperties = new Property[propertyNames.length];
+				for (int i = 0; i < propertyNames.length; i++) {
+					String propertyName = propertyNames[i];
+					classNotFoundProperties[i] = new ClassNotFoundProperty(propertyName);
+				}
+				return new ClassDescriptor(ClassNotFound.class, classNotFoundProperties, false);
+			}
+
 			
 			Property[] properties = context.getProperties(cls);
 			Property[] serializedProperties = new Property[propertyNames.length];
@@ -1183,6 +1199,111 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 			this.cls = cls;
 			this.properties = properties;
 			this.partial = partial;
+		}
+	}
+	
+	public static class ClassNotFound extends HashMap<String, Object> {
+
+		private static final long serialVersionUID = 1L;
+
+		private final String classNotFoundDescription;
+		
+		public ClassNotFound(String classNotFoundDescription) {
+			this.classNotFoundDescription = classNotFoundDescription;
+		}
+
+		public String getClassNotFoundDescription() {
+			return classNotFoundDescription;
+		}
+	}
+	
+	private static class ClassNotFoundProperty implements Property {
+
+		private final String name;
+		
+		public ClassNotFoundProperty(String name) {
+			this.name = name;
+		}
+
+		@Override
+		public String getName() {
+			return name;
+		}
+
+		@Override
+		public Class<?> getType() {
+			return Object.class;
+		}
+
+		@Override
+		public Type getGenericType() {
+			return Object.class;
+		}
+
+		@Override
+		public Field getField() {
+			return null;
+		}
+
+		@Override
+		public Method getGetter() {
+			return null;
+		}
+
+		@Override
+		public Method getSetter() {
+			return null;
+		}
+
+		@Override
+		public Class<?> getDeclaringClass() {
+			return ClassNotFound.class;
+		}
+
+		@Override
+		public Object init(ExtendedSpearalDecoder decoder, Object holder)
+			throws InstantiationException, IllegalAccessException, InvocationTargetException {
+			return null;
+		}
+
+		@Override
+		public Object get(Object holder)
+			throws IllegalAccessException, InvocationTargetException {
+			return ((ClassNotFound)holder).get(name);
+		}
+
+		@Override
+		public void set(Object holder, Object value)
+			throws IllegalAccessException, InvocationTargetException {
+			((ClassNotFound)holder).put(name, value);
+		}
+
+		@Override
+		public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
+			return false;
+		}
+
+		@Override
+		public <A extends Annotation> A getAnnotation(Class<A> annotationClass) {
+			return null;
+		}
+
+		@Override
+		public boolean isReadOnly() {
+			return false;
+		}
+
+		@Override
+		public void write(ExtendedSpearalEncoder encoder, Object holder)
+			throws IOException, IllegalAccessException, InvocationTargetException {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void read(ExtendedSpearalDecoder decoder, Object holder, int parameterizedType)
+			throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException {
+			
+			set(holder, decoder.readAny(parameterizedType));
 		}
 	}
 }

@@ -68,12 +68,12 @@ public interface ExtendedSpearalDecoder extends SpearalDecoder {
 	void readMap(int parameterizedType, Object holder, Property property)
 		throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException;
 	
-	Enum<?> readEnum(int parameterizedType) throws IOException;
+	Enum<?> readEnum(int parameterizedType, Type targetType) throws IOException;
 	void skipEnum(int parameterizedType) throws IOException;
 
-	Class<?> readClass(int parameterizedType) throws IOException;
+	Class<?> readClass(int parameterizedType, Type targetType) throws IOException;
 	void skipClass(int parameterizedType) throws IOException;
 	
-	Object readBean(int parameterizedType) throws IOException;
+	Object readBean(int parameterizedType, Type targetType) throws IOException;
 	void skipBean(int parameterizedType) throws IOException;
 }

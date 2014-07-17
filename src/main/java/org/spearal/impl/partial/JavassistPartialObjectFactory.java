@@ -36,16 +36,16 @@ import org.spearal.impl.cache.AnyMap.ValueProvider;
 /**
  * @author Franck WOLFF
  */
-public class JavassistPartialObjectFactory implements PartialObjectFactory, ValueProvider<Class<?>, Class<?>> {
+public class JavassistPartialObjectFactory implements PartialObjectFactory, ValueProvider<Class<?>, Object, Class<?>> {
 	
-	private final CopyOnWriteMap<Class<?>, Class<?>> proxyClassesCache;
+	private final CopyOnWriteMap<Class<?>, Object, Class<?>> proxyClassesCache;
 	
 	public JavassistPartialObjectFactory() {
-		this.proxyClassesCache = new CopyOnWriteMap<Class<?>, Class<?>>(true, this);
+		this.proxyClassesCache = new CopyOnWriteMap<Class<?>, Object, Class<?>>(true, this);
 	}
 
 	@Override
-	public Class<?> createValue(SpearalContext context, Class<?> key) {
+	public Class<?> createValue(SpearalContext context, Class<?> key, Object unused) {
 		context.getSecurizer().checkDecodable(key);
 		
 		ProxyFactory proxyFactory = new ProxyFactory();

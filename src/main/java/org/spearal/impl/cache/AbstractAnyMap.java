@@ -17,19 +17,20 @@
  */
 package org.spearal.impl.cache;
 
+
 /**
  * @author Franck WOLFF
  */
-public abstract class AbstractAnyMap<K, V> extends AbstractMap implements AnyMap<K, V> {
+public abstract class AbstractAnyMap<K, P, V> extends AbstractMap implements AnyMap<K, P, V> {
 
-	protected ValueProvider<K, V> provider;
+	protected ValueProvider<K, P, V> provider;
 	protected Entry<K, V>[] entries;
 
-	public AbstractAnyMap(ValueProvider<K, V> provider) {
+	public AbstractAnyMap(ValueProvider<K, P, V> provider) {
 		this.provider = provider;
 	}
 
-	public AbstractAnyMap(ValueProvider<K, V> provider, int capacity) {
+	public AbstractAnyMap(ValueProvider<K, P, V> provider, int capacity) {
 		super(capacity);
 		this.provider = provider;
 	}
@@ -43,11 +44,11 @@ public abstract class AbstractAnyMap<K, V> extends AbstractMap implements AnyMap
 	}
 
 	
-	public ValueProvider<K, V> getProvider() {
+	public ValueProvider<K, P, V> getProvider() {
 		return provider;
 	}
 
-	protected void setProvider(ValueProvider<K, V> provider) {
+	protected void setProvider(ValueProvider<K, P, V> provider) {
 		this.provider = provider;
 	}
 
@@ -73,13 +74,13 @@ public abstract class AbstractAnyMap<K, V> extends AbstractMap implements AnyMap
 		return sb.toString();
 	}
 
-	protected abstract AbstractAnyMap<K, V> create(ValueProvider<K, V> provider, int capacity);
+	protected abstract AbstractAnyMap<K, P, V> create(ValueProvider<K, P, V> provider, int capacity);
 	
 	@Override
-	public AnyMap<K, V> clone() {
+	public AnyMap<K, P, V> clone() {
 		Entry<K, V>[] entries = this.entries;
 
-		AbstractAnyMap<K, V> clone = create(provider, entries.length);
+		AbstractAnyMap<K, P, V> clone = create(provider, entries.length);
 		
 		clone.threshold = threshold;
 		clone.size = size;

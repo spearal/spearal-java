@@ -22,13 +22,13 @@ import org.spearal.SpearalContext;
 /**
  * @author Franck WOLFF
  */
-public class EqualityMap<K, V> extends AbstractAnyMap<K, V> {
+public class EqualityMap<K, P, V> extends AbstractAnyMap<K, P, V> {
 
-	public EqualityMap(ValueProvider<K, V> provider) {
+	public EqualityMap(ValueProvider<K, P, V> provider) {
 		super(provider);
 	}
 
-	public EqualityMap(ValueProvider<K, V> provider, int capacity) {
+	public EqualityMap(ValueProvider<K, P, V> provider, int capacity) {
 		super(provider, capacity);
 	}
 
@@ -48,6 +48,11 @@ public class EqualityMap<K, V> extends AbstractAnyMap<K, V> {
 
 	@Override
 	public V putIfAbsent(SpearalContext context, K key) {
+		return putIfAbsent(context, key, null);
+	}
+
+	@Override
+	public V putIfAbsent(SpearalContext context, K key, P param) {
 		Entry<K, V>[] entries = this.entries;
 
 		int hash = key.hashCode();
@@ -70,14 +75,14 @@ public class EqualityMap<K, V> extends AbstractAnyMap<K, V> {
 			}
 		}
 
-		V value = provider.createValue(context, key);
+		V value = provider.createValue(context, key, param);
         entries[index] = new Entry<K, V>(key, hash, value, head);
         size++;
 		return value;
 	}
 
 	@Override
-	protected AbstractAnyMap<K, V> create(ValueProvider<K, V> provider, int capacity) {
-		return new EqualityMap<K, V>(provider, capacity);
+	protected AbstractAnyMap<K, P, V> create(ValueProvider<K, P, V> provider, int capacity) {
+		return new EqualityMap<K, P, V>(provider, capacity);
 	}
 }

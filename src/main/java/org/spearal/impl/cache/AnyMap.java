@@ -22,20 +22,21 @@ import org.spearal.SpearalContext;
 /**
  * @author Franck WOLFF
  */
-public interface AnyMap<K, V> extends Cloneable {
+public interface AnyMap<K, P, V> extends Cloneable {
 
 	V get(K key);
 	
 	V putIfAbsent(SpearalContext context, K key);
+	V putIfAbsent(SpearalContext context, K key, P param);
 	
 	int size();
 	
 	void clear();
 	
-	AnyMap<K, V> clone();
+	AnyMap<K, P, V> clone();
 	
-	public interface ValueProvider<K, V> {
+	public interface ValueProvider<K, P, V> {
 		
-		V createValue(SpearalContext context, K key);
+		V createValue(SpearalContext context, K key, P param);
 	}
 }

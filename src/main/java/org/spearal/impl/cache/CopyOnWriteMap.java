@@ -23,28 +23,28 @@ import org.spearal.impl.cache.AnyMap.ValueProvider;
 /**
  * @author Franck WOLFF
  */
-public final class CopyOnWriteMap<K, V> {
+public final class CopyOnWriteMap<K, P, V> {
 
-	protected volatile AnyMap<K, V> map;
+	protected volatile AnyMap<K, P, V> map;
 	
-	public CopyOnWriteMap(boolean identity, ValueProvider<K, V> provider) {
+	public CopyOnWriteMap(boolean identity, ValueProvider<K, P, V> provider) {
 		if (identity)
-			 this.map = new IdentityMap<K, V>(provider, 1);
+			 this.map = new IdentityMap<K, P, V>(provider, 1);
 		else
-			 this.map = new EqualityMap<K, V>(provider, 1);
+			 this.map = new EqualityMap<K, P, V>(provider, 1);
 	}
 	
 	public V get(K key) {
 		return get().get(key);
 	}
 	
-	public synchronized V putIfAbsent(SpearalContext context, K key) {
-		AnyMap<K, V> map = get();
+	public synchronized V putIfAbsent(SpearalContext context, K key, P param) {
+		AnyMap<K, P, V> map = get();
 		
 		V value = map.get(key);
 		if (value == null) {
 			map = map.clone();
-			value = map.putIfAbsent(context, key);
+			value = map.putIfAbsent(context, key, param);
 			set(map);
 		}
 		return value;
@@ -52,7 +52,12 @@ public final class CopyOnWriteMap<K, V> {
 	
 	public V getOrPutIfAbsent(SpearalContext context, K key) {
 		V value = get().get(key);
-		return (value != null ? value : putIfAbsent(context, key));
+		return (value != null ? value : putIfAbsent(context, key, null));
+	}
+	
+	public V getOrPutIfAbsent(SpearalContext context, K key, P param) {
+		V value = get().get(key);
+		return (value != null ? value : putIfAbsent(context, key, param));
 	}
 	
 	public int size() {
@@ -64,11 +69,11 @@ public final class CopyOnWriteMap<K, V> {
 		return get().toString();
 	}
 
-	private AnyMap<K, V> get() {
+	private AnyMap<K, P, V> get() {
 		return map;
 	}
 	
-	private void set(AnyMap<K, V> map) {
+	private void set(AnyMap<K, P, V> map) {
 		this.map = map;
 	}
 }

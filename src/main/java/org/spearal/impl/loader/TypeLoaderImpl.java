@@ -18,23 +18,25 @@
 package org.spearal.impl.loader;
 
 import java.lang.reflect.Proxy;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.spearal.SpearalContext;
 import org.spearal.configuration.TypeLoader;
-import org.spearal.impl.cache.CopyOnWriteMap;
 import org.spearal.impl.cache.AnyMap.ValueProvider;
+import org.spearal.impl.cache.CopyOnWriteMap;
 import org.spearal.impl.util.ClassDescriptionUtil;
+import org.spearal.impl.util.TypeUtil;
 
 /**
  * @author Franck WOLFF
  */
-public class TypeLoaderImpl implements TypeLoader, ValueProvider<String, Class<?>> {
+public class TypeLoaderImpl implements TypeLoader, ValueProvider<String, Type, Class<?>> {
 
 	private final ClassLoader classLoader;
-	private final CopyOnWriteMap<String, Class<?>> classesCache;
+	private final CopyOnWriteMap<String, Type, Class<?>> classesCache;
 	
 	public TypeLoaderImpl() {
 		this(TypeLoaderImpl.class.getClassLoader());
@@ -42,20 +44,20 @@ public class TypeLoaderImpl implements TypeLoader, ValueProvider<String, Class<?
 	
 	public TypeLoaderImpl(final ClassLoader classLoader) {
 		this.classLoader = classLoader;
-		this.classesCache = new CopyOnWriteMap<String, Class<?>>(true, this);
+		this.classesCache = new CopyOnWriteMap<String, Type, Class<?>>(true, this);
 	}
 
 	@Override
-	public Class<?> loadClass(SpearalContext context, String classNames) throws SecurityException {
+	public Class<?> loadClass(SpearalContext context, String classNames, Type targetType) throws SecurityException {
 		if (classNames == null || classNames.length() == 0)
 			return null;
 		
-		Class<?> cls = classesCache.getOrPutIfAbsent(context, classNames);
+		Class<?> cls = classesCache.getOrPutIfAbsent(context, classNames, targetType);
 		return (cls != ClassNotFound.class ? cls : null);
 	}
 	
 	@Override
-	public Class<?> createValue(SpearalContext context, String key) {
+	public Class<?> createValue(SpearalContext context, String key, Type targetType) {
 		Class<?> cls;
 		
 		String[] classNames = ClassDescriptionUtil.splitClassNames(key);
@@ -66,7 +68,7 @@ public class TypeLoaderImpl implements TypeLoader, ValueProvider<String, Class<?
 					cls = Proxy.getProxyClass(classLoader, new Class<?>[]{ cls });
 			}
 			catch (ClassNotFoundException e) {
-				cls = ClassNotFound.class;
+				cls = null;
 			}
 		}
 		else {
@@ -93,9 +95,20 @@ public class TypeLoaderImpl implements TypeLoader, ValueProvider<String, Class<?
 			}
 			
 			if (interfaces.size() == 0)
-				cls = ClassNotFound.class;
+				cls = null;
 			else
 				cls = Proxy.getProxyClass(classLoader, interfaces.toArray(new Class<?>[0]));
+		}
+		
+		if (cls == null) {
+			if (targetType == null)
+				cls = ClassNotFound.class;
+			else {
+				cls = TypeUtil.classOfType(targetType);
+				if (cls.isInterface())
+					cls = Proxy.getProxyClass(cls.getClassLoader(), new Class<?>[]{ cls });
+			}
+			
 		}
 		
 		return cls;
@@ -111,5 +124,6 @@ public class TypeLoaderImpl implements TypeLoader, ValueProvider<String, Class<?
 	}
 	
 	private interface ClassNotFound {
+		
 	}
 }
