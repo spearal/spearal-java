@@ -2,6 +2,7 @@ language: java
 script: ./gradlew clean install
 jdk:
 - openjdk7
+
 deploy:
   provider: releases
   skip_cleanup: true
