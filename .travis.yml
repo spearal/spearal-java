@@ -9,4 +9,6 @@ deploy:
     secure: SLEBkybLr40Qt0kILFu6WxaIvW190XgMQI3VgBOb9FiLP5xI1TVHSyb58gUgbwc/ifi4FcBqnwzRpt7v91gRe61s0fOf/CbuflU6hmZOaC4D/+dGbfbihYO6/VV2cyFgpjAF5ndIFawW8q4qeDId9SwwsynF7LA0bTyA0Ce2YZc=
   app: spearal-java
   on:
+    tags: true
+    all_branches: true
     repo: spearal/spearal-java
