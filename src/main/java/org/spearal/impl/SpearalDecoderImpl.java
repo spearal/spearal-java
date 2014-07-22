@@ -132,7 +132,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
 	@Override
 	public void skipAny()  throws IOException {
-        skipAny(readNextByte());
+        readAny();
 	}
 	
 	@Override
@@ -296,58 +296,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
 	@Override
 	public void skipAny(int parameterizedType) throws IOException {
-        switch (SpearalType.valueOf(parameterizedType)) {
-        
-        case NULL:
-        case TRUE:
-        case FALSE:
-        	return;
-
-        case INTEGRAL:
-        	skipIntegral(parameterizedType);
-        	return;
-        case BIG_INTEGRAL:
-        	skipBigIntegral(parameterizedType);
-        	return;
-        	
-        case FLOATING:
-        	skipFloating(parameterizedType);
-        	return;
-        case BIG_FLOATING:
-        	skipBigFloating(parameterizedType);
-        	return;
-        	
-        case STRING:
-        	skipString(parameterizedType);
-        	return;
-        
-        case BYTE_ARRAY:
-        	skipByteArray(parameterizedType);
-        	return;
-
-        case DATE_TIME:
-        	skipDateTime(parameterizedType);
-        	return;
-            
-        case COLLECTION:
-        	skipCollection(parameterizedType);
-        	return;
-        case MAP:
-        	skipMap(parameterizedType);
-        	return;
-            
-        case ENUM:
-        	skipEnum(parameterizedType);
-        	return;
-        case CLASS:
-        	skipClass(parameterizedType);
-        	return;
-        case BEAN:
-        	skipBean(parameterizedType);
-        	return;
-        }
-        
-        throw new RuntimeException("Unexpected type: " + parameterizedType);
+		readAny(parameterizedType);
 	}
 
 	public void printAny(SpearalPrinter printer, int parameterizedType) throws IOException {
@@ -448,13 +397,6 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 		
 		return v;
     }
-
-    @Override
-    public void skipIntegral(int parameterizedType) throws IOException {
-    	final int length = (parameterizedType & 0x07) + 1;
-    	ensureAvailable(length);
-    	position += length;
-    }
     
     @Override
 	public BigInteger readBigIntegral(int parameterizedType) throws IOException {
@@ -466,13 +408,6 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
         	representation = readBigNumberData(indexOrLength);
     	return bigIntegers.putIfAbsent(context, representation);
 	}
-
-    @Override
-    public void skipBigIntegral(int parameterizedType) throws IOException {
-    	final int indexOrLength = readIndexOrLength(parameterizedType);
-    	if (!isStringReference(parameterizedType))
-    		skipFully((indexOrLength / 2) + (indexOrLength % 2));
-    }
 
 	@Override
     public double readFloating(int parameterizedType) throws IOException {
@@ -508,19 +443,6 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	ensureAvailable(8);
     	return Double.longBitsToDouble(readLongData());
     }
-	
-	@Override
-    public void skipFloating(int parameterizedType) throws IOException {
-		if ((parameterizedType & 0x08) != 0) {
-			int length = (parameterizedType & 0x03) + 1;
-			ensureAvailable(length);
-			position += length;
-		}
-		else {
-			ensureAvailable(8);
-			position += 8;
-		}
-	}
 
 	@Override
 	public BigDecimal readBigFloating(int parameterizedType) throws IOException {
@@ -532,23 +454,11 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
         	representation = readBigNumberData(indexOrLength);
 		return bigDecimals.putIfAbsent(context, representation);
 	}
-	
-	@Override
-    public void skipBigFloating(int parameterizedType) throws IOException {
-		final int indexOrLength = readIndexOrLength(parameterizedType);
-    	if (!isStringReference(parameterizedType))
-    		skipFully((indexOrLength / 2) + (indexOrLength % 2));
-	}
 
 	@Override
     public String readString(int parameterizedType) throws IOException {
     	return readStringData(parameterizedType);
     }
-	
-	@Override
-    public void skipString(int parameterizedType) throws IOException {
-    	skipStringData(parameterizedType);
-	}
 	
 	private void printString(SpearalPrinter printer, int parameterizedType) throws IOException {
     	printer.printString(getStringData(parameterizedType));
@@ -566,16 +476,6 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	readFully(bytes, 0, indexOrLength);
 		return bytes;
 	}
-    
-    @Override
-    public void skipByteArray(int parameterizedType) throws IOException {
-    	final int indexOrLength = readIndexOrLength(parameterizedType);
-    	
-    	if (!isObjectReference(parameterizedType)) {
-    		sharedObjects.add(null);
-    		skipFully(indexOrLength);
-    	}
-    }
     
     private void printByteArray(SpearalPrinter printer, int parameterizedType) throws IOException {
     	final int indexOrLength = readIndexOrLength(parameterizedType);
@@ -644,12 +544,6 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	
     	return new SpearalDateTime(year, month, date, hours, minutes, seconds, nanoseconds, hasDate, hasTime);
     }
-    
-    
-    @Override
-    public void skipDateTime(int parameterizedType) throws IOException {
-    	readDateTime(parameterizedType);
-    }
 
 	@Override
 	public Collection<?> readCollection(int parameterizedType) throws IOException {
@@ -665,17 +559,6 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     		value.add(readAny());
     	
     	return value;
-	}
-	
-	@Override
-    public void skipCollection(int parameterizedType) throws IOException {
-		final int indexOrLength = readIndexOrLength(parameterizedType);
-    	
-    	if (!isObjectReference(parameterizedType)) {
-			sharedObjects.add(null);
-    		for (int i = 0; i < indexOrLength; i++)
-    			skipAny();
-    	}
 	}
 	
 	private void printCollection(SpearalPrinter printer, int parameterizedType) throws IOException {
@@ -762,19 +645,6 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     		printer.printMapEnd();
     	}
 	}
-	
-	@Override
-    public void skipMap(int parameterizedType) throws IOException {
-		final int indexOrLength = readIndexOrLength(parameterizedType);
-    	
-    	if (!isObjectReference(parameterizedType)) {
-			sharedObjects.add(null);
-    		for (int i = 0; i < indexOrLength; i++) {
-    			skipAny();
-    			skipAny();
-    		}
-    	}
-	}
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -821,22 +691,11 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	StringData value = getStringData(parameterizedType);
     	printer.printEnum(className, value);
 	}
-    
-    @Override
-    public void skipEnum(int parameterizedType) throws IOException {
-    	skipStringData(parameterizedType);
-    	skipString(readNextByte());
-    }
 
 	@Override
 	public Class<?> readClass(int parameterizedType, Type targetType) throws IOException {
     	String className = readStringData(parameterizedType);
 		return context.loadClass(className, targetType);
-	}
-	
-	@Override
-    public void skipClass(int parameterizedType) throws IOException {
-    	skipStringData(parameterizedType);
 	}
 	
 	private void printClass(SpearalPrinter printer, int parameterizedType) throws IOException {
@@ -879,20 +738,6 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     		throw new IOException(e);
     	}
     }
-	
-	@Override
-    public void skipBean(int parameterizedType) throws IOException {
-		final int indexOrLength = readIndexOrLength(parameterizedType);
-    	
-    	if (!isObjectReference(parameterizedType)) {
-    		String classDescription = readStringData(parameterizedType, indexOrLength);
-    		sharedObjects.add(null);
-    		
-    		int propertiesCount = ClassDescriptionUtil.propertiesCount(classDescription);
-    		for (int i = 0; i < propertiesCount; i++)
-    			skipAny();
-    	}
-	}
 	
 	private void printBean(SpearalPrinter printer, int parameterizedType) throws IOException {
 		final int indexOrLength = readIndexOrLength(parameterizedType);
@@ -975,14 +820,6 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
     	sharedStrings.add(value);
         
         return value;
-    }
-    
-    private void skipStringData(int parameterizedType) throws IOException {
-    	int indexOrLength = readIndexOrLength(parameterizedType);
-    	if (!isStringReference(parameterizedType)) {
-    		sharedStrings.add(null);
-    		skipFully(indexOrLength);
-    	}
     }
     
     private StringData getStringData(int parameterizedType) throws IOException {
@@ -1078,32 +915,6 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	            if (count <= 0)
 	                throw new EOFException();
 	            off += count;
-	            len -= count;
-			}
-		}
-	}
-
-	private void skipFully(int len) throws IOException {
-		if (len < 0)
-			throw new IndexOutOfBoundsException();
-        if (len == 0)
-        	return;
-
-        final int left = size - position;
-		if (len <= left)
-			position += len;
-		else {
-			if (left > 0) {
-				len -= left;
-				position = size;
-			}
-			
-			while (len > 0) {
-				int count = (int)in.skip(len);
-				if (count == len)
-					return;
-	            if (count <= 0)
-	                throw new EOFException();
 	            len -= count;
 			}
 		}
