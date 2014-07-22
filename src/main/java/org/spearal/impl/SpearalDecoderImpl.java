@@ -118,16 +118,13 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
 	@Override
     public Object readAny() throws IOException {
-        return readAny(readNextByte());
+        return readAny(readNextByte(), null);
     }
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T readAny(Type targetType) throws IOException {
-    	int parameterizedType = readNextByte();
-    	if (targetType == null)
-    		return (T)readAny(parameterizedType);
-        return (T)readAny(parameterizedType, targetType);
+		return (T)readAny(readNextByte(), targetType);
 	}
 
 	@Override
@@ -142,156 +139,106 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
 	@Override
     public Object readAny(int parameterizedType) throws IOException {
-        switch (SpearalType.valueOf(parameterizedType)) {
-        
-        case NULL:
-        	return null;
-        
-        case TRUE:
-        	return Boolean.TRUE;
-        case FALSE:
-        	return Boolean.FALSE;
-
-        case INTEGRAL:
-        	return Long.valueOf(readIntegral(parameterizedType));
-        case BIG_INTEGRAL:
-        	return readBigIntegral(parameterizedType);
-        	
-        case FLOATING:
-        	return Double.valueOf(readFloating(parameterizedType));
-        case BIG_FLOATING:
-        	return readBigFloating(parameterizedType);
-        	
-        case STRING:
-        	return readString(parameterizedType);
-        
-        case BYTE_ARRAY:
-        	return readByteArray(parameterizedType);
-
-        case DATE_TIME:
-        	return readDateTime(parameterizedType).toDate();
-            
-        case COLLECTION:
-        	return readCollection(parameterizedType);
-        case MAP:
-        	return readMap(parameterizedType);
-            
-        case ENUM:
-        	return readEnum(parameterizedType, null);
-        case CLASS:
-        	return readClass(parameterizedType, null);
-        case BEAN:
-        	return readBean(parameterizedType, null);
-        }
-        
-        throw new RuntimeException("Unexpected type: " + parameterizedType);
+		return readAny(parameterizedType, null);
     }
 
     @Override
 	public Object readAny(int parameterizedType, Type targetType) throws IOException {
-    	if (targetType == null)
-    		return readAny(parameterizedType);
-        
+
     	Object value;
+    	boolean convert;
     	
     	switch (SpearalType.valueOf(parameterizedType)) {
         
         case NULL:
-        	if ((targetType instanceof Class<?>) && ((Class<?>)targetType).isPrimitive())
-        		return context.convert(this, null, targetType);
-        	return null;
+        	value = null;
+        	convert = ((targetType instanceof Class<?>) && ((Class<?>)targetType).isPrimitive());
+        	break;
         
         case TRUE:
-        	if (targetType == boolean.class || targetType == Boolean.class)
-        		return Boolean.TRUE;
-        	return context.convert(this, Boolean.TRUE, targetType);
+        	value = Boolean.TRUE;
+        	convert = (targetType != null && targetType != boolean.class && targetType != Boolean.class);
+        	break;
 
         case FALSE:
-        	if (targetType == boolean.class || targetType == Boolean.class)
-        		return Boolean.FALSE;
-        	return context.convert(this, Boolean.FALSE, targetType);
+        	value = Boolean.FALSE;
+        	convert = (targetType != null && targetType != boolean.class && targetType != Boolean.class);
+        	break;
 
         case INTEGRAL:
         	value = Long.valueOf(readIntegral(parameterizedType));
-        	if (targetType == long.class || targetType == Long.class)
-        		return value;
+        	convert = (targetType != null && targetType != long.class && targetType != Long.class);
         	break;
 
         case BIG_INTEGRAL:
         	value = readBigIntegral(parameterizedType);
-        	if (targetType == BigInteger.class)
-        		return value;
+        	convert = (targetType != null && targetType != BigInteger.class);
         	break;
         	
         case FLOATING:
         	value = Double.valueOf(readFloating(parameterizedType));
-        	if (targetType == double.class || targetType == Double.class)
-        		return value;
+        	convert = (targetType != null && targetType != double.class && targetType != Double.class);
         	break;
         
         case BIG_FLOATING:
         	value = readBigFloating(parameterizedType);
-        	if (targetType == BigDecimal.class)
-        		return value;
+        	convert = (targetType != null && targetType != BigDecimal.class);
         	break;
         	
         case STRING:
         	value = readString(parameterizedType);
-        	if (targetType == String.class)
-        		return value;
+        	convert = (targetType != null && targetType != String.class);
         	break;
         
         case BYTE_ARRAY:
         	value = readByteArray(parameterizedType);
-        	if (targetType == byte[].class)
-        		return value;
+        	convert = (targetType != null && targetType != byte[].class);
         	break;
 
         case DATE_TIME:
         	value = readDateTime(parameterizedType);
-        	if (targetType == SpearalDateTime.class)
-        		return value;
+        	if (targetType == null) {
+        		targetType = Object.class;
+        		convert = true;
+        	}
+        	else
+        		convert = (targetType != SpearalDateTime.class);
         	break;
             
         case COLLECTION:
         	value = readCollection(parameterizedType);
+        	convert = (targetType != null); // must introspect the component type.
         	break;
+
         case MAP:
         	value = readMap(parameterizedType);
+        	convert = (targetType != null); // must introspect the component type.
         	break;
             
         case ENUM:
         	value = readEnum(parameterizedType, targetType);
-        	if (value.getClass() == targetType)
-        		return value;
+        	convert = (targetType != null && targetType != value.getClass());
         	break;
         	
         case CLASS:
         	value = readClass(parameterizedType, targetType);
-        	if (Class.class == targetType)
-        		return value;
+        	convert = (targetType != null && targetType != Class.class);
         	break;
         	
         case BEAN:
         	value = readBean(parameterizedType, targetType);
-        	if (value == null) {
-        		if (!(targetType instanceof Class<?>) || !((Class<?>)targetType).isPrimitive())
-        			return null;
-        	}
-        	else {
-        		Class<?> valueClass = value.getClass();
-        		if (valueClass == targetType)
-        			return value;
-        		if ((targetType instanceof Class) && ((Class<?>)targetType).isAssignableFrom(valueClass))
-        			return value;
-        	}
+        	convert = (
+        		targetType != null &&
+        		targetType != value.getClass() &&
+        		!((targetType instanceof Class) && ((Class<?>)targetType).isAssignableFrom(value.getClass()))
+        	);
         	break;
         
         default:
         	throw new RuntimeException("Unexpected parameterized type: " + parameterizedType);
         }
     	
-    	return context.convert(this, value, targetType);
+    	return (convert ? context.convert(this, value, targetType) : value);
 	}
 
 	@Override
@@ -317,14 +264,14 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
         	printer.printIntegral(readIntegral(parameterizedType));
         	return;
         case BIG_INTEGRAL:
-        	printer.printBigIntegral(readBigIntegral(parameterizedType));
+        	printBigIntegral(printer, parameterizedType);
         	return;
         	
         case FLOATING:
         	printer.printFloating(readFloating(parameterizedType));
         	return;
         case BIG_FLOATING:
-        	printer.printBigFloating(readBigFloating(parameterizedType));
+        	printBigFloating(printer, parameterizedType);
         	return;
         	
         case STRING:
@@ -408,6 +355,10 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
         	representation = readBigNumberData(indexOrLength);
     	return bigIntegers.putIfAbsent(context, representation);
 	}
+    
+    void printBigIntegral(SpearalPrinter printer, int parameterizedType) throws IOException {
+    	printer.printBigIntegral(readBigIntegral(parameterizedType));
+    }
 
 	@Override
     public double readFloating(int parameterizedType) throws IOException {
@@ -454,6 +405,10 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
         	representation = readBigNumberData(indexOrLength);
 		return bigDecimals.putIfAbsent(context, representation);
 	}
+    
+    void printBigFloating(SpearalPrinter printer, int parameterizedType) throws IOException {
+    	printer.printBigFloating(readBigFloating(parameterizedType));
+    }
 
 	@Override
     public String readString(int parameterizedType) throws IOException {
