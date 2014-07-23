@@ -357,7 +357,11 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	}
 	
 	void printBigIntegral(SpearalPrinter printer, int parameterizedType) throws IOException {
-		printer.printBigIntegral(readBigIntegral(parameterizedType));
+		final int indexOrLength = readIndexOrLength(parameterizedType);
+		if (isStringReference(parameterizedType))
+			printer.printBigIntegral(new StringData(sharedStrings.get(indexOrLength), indexOrLength, true));
+		else
+			printer.printBigIntegral(new StringData(readBigNumberData(indexOrLength), sharedStrings.size() - 1, false));
 	}
 
 	@Override
@@ -407,7 +411,11 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	}
 	
 	void printBigFloating(SpearalPrinter printer, int parameterizedType) throws IOException {
-		printer.printBigFloating(readBigFloating(parameterizedType));
+		final int indexOrLength = readIndexOrLength(parameterizedType);
+		if (isStringReference(parameterizedType))
+			printer.printBigFloating(new StringData(sharedStrings.get(indexOrLength), indexOrLength, true));
+		else
+			printer.printBigFloating(new StringData(readBigNumberData(indexOrLength), sharedStrings.size() - 1, false));
 	}
 
 	@Override

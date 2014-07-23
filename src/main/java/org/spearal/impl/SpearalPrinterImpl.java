@@ -19,8 +19,6 @@ package org.spearal.impl;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 
 import org.spearal.SpearalPrinter;
 
@@ -84,8 +82,8 @@ public class SpearalPrinterImpl implements SpearalPrinter {
 	}
 
 	@Override
-	public void printBigIntegral(BigInteger value) throws IOException {
-		out.print(value);
+	public void printBigIntegral(StringData value) throws IOException {
+		out.print(value.value);
 	}
 
 	@Override
@@ -94,8 +92,8 @@ public class SpearalPrinterImpl implements SpearalPrinter {
 	}
 
 	@Override
-	public void printBigFloating(BigDecimal value) throws IOException {
-		out.print(value);
+	public void printBigFloating(StringData value) throws IOException {
+		out.print(value.value);
 	}
 
 	@Override
