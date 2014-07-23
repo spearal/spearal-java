@@ -42,17 +42,17 @@ public interface SpearalPrinter {
 	void printDateTime(SpearalDateTime value) throws IOException;
 	
 	void printCollectionStart(int index, int length) throws IOException;
-	void printCollectionItemStart(int index) throws IOException;
-	void printCollectionItemEnd(int index) throws IOException;
-	void printCollectionEnd() throws IOException;
+	void printCollectionItemStart(int index, int itemIndex) throws IOException;
+	void printCollectionItemEnd(int index, int itemIndex) throws IOException;
+	void printCollectionEnd(int index) throws IOException;
 	void printCollectionReference(int index) throws IOException;
 	
 	void printMapStart(int index, int length) throws IOException;
-	void printMapKeyStart(int index) throws IOException;
-	void printMapKeyEnd(int index) throws IOException;
-	void printMapValueStart(int index) throws IOException;
-	void printMapValueEnd(int index) throws IOException;
-	void printMapEnd() throws IOException;
+	void printMapKeyStart(int index, int entryIndex) throws IOException;
+	void printMapKeyEnd(int index, int entryIndex) throws IOException;
+	void printMapValueStart(int index, int entryIndex) throws IOException;
+	void printMapValueEnd(int index, int entryIndex) throws IOException;
+	void printMapEnd(int index) throws IOException;
 	void printMapReference(int index) throws IOException;
 	
 	void printEnum(StringData className, StringData value) throws IOException;
@@ -60,9 +60,9 @@ public interface SpearalPrinter {
 	
 	void printBeanStart(int index, StringData classDescription, String[] classNames)
 		throws IOException;
-	void printBeanPropertyStart(String propertyName, boolean first);
-	void printBeanPropertyEnd();
-	void printBeanEnd() throws IOException;
+	void printBeanPropertyStart(int index, String propertyName, int propertyIndex);
+	void printBeanPropertyEnd(int index, int propertyIndex);
+	void printBeanEnd(int index) throws IOException;
 	void printBeanReference(int index) throws IOException;
 	
 	public static class StringData {
