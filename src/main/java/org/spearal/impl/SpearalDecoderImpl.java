@@ -64,7 +64,6 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	private final byte[] buffer;
 	private int position;
 	private int size;
-	private boolean eof;
 
 	public SpearalDecoderImpl(SpearalContext context, InputStream in) {
 		this(context, in, 1024);
@@ -108,7 +107,6 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 		this.buffer = new byte[capacity];
 		this.position = 0;
 		this.size = 0;
-		this.eof = false;
 	}
 	
 	@Override
@@ -889,39 +887,21 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	}
 	
 	private void ensureAvailable(int count) throws IOException {
-		
-		// assert(count > 0);
-
 		if (size - position < count)
 			fillBuffer(count);
 	}
 
 	private void fillBuffer(int count) throws IOException {
-		final int left = size - position;
-		
-		// assert(left >= 0);
-		// assert(count > 0);
-		// assert(left < count);
-		
-		if (left > 0) {
-			if (left + count > buffer.length)
-				throw new IllegalArgumentException(Integer.toString(count));
-			System.arraycopy(buffer, position, buffer, 0, left);
+		if (position > 0) {
+			size -= position;
+			System.arraycopy(buffer, position, buffer, 0, size);
+			position = 0;
 		}
-		else if (eof) {
-			position = size = 0;
-			throw new EOFException();
-		}
-		
-		position = 0;
-		size = left;
 		
 		do {
 			int read = in.read(buffer, size, buffer.length - size);
-			if (read == -1) {
-				eof = true;
+			if (read == -1)
 				throw new EOFException();
-			}
 			size += read;
 		}
 		while (size < count);
