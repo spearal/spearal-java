@@ -204,10 +204,10 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 			break;
 			
 		case COLLECTION:
-			value = readCollection(parameterizedType);
-			convert = (targetType != null); // must introspect the component type.
+			value = readCollection(parameterizedType, targetType);
+			convert = !Collection.class.isAssignableFrom(TypeUtil.classOfType(targetType));
 			break;
-
+			
 		case MAP:
 			value = readMap(parameterizedType);
 			convert = (targetType != null); // must introspect the component type.
@@ -523,6 +523,36 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 		for (int i = 0; i < indexOrLength; i++)
 			value.add(readAny());
 		
+		return value;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public Collection<?> readCollection(int parameterizedType, Type targetType) throws IOException {
+		final int indexOrLength = readIndexOrLength(parameterizedType);
+
+		if (isObjectReference(parameterizedType))
+			return (List<?>)sharedObjects.get(indexOrLength);
+		
+		Collection<Object> value = null;
+		Type elementType = null;	
+		if (targetType != null && Collection.class.isAssignableFrom(TypeUtil.classOfType(targetType))) {		
+			try {
+				value = (Collection<Object>)context.instantiate(this, targetType);
+				elementType = TypeUtil.getElementType(targetType);			
+			} 
+			catch (Exception e) {
+				value = null;
+				elementType = null;
+			}
+		}
+		
+		if (value == null)		
+			value = new ArrayList<Object>(indexOrLength);
+		
+		sharedObjects.add(value);
+		for (int i = 0; i < indexOrLength; i++)
+			value.add(readAny(elementType));
+
 		return value;
 	}
 	
