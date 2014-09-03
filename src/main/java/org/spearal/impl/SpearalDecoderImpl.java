@@ -205,12 +205,12 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 			
 		case COLLECTION:
 			value = readCollection(parameterizedType, targetType);
-			convert = !Collection.class.isAssignableFrom(TypeUtil.classOfType(targetType));
+			convert = (targetType != null && !Collection.class.isAssignableFrom(TypeUtil.classOfType(targetType)));
 			break;
 			
 		case MAP:
-			value = readMap(parameterizedType);
-			convert = (targetType != null); // must introspect the component type.
+			value = readMap(parameterizedType, targetType);
+			convert = (targetType != null && !Map.class.isAssignableFrom(TypeUtil.classOfType(targetType)));
 			break;
 			
 		case ENUM:
@@ -509,24 +509,9 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	private void printDateTime(SpearalPrinter printer, int parameterizedType) throws IOException {
 		printer.printDateTime(readDateTime(parameterizedType));
 	}
-
-	@Override
-	public Collection<?> readCollection(int parameterizedType) throws IOException {
-		final int indexOrLength = readIndexOrLength(parameterizedType);
-		
-		if (isObjectReference(parameterizedType))
-			return (List<?>)sharedObjects.get(indexOrLength);
-		
-		List<Object> value = new ArrayList<Object>(indexOrLength);
-		sharedObjects.add(value);
-		
-		for (int i = 0; i < indexOrLength; i++)
-			value.add(readAny());
-		
-		return value;
-	}
 	
 	@SuppressWarnings("unchecked")
+	@Override
 	public Collection<?> readCollection(int parameterizedType, Type targetType) throws IOException {
 		final int indexOrLength = readIndexOrLength(parameterizedType);
 
@@ -538,18 +523,17 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 		if (targetType != null && Collection.class.isAssignableFrom(TypeUtil.classOfType(targetType))) {		
 			try {
 				value = (Collection<Object>)context.instantiate(this, targetType);
-				elementType = TypeUtil.getElementType(targetType);			
 			} 
 			catch (Exception e) {
-				value = null;
-				elementType = null;
+				throw new RuntimeException("Couldn't instantiate type: " + targetType, e);
 			}
+			elementType = TypeUtil.getElementType(targetType);
 		}
-		
-		if (value == null)		
+		else
 			value = new ArrayList<Object>(indexOrLength);
 		
 		sharedObjects.add(value);
+
 		for (int i = 0; i < indexOrLength; i++)
 			value.add(readAny(elementType));
 
@@ -600,19 +584,36 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 			value.add(readAny(elementType));
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public Map<?, ?> readMap(int parameterizedType) throws IOException {
+	public Map<?, ?> readMap(int parameterizedType, Type targetType) throws IOException {
 		final int indexOrLength = readIndexOrLength(parameterizedType);
 		
 		if (isObjectReference(parameterizedType))
 			return (Map<?, ?>)sharedObjects.get(indexOrLength);
 		
-		Map<Object, Object> value = new LinkedHashMap<Object, Object>(indexOrLength);
+		Map<Object, Object> value = null;
+		Type keyType = null;
+		Type valType = null;
+		if (targetType != null && Map.class.isAssignableFrom(TypeUtil.classOfType(targetType))) {		
+			try {
+				value = (Map<Object, Object>)context.instantiate(this, targetType);
+			} 
+			catch (Exception e) {
+				throw new RuntimeException("Couldn't instantiate type: " + targetType, e);
+			}
+			Type[] keyValueTypes = TypeUtil.getKeyValueType(targetType);
+			keyType = keyValueTypes[0];
+			valType = keyValueTypes[1];
+		}
+		else
+			value = new LinkedHashMap<Object, Object>(indexOrLength);
+		
 		sharedObjects.add(value);
 		
 		for (int i = 0; i < indexOrLength; i++) {
-			Object key = readAny();
-			Object val = readAny();
+			Object key = readAny(keyType);
+			Object val = readAny(valType);
 			value.put(key, val);
 		}
 		

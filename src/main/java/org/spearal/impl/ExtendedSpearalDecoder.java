@@ -51,11 +51,11 @@ public interface ExtendedSpearalDecoder extends SpearalDecoder {
 	
 	byte[] readByteArray(int parameterizedType) throws IOException;
 	
-	Collection<?> readCollection(int parameterizedType) throws IOException;
+	Collection<?> readCollection(int parameterizedType, Type targetType) throws IOException;
 	void readCollection(int parameterizedType, Object holder, Property property)
 		throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException;
 
-	Map<?, ?> readMap(int parameterizedType) throws IOException;
+	Map<?, ?> readMap(int parameterizedType, Type targetType) throws IOException;
 	void readMap(int parameterizedType, Object holder, Property property)
 		throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException;
 	
