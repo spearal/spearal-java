@@ -471,9 +471,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 	}
 	
     private void writeStringData(int type, String s) throws IOException {
-    	final int length = s.length();
-
-    	if (length == 0) {
+    	if (s.length() == 0) {
         	ensureCapacity(2);
     		buffer[position++] = (byte)type;
         	buffer[position++] = 0;
