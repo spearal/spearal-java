@@ -58,368 +58,262 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	private final EqualityMap<String, Object, BigInteger> bigIntegers;
 	private final EqualityMap<String, Object, BigDecimal> bigDecimals;
 
-    private final SpearalContext context;
+	private final SpearalContext context;
 	
-    private final InputStream in;
+	private final InputStream in;
 	private final byte[] buffer;
 	private int position;
 	private int size;
-	private boolean eof;
 
 	public SpearalDecoderImpl(SpearalContext context, InputStream in) {
 		this(context, in, 1024);
 	}
 
 	public SpearalDecoderImpl(final SpearalContext context, InputStream in, int capacity) {
-        this.sharedStrings = new ArrayList<String>(64);
-        this.sharedObjects = new ArrayList<Object>(64);
-        
-        this.descriptors = new EqualityMap<String, Type, ClassDescriptor>(new ValueProvider<String, Type, ClassDescriptor>() {
+		this.sharedStrings = new ArrayList<String>(64);
+		this.sharedObjects = new ArrayList<Object>(64);
+		
+		this.descriptors = new EqualityMap<String, Type, ClassDescriptor>(new ValueProvider<String, Type, ClassDescriptor>() {
 			@Override
 			public ClassDescriptor createValue(SpearalContext context, String key, Type targetType) {
 				return ClassDescriptor.forDescription(context, key, targetType);
 			}
 		});
-        this.bigIntegers = new EqualityMap<String, Object, BigInteger>(new ValueProvider<String, Object, BigInteger>() {
+		this.bigIntegers = new EqualityMap<String, Object, BigInteger>(new ValueProvider<String, Object, BigInteger>() {
 			@Override
 			public BigInteger createValue(SpearalContext context, String key, Object unsused) {
 				final int exponentIndex = key.indexOf('E');
 
-		    	BigInteger bigInteger;
-		    	if (exponentIndex == -1)
-		    		bigInteger = new BigInteger(key);
-		    	else {
-		    		bigInteger = new BigInteger(key.substring(0, exponentIndex));
-		    		int exponent = Integer.parseInt(key.substring(exponentIndex + 1));
-		    		bigInteger = bigInteger.multiply(BigInteger.TEN.pow(exponent));
-		    	}
+				BigInteger bigInteger;
+				if (exponentIndex == -1)
+					bigInteger = new BigInteger(key);
+				else {
+					bigInteger = new BigInteger(key.substring(0, exponentIndex));
+					int exponent = Integer.parseInt(key.substring(exponentIndex + 1));
+					bigInteger = bigInteger.multiply(BigInteger.TEN.pow(exponent));
+				}
 				return bigInteger;
 			}
 		});
-        this.bigDecimals = new EqualityMap<String, Object, BigDecimal>(new ValueProvider<String, Object, BigDecimal>() {
+		this.bigDecimals = new EqualityMap<String, Object, BigDecimal>(new ValueProvider<String, Object, BigDecimal>() {
 			@Override
 			public BigDecimal createValue(SpearalContext context, String key, Object unsused) {
 				return new BigDecimal(key);
 			}
 		});
 
-        this.context = context;
-        this.in = in;
-        this.buffer = new byte[capacity];
-        this.position = 0;
-        this.size = 0;
-        this.eof = false;
+		this.context = context;
+		this.in = in;
+		this.buffer = new byte[capacity];
+		this.position = 0;
+		this.size = 0;
 	}
 	
-    @Override
+	@Override
 	public SpearalContext getContext() {
 		return context;
 	}
 
 	@Override
-    public Object readAny() throws IOException {
-        return readAny(readNextByte());
-    }
+	public Object readAny() throws IOException {
+		return readAny(readNextByte(), null);
+	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T readAny(Type targetType) throws IOException {
-    	int parameterizedType = readNextByte();
-    	if (targetType == null)
-    		return (T)readAny(parameterizedType);
-        return (T)readAny(parameterizedType, targetType);
+		return (T)readAny(readNextByte(), targetType);
 	}
 
 	@Override
 	public void skipAny()  throws IOException {
-        skipAny(readNextByte());
+		readAny();
 	}
 	
 	@Override
 	public void printAny(SpearalPrinter printer) throws IOException {
-        printAny(printer, readNextByte());
+		printAny(printer, readNextByte());
 	}
 
 	@Override
-    public Object readAny(int parameterizedType) throws IOException {
-        switch (SpearalType.valueOf(parameterizedType)) {
-        
-        case NULL:
-        	return null;
-        
-        case TRUE:
-        	return Boolean.TRUE;
-        case FALSE:
-        	return Boolean.FALSE;
+	public Object readAny(int parameterizedType) throws IOException {
+		return readAny(parameterizedType, null);
+	}
 
-        case INTEGRAL:
-        	return Long.valueOf(readIntegral(parameterizedType));
-        case BIG_INTEGRAL:
-        	return readBigIntegral(parameterizedType);
-        	
-        case FLOATING:
-        	return Double.valueOf(readFloating(parameterizedType));
-        case BIG_FLOATING:
-        	return readBigFloating(parameterizedType);
-        	
-        case STRING:
-        	return readString(parameterizedType);
-        
-        case BYTE_ARRAY:
-        	return readByteArray(parameterizedType);
-
-        case DATE_TIME:
-        	return readDateTime(parameterizedType).toDate();
-            
-        case COLLECTION:
-        	return readCollection(parameterizedType);
-        case MAP:
-        	return readMap(parameterizedType);
-            
-        case ENUM:
-        	return readEnum(parameterizedType, null);
-        case CLASS:
-        	return readClass(parameterizedType, null);
-        case BEAN:
-        	return readBean(parameterizedType, null);
-        }
-        
-        throw new RuntimeException("Unexpected type: " + parameterizedType);
-    }
-
-    @Override
+	@Override
 	public Object readAny(int parameterizedType, Type targetType) throws IOException {
-    	if (targetType == null)
-    		return readAny(parameterizedType);
-        
-    	Object value;
-    	
-    	switch (SpearalType.valueOf(parameterizedType)) {
-        
-        case NULL:
-        	if ((targetType instanceof Class<?>) && ((Class<?>)targetType).isPrimitive())
-        		return context.convert(this, null, targetType);
-        	return null;
-        
-        case TRUE:
-        	if (targetType == boolean.class || targetType == Boolean.class)
-        		return Boolean.TRUE;
-        	return context.convert(this, Boolean.TRUE, targetType);
 
-        case FALSE:
-        	if (targetType == boolean.class || targetType == Boolean.class)
-        		return Boolean.FALSE;
-        	return context.convert(this, Boolean.FALSE, targetType);
+		Object value;
+		boolean convert;
+		
+		switch (SpearalType.valueOf(parameterizedType)) {
+		
+		case NULL:
+			value = null;
+			convert = ((targetType instanceof Class<?>) && ((Class<?>)targetType).isPrimitive());
+			break;
+		
+		case TRUE:
+			value = Boolean.TRUE;
+			convert = (targetType != null && targetType != boolean.class && targetType != Boolean.class);
+			break;
 
-        case INTEGRAL:
-        	value = Long.valueOf(readIntegral(parameterizedType));
-        	if (targetType == long.class || targetType == Long.class)
-        		return value;
-        	break;
+		case FALSE:
+			value = Boolean.FALSE;
+			convert = (targetType != null && targetType != boolean.class && targetType != Boolean.class);
+			break;
 
-        case BIG_INTEGRAL:
-        	value = readBigIntegral(parameterizedType);
-        	if (targetType == BigInteger.class)
-        		return value;
-        	break;
-        	
-        case FLOATING:
-        	value = Double.valueOf(readFloating(parameterizedType));
-        	if (targetType == double.class || targetType == Double.class)
-        		return value;
-        	break;
-        
-        case BIG_FLOATING:
-        	value = readBigFloating(parameterizedType);
-        	if (targetType == BigDecimal.class)
-        		return value;
-        	break;
-        	
-        case STRING:
-        	value = readString(parameterizedType);
-        	if (targetType == String.class)
-        		return value;
-        	break;
-        
-        case BYTE_ARRAY:
-        	value = readByteArray(parameterizedType);
-        	if (targetType == byte[].class)
-        		return value;
-        	break;
+		case INTEGRAL:
+			value = Long.valueOf(readIntegral(parameterizedType));
+			convert = (targetType != null && targetType != long.class && targetType != Long.class);
+			break;
 
-        case DATE_TIME:
-        	value = readDateTime(parameterizedType);
-        	if (targetType == SpearalDateTime.class)
-        		return value;
-        	break;
-            
-        case COLLECTION:
-        	value = readCollection(parameterizedType);
-        	break;
-        case MAP:
-        	value = readMap(parameterizedType);
-        	break;
-            
-        case ENUM:
-        	value = readEnum(parameterizedType, targetType);
-        	if (value.getClass() == targetType)
-        		return value;
-        	break;
-        	
-        case CLASS:
-        	value = readClass(parameterizedType, targetType);
-        	if (Class.class == targetType)
-        		return value;
-        	break;
-        	
-        case BEAN:
-        	value = readBean(parameterizedType, targetType);
-        	if (value == null) {
-        		if (!(targetType instanceof Class<?>) || !((Class<?>)targetType).isPrimitive())
-        			return null;
-        	}
-        	else {
-        		Class<?> valueClass = value.getClass();
-        		if (valueClass == targetType)
-        			return value;
-        		if ((targetType instanceof Class) && ((Class<?>)targetType).isAssignableFrom(valueClass))
-        			return value;
-        	}
-        	break;
-        
-        default:
-        	throw new RuntimeException("Unexpected parameterized type: " + parameterizedType);
-        }
-    	
-    	return context.convert(this, value, targetType);
+		case BIG_INTEGRAL:
+			value = readBigIntegral(parameterizedType);
+			convert = (targetType != null && targetType != BigInteger.class);
+			break;
+			
+		case FLOATING:
+			value = Double.valueOf(readFloating(parameterizedType));
+			convert = (targetType != null && targetType != double.class && targetType != Double.class);
+			break;
+		
+		case BIG_FLOATING:
+			value = readBigFloating(parameterizedType);
+			convert = (targetType != null && targetType != BigDecimal.class);
+			break;
+			
+		case STRING:
+			value = readString(parameterizedType);
+			convert = (targetType != null && targetType != String.class);
+			break;
+		
+		case BYTE_ARRAY:
+			value = readByteArray(parameterizedType);
+			convert = (targetType != null && targetType != byte[].class);
+			break;
+
+		case DATE_TIME:
+			value = readDateTime(parameterizedType);
+			if (targetType == null) {
+				targetType = Object.class;
+				convert = true;
+			}
+			else
+				convert = (targetType != SpearalDateTime.class);
+			break;
+			
+		case COLLECTION:
+			value = readCollection(parameterizedType);
+			convert = (targetType != null); // must introspect the component type.
+			break;
+
+		case MAP:
+			value = readMap(parameterizedType);
+			convert = (targetType != null); // must introspect the component type.
+			break;
+			
+		case ENUM:
+			value = readEnum(parameterizedType, targetType);
+			convert = (targetType != null && targetType != value.getClass());
+			break;
+			
+		case CLASS:
+			value = readClass(parameterizedType, targetType);
+			convert = (targetType != null && targetType != Class.class);
+			break;
+			
+		case BEAN:
+			value = readBean(parameterizedType, targetType);
+			convert = (
+				targetType != null &&
+				targetType != value.getClass() &&
+				!((targetType instanceof Class) && ((Class<?>)targetType).isAssignableFrom(value.getClass()))
+			);
+			break;
+		
+		default:
+			throw new RuntimeException("Unexpected parameterized type: " + parameterizedType);
+		}
+		
+		return (convert ? context.convert(this, value, targetType) : value);
 	}
 
 	@Override
 	public void skipAny(int parameterizedType) throws IOException {
-        switch (SpearalType.valueOf(parameterizedType)) {
-        
-        case NULL:
-        case TRUE:
-        case FALSE:
-        	return;
-
-        case INTEGRAL:
-        	skipIntegral(parameterizedType);
-        	return;
-        case BIG_INTEGRAL:
-        	skipBigIntegral(parameterizedType);
-        	return;
-        	
-        case FLOATING:
-        	skipFloating(parameterizedType);
-        	return;
-        case BIG_FLOATING:
-        	skipBigFloating(parameterizedType);
-        	return;
-        	
-        case STRING:
-        	skipString(parameterizedType);
-        	return;
-        
-        case BYTE_ARRAY:
-        	skipByteArray(parameterizedType);
-        	return;
-
-        case DATE_TIME:
-        	skipDateTime(parameterizedType);
-        	return;
-            
-        case COLLECTION:
-        	skipCollection(parameterizedType);
-        	return;
-        case MAP:
-        	skipMap(parameterizedType);
-        	return;
-            
-        case ENUM:
-        	skipEnum(parameterizedType);
-        	return;
-        case CLASS:
-        	skipClass(parameterizedType);
-        	return;
-        case BEAN:
-        	skipBean(parameterizedType);
-        	return;
-        }
-        
-        throw new RuntimeException("Unexpected type: " + parameterizedType);
+		readAny(parameterizedType);
 	}
 
 	public void printAny(SpearalPrinter printer, int parameterizedType) throws IOException {
-        switch (SpearalType.valueOf(parameterizedType)) {
-        
-        case NULL:
-        	printer.printNull();
-        	return;
+		switch (SpearalType.valueOf(parameterizedType)) {
+		
+		case NULL:
+			printer.printNull();
+			return;
 
-        case TRUE:
-        	printer.printBoolean(true);
-        	return;
-        case FALSE:
-        	printer.printBoolean(false);
-        	return;
+		case TRUE:
+			printer.printBoolean(true);
+			return;
+		case FALSE:
+			printer.printBoolean(false);
+			return;
 
-        case INTEGRAL:
-        	printer.printIntegral(readIntegral(parameterizedType));
-        	return;
-        case BIG_INTEGRAL:
-        	printer.printBigIntegral(readBigIntegral(parameterizedType));
-        	return;
-        	
-        case FLOATING:
-        	printer.printFloating(readFloating(parameterizedType));
-        	return;
-        case BIG_FLOATING:
-        	printer.printBigFloating(readBigFloating(parameterizedType));
-        	return;
-        	
-        case STRING:
-        	printString(printer, parameterizedType);
-        	return;
-        
-        case BYTE_ARRAY:
-        	printByteArray(printer, parameterizedType);
-        	return;
+		case INTEGRAL:
+			printer.printIntegral(readIntegral(parameterizedType));
+			return;
+		case BIG_INTEGRAL:
+			printBigIntegral(printer, parameterizedType);
+			return;
+			
+		case FLOATING:
+			printer.printFloating(readFloating(parameterizedType));
+			return;
+		case BIG_FLOATING:
+			printBigFloating(printer, parameterizedType);
+			return;
+			
+		case STRING:
+			printString(printer, parameterizedType);
+			return;
+		
+		case BYTE_ARRAY:
+			printByteArray(printer, parameterizedType);
+			return;
 
-        case DATE_TIME:
-        	printer.printDateTime(readDateTime(parameterizedType));
-        	return;
-            
-        case COLLECTION:
-        	printCollection(printer, parameterizedType);
-        	return;
-        case MAP:
-        	printMap(printer, parameterizedType);
-        	return;
-            
-        case ENUM:
-        	printEnum(printer, parameterizedType);
-        	return;
-        case CLASS:
-        	printClass(printer, parameterizedType);
-        	return;
-        case BEAN:
-        	printBean(printer, parameterizedType);
-        	return;
-        }
-        
-        throw new RuntimeException("Unexpected type: " + parameterizedType);
+		case DATE_TIME:
+			printDateTime(printer, parameterizedType);
+			return;
+			
+		case COLLECTION:
+			printCollection(printer, parameterizedType);
+			return;
+		case MAP:
+			printMap(printer, parameterizedType);
+			return;
+			
+		case ENUM:
+			printEnum(printer, parameterizedType);
+			return;
+		case CLASS:
+			printClass(printer, parameterizedType);
+			return;
+		case BEAN:
+			printBean(printer, parameterizedType);
+			return;
+		}
+		
+		throw new RuntimeException("Unexpected type: " + parameterizedType);
 	}
-    
-    @Override
-    public long readIntegral(int parameterizedType) throws IOException {
-    	final int length0 = (parameterizedType & 0x07);
+	
+	@Override
+	public long readIntegral(int parameterizedType) throws IOException {
+		final int length0 = (parameterizedType & 0x07);
 
-    	ensureAvailable(length0 + 1);
+		ensureAvailable(length0 + 1);
 
-    	final byte[] buffer = this.buffer;
-    	int position = this.position;
-    	
+		final byte[] buffer = this.buffer;
+		int position = this.position;
+		
 		long v = 0L;
 		
 		switch (length0) {
@@ -447,42 +341,36 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 			v = -v;
 		
 		return v;
-    }
-
-    @Override
-    public void skipIntegral(int parameterizedType) throws IOException {
-    	final int length = (parameterizedType & 0x07) + 1;
-    	ensureAvailable(length);
-    	position += length;
-    }
-    
-    @Override
+	}
+	
+	@Override
 	public BigInteger readBigIntegral(int parameterizedType) throws IOException {
-    	final int indexOrLength = readIndexOrLength(parameterizedType);
-    	String representation;
-    	if (isStringReference(parameterizedType))
-    		representation = sharedStrings.get(indexOrLength);
-    	else
-        	representation = readBigNumberData(indexOrLength);
-    	return bigIntegers.putIfAbsent(context, representation);
+		final int indexOrLength = readIndexOrLength(parameterizedType);
+		String representation;
+		if (isStringReference(parameterizedType))
+			representation = sharedStrings.get(indexOrLength);
+		else
+			representation = readBigNumberData(indexOrLength);
+		return bigIntegers.putIfAbsent(context, representation);
+	}
+	
+	void printBigIntegral(SpearalPrinter printer, int parameterizedType) throws IOException {
+		final int indexOrLength = readIndexOrLength(parameterizedType);
+		if (isStringReference(parameterizedType))
+			printer.printBigIntegral(new StringData(sharedStrings.get(indexOrLength), indexOrLength, true));
+		else
+			printer.printBigIntegral(new StringData(readBigNumberData(indexOrLength), sharedStrings.size() - 1, false));
 	}
 
-    @Override
-    public void skipBigIntegral(int parameterizedType) throws IOException {
-    	final int indexOrLength = readIndexOrLength(parameterizedType);
-    	if (!isStringReference(parameterizedType))
-    		skipFully((indexOrLength / 2) + (indexOrLength % 2));
-    }
-
 	@Override
-    public double readFloating(int parameterizedType) throws IOException {
+	public double readFloating(int parameterizedType) throws IOException {
 		if ((parameterizedType & 0x08) != 0) {
 			int length0 = (parameterizedType & 0x03);
 			
 			ensureAvailable(length0 + 1);
-	    	
+			
 			final byte[] buffer = this.buffer;
-	    	int position = this.position;
+			int position = this.position;
 			
 			long doubleAsLong = 0L;
 			
@@ -505,338 +393,276 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 			return (doubleAsLong / 1000.0);
 		}
 		
-    	ensureAvailable(8);
-    	return Double.longBitsToDouble(readLongData());
-    }
-	
-	@Override
-    public void skipFloating(int parameterizedType) throws IOException {
-		if ((parameterizedType & 0x08) != 0) {
-			int length = (parameterizedType & 0x03) + 1;
-			ensureAvailable(length);
-			position += length;
-		}
-		else {
-			ensureAvailable(8);
-			position += 8;
-		}
+		ensureAvailable(8);
+		return Double.longBitsToDouble(readLongData());
 	}
 
 	@Override
 	public BigDecimal readBigFloating(int parameterizedType) throws IOException {
 		final int indexOrLength = readIndexOrLength(parameterizedType);
-    	String representation;
-    	if (isStringReference(parameterizedType))
-    		representation = sharedStrings.get(indexOrLength);
-    	else
-        	representation = readBigNumberData(indexOrLength);
+		String representation;
+		if (isStringReference(parameterizedType))
+			representation = sharedStrings.get(indexOrLength);
+		else
+			representation = readBigNumberData(indexOrLength);
 		return bigDecimals.putIfAbsent(context, representation);
 	}
 	
-	@Override
-    public void skipBigFloating(int parameterizedType) throws IOException {
+	void printBigFloating(SpearalPrinter printer, int parameterizedType) throws IOException {
 		final int indexOrLength = readIndexOrLength(parameterizedType);
-    	if (!isStringReference(parameterizedType))
-    		skipFully((indexOrLength / 2) + (indexOrLength % 2));
+		if (isStringReference(parameterizedType))
+			printer.printBigFloating(new StringData(sharedStrings.get(indexOrLength), indexOrLength, true));
+		else
+			printer.printBigFloating(new StringData(readBigNumberData(indexOrLength), sharedStrings.size() - 1, false));
 	}
 
 	@Override
-    public String readString(int parameterizedType) throws IOException {
-    	return readStringData(parameterizedType);
-    }
-	
-	@Override
-    public void skipString(int parameterizedType) throws IOException {
-    	skipStringData(parameterizedType);
+	public String readString(int parameterizedType) throws IOException {
+		return readStringData(parameterizedType);
 	}
 	
 	private void printString(SpearalPrinter printer, int parameterizedType) throws IOException {
-    	printer.printString(getStringData(parameterizedType));
+		printer.printString(getStringData(parameterizedType));
 	}
-    
-    @Override
+	
+	@Override
 	public byte[] readByteArray(int parameterizedType) throws IOException {
-    	final int indexOrLength = readIndexOrLength(parameterizedType);
+		final int indexOrLength = readIndexOrLength(parameterizedType);
 
-    	if (isObjectReference(parameterizedType))
-    		return (byte[])sharedObjects.get(indexOrLength);
-    	
-    	byte[] bytes = new byte[indexOrLength];
-    	sharedObjects.add(bytes);
-    	readFully(bytes, 0, indexOrLength);
+		if (isObjectReference(parameterizedType))
+			return (byte[])sharedObjects.get(indexOrLength);
+		
+		byte[] bytes = new byte[indexOrLength];
+		sharedObjects.add(bytes);
+		readFully(bytes, 0, indexOrLength);
 		return bytes;
 	}
-    
-    @Override
-    public void skipByteArray(int parameterizedType) throws IOException {
-    	final int indexOrLength = readIndexOrLength(parameterizedType);
-    	
-    	if (!isObjectReference(parameterizedType)) {
-    		sharedObjects.add(null);
-    		skipFully(indexOrLength);
-    	}
-    }
-    
-    private void printByteArray(SpearalPrinter printer, int parameterizedType) throws IOException {
-    	final int indexOrLength = readIndexOrLength(parameterizedType);
+	
+	private void printByteArray(SpearalPrinter printer, int parameterizedType) throws IOException {
+		final int indexOrLength = readIndexOrLength(parameterizedType);
 
-    	if (isObjectReference(parameterizedType))
-    		printer.printByteArray((byte[])sharedObjects.get(indexOrLength), indexOrLength, true);
-    	else {
-        	byte[] bytes = new byte[indexOrLength];
-        	sharedObjects.add(bytes);
-        	readFully(bytes, 0, indexOrLength);
-        	printer.printByteArray(bytes, sharedObjects.size() - 1, false);
-    	}
-    }
-    
-    @Override
-    public SpearalDateTime readDateTime(int parameterizedType) throws IOException {
+		if (isObjectReference(parameterizedType))
+			printer.printByteArray((byte[])sharedObjects.get(indexOrLength), indexOrLength, true);
+		else {
+			byte[] bytes = new byte[indexOrLength];
+			sharedObjects.add(bytes);
+			readFully(bytes, 0, indexOrLength);
+			printer.printByteArray(bytes, sharedObjects.size() - 1, false);
+		}
+	}
+	
+	@Override
+	public SpearalDateTime readDateTime(int parameterizedType) throws IOException {
 
-    	boolean hasDate = ((parameterizedType & 0x08) != 0);
-    	boolean hasTime = ((parameterizedType & 0x04) != 0);
-    	
-    	int year = 0;
-    	int month = 0;
-    	int date = 0;
-    	int hours = 0;
-    	int minutes = 0;
-    	int seconds = 0;
-    	int nanoseconds = 0;
-    	
-    	if (hasDate) {
-    		ensureAvailable(2);
-    		month = (buffer[position++] & 0xff);
-    		date = (buffer[position++] & 0xff);
-    		
-    		int length0 = ((month >>> 4) & 0x03);
-    		boolean inverse = ((month & 0x80) != 0);
-    		
-    		month &= 0x0f;
-    		
-    		ensureAvailable(length0 + 1);
-    		year = readUnsignedIntegerValue(length0);
-    		if (inverse)
-    			year = -year;
-    		year += 2000;
-    	}
-    	
-    	if (hasTime) {
-    		ensureAvailable(3);
-    		hours = (buffer[position++] & 0xff);
-    		minutes = (buffer[position++] & 0xff);
-    		seconds = (buffer[position++] & 0xff);
-    		
-    		int subsecondsType = (parameterizedType & 0x03);
-    		if (subsecondsType != 0) {
-    			int length0 = (hours >>> 5);
-    			ensureAvailable(length0 + 1);
-    			nanoseconds = readUnsignedIntegerValue(length0);
-    			
-    			if (subsecondsType == 2)
-    				nanoseconds *= 1000;
-    			else if (subsecondsType == 3)
-    				nanoseconds *= 1000000;
-    		}
-    		
-    		hours &= 0x1f;
-    	}
-    	
-    	return new SpearalDateTime(year, month, date, hours, minutes, seconds, nanoseconds, hasDate, hasTime);
-    }
-    
-    
-    @Override
-    public void skipDateTime(int parameterizedType) throws IOException {
-    	readDateTime(parameterizedType);
-    }
+		boolean hasDate = ((parameterizedType & 0x08) != 0);
+		boolean hasTime = ((parameterizedType & 0x04) != 0);
+		
+		int year = 0;
+		int month = 0;
+		int date = 0;
+		int hours = 0;
+		int minutes = 0;
+		int seconds = 0;
+		int nanoseconds = 0;
+		
+		if (hasDate) {
+			ensureAvailable(2);
+			month = (buffer[position++] & 0xff);
+			date = (buffer[position++] & 0xff);
+			
+			int length0 = ((month >>> 4) & 0x03);
+			boolean inverse = ((month & 0x80) != 0);
+			
+			month &= 0x0f;
+			
+			ensureAvailable(length0 + 1);
+			year = readUnsignedIntegerValue(length0);
+			if (inverse)
+				year = -year;
+			year += 2000;
+		}
+		
+		if (hasTime) {
+			ensureAvailable(3);
+			hours = (buffer[position++] & 0xff);
+			minutes = (buffer[position++] & 0xff);
+			seconds = (buffer[position++] & 0xff);
+			
+			int subsecondsType = (parameterizedType & 0x03);
+			if (subsecondsType != 0) {
+				int length0 = (hours >>> 5);
+				ensureAvailable(length0 + 1);
+				nanoseconds = readUnsignedIntegerValue(length0);
+				
+				if (subsecondsType == 2)
+					nanoseconds *= 1000;
+				else if (subsecondsType == 3)
+					nanoseconds *= 1000000;
+			}
+			
+			hours &= 0x1f;
+		}
+		
+		return new SpearalDateTime(year, month, date, hours, minutes, seconds, nanoseconds, hasDate, hasTime);
+	}
+	
+	private void printDateTime(SpearalPrinter printer, int parameterizedType) throws IOException {
+		printer.printDateTime(readDateTime(parameterizedType));
+	}
 
 	@Override
 	public Collection<?> readCollection(int parameterizedType) throws IOException {
 		final int indexOrLength = readIndexOrLength(parameterizedType);
 		
-    	if (isObjectReference(parameterizedType))
-    		return (List<?>)sharedObjects.get(indexOrLength);
-    	
-    	List<Object> value = new ArrayList<Object>(indexOrLength);
-    	sharedObjects.add(value);
-    	
-    	for (int i = 0; i < indexOrLength; i++)
-    		value.add(readAny());
-    	
-    	return value;
-	}
-	
-	@Override
-    public void skipCollection(int parameterizedType) throws IOException {
-		final int indexOrLength = readIndexOrLength(parameterizedType);
-    	
-    	if (!isObjectReference(parameterizedType)) {
-			sharedObjects.add(null);
-    		for (int i = 0; i < indexOrLength; i++)
-    			skipAny();
-    	}
+		if (isObjectReference(parameterizedType))
+			return (List<?>)sharedObjects.get(indexOrLength);
+		
+		List<Object> value = new ArrayList<Object>(indexOrLength);
+		sharedObjects.add(value);
+		
+		for (int i = 0; i < indexOrLength; i++)
+			value.add(readAny());
+		
+		return value;
 	}
 	
 	private void printCollection(SpearalPrinter printer, int parameterizedType) throws IOException {
 		final int indexOrLength = readIndexOrLength(parameterizedType);
-    	
-    	if (isObjectReference(parameterizedType))
-    		printer.printCollectionReference(indexOrLength);
-    	else {
-    		printer.printCollectionStart(sharedObjects.size(), indexOrLength);
-    		sharedObjects.add(null);
-    		
-    		for (int i = 0; i < indexOrLength; i++) {
-    			printer.printCollectionItemStart(i);
-    			printAny(printer);
-    			printer.printCollectionItemEnd(i);
-    		}
-    		
-    		printer.printCollectionEnd();
-    	}
+		
+		if (isObjectReference(parameterizedType))
+			printer.printCollectionReference(indexOrLength);
+		else {
+			int index = sharedObjects.size();
+			printer.printCollectionStart(index, indexOrLength);
+			sharedObjects.add(null);
+			
+			for (int i = 0; i < indexOrLength; i++) {
+				printer.printCollectionItemStart(index, i);
+				printAny(printer);
+				printer.printCollectionItemEnd(index, i);
+			}
+			
+			printer.printCollectionEnd(index);
+		}
 	}
-    
-    @SuppressWarnings("unchecked")
+	
+	@SuppressWarnings("unchecked")
 	@Override
 	public void readCollection(int parameterizedType, Object holder, Property property)
 		throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException {
-    	
-    	final int indexOrLength = readIndexOrLength(parameterizedType);
-    	
-    	if (isObjectReference(parameterizedType)) {
-    		property.set(holder, sharedObjects.get(indexOrLength));
-    		return;
-    	}
-    	
+		
+		final int indexOrLength = readIndexOrLength(parameterizedType);
+		
+		if (isObjectReference(parameterizedType)) {
+			property.set(holder, sharedObjects.get(indexOrLength));
+			return;
+		}
+		
 		Collection<Object> value = (Collection<Object>)property.get(holder);
-    	if (value != null)
-    		value.clear();
-    	else
-    		value = (Collection<Object>)property.init(this, holder);
-    	sharedObjects.add(value);
-    	
-    	Type elementType = TypeUtil.getElementType(property.getGenericType());
-    	for (int i = 0; i < indexOrLength; i++)
-    		value.add(readAny(elementType));
+		if (value != null)
+			value.clear();
+		else
+			value = (Collection<Object>)property.init(this, holder);
+		sharedObjects.add(value);
+		
+		Type elementType = TypeUtil.getElementType(property.getGenericType());
+		for (int i = 0; i < indexOrLength; i++)
+			value.add(readAny(elementType));
 	}
 
 	@Override
 	public Map<?, ?> readMap(int parameterizedType) throws IOException {
 		final int indexOrLength = readIndexOrLength(parameterizedType);
-    	
-    	if (isObjectReference(parameterizedType))
-    		return (Map<?, ?>)sharedObjects.get(indexOrLength);
-    	
-    	Map<Object, Object> value = new LinkedHashMap<Object, Object>(indexOrLength);
-    	sharedObjects.add(value);
-    	
-    	for (int i = 0; i < indexOrLength; i++) {
-    		Object key = readAny();
-    		Object val = readAny();
-    		value.put(key, val);
-    	}
-    	
-    	return value;
+		
+		if (isObjectReference(parameterizedType))
+			return (Map<?, ?>)sharedObjects.get(indexOrLength);
+		
+		Map<Object, Object> value = new LinkedHashMap<Object, Object>(indexOrLength);
+		sharedObjects.add(value);
+		
+		for (int i = 0; i < indexOrLength; i++) {
+			Object key = readAny();
+			Object val = readAny();
+			value.put(key, val);
+		}
+		
+		return value;
 	}
 	
 	private void printMap(SpearalPrinter printer, int parameterizedType) throws IOException {
 		final int indexOrLength = readIndexOrLength(parameterizedType);
-    	
-    	if (isObjectReference(parameterizedType))
-    		printer.printMapReference(indexOrLength);
-    	else {
-    		printer.printMapStart(sharedObjects.size(), indexOrLength);
-    		sharedObjects.add(null);
-    		
-    		for (int i = 0; i < indexOrLength; i++) {
-    			printer.printMapKeyStart(i);
-    			printAny(printer);
-    			printer.printMapKeyEnd(i);
-    			
-    			printer.printMapValueStart(i);
-    			printAny(printer);
-    			printer.printMapValueEnd(i);
-    		}
-    		
-    		printer.printMapEnd();
-    	}
-	}
-	
-	@Override
-    public void skipMap(int parameterizedType) throws IOException {
-		final int indexOrLength = readIndexOrLength(parameterizedType);
-    	
-    	if (!isObjectReference(parameterizedType)) {
+		
+		if (isObjectReference(parameterizedType))
+			printer.printMapReference(indexOrLength);
+		else {
+			int index = sharedObjects.size();
+			printer.printMapStart(index, indexOrLength);
 			sharedObjects.add(null);
-    		for (int i = 0; i < indexOrLength; i++) {
-    			skipAny();
-    			skipAny();
-    		}
-    	}
+			
+			for (int i = 0; i < indexOrLength; i++) {
+				printer.printMapKeyStart(index, i);
+				printAny(printer);
+				printer.printMapKeyEnd(index, i);
+				
+				printer.printMapValueStart(index, i);
+				printAny(printer);
+				printer.printMapValueEnd(index, i);
+			}
+			
+			printer.printMapEnd(index);
+		}
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public void readMap(int parameterizedType, Object holder, Property property)
 		throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException {
-    	
+		
 		final int indexOrLength = readIndexOrLength(parameterizedType);
-    	
-    	if (isObjectReference(parameterizedType)) {
-    		property.set(holder, sharedObjects.get(indexOrLength));
-    		return;
-    	}
-    	
-    	Map<Object, Object> value = (Map<Object, Object>)property.get(holder);
-    	if (value != null)
-    		value.clear();
-    	else
-    		value = (Map<Object, Object>)property.init(this, holder);
-    	sharedObjects.add(value);
+		
+		if (isObjectReference(parameterizedType)) {
+			property.set(holder, sharedObjects.get(indexOrLength));
+			return;
+		}
+		
+		Map<Object, Object> value = (Map<Object, Object>)property.get(holder);
+		if (value != null)
+			value.clear();
+		else
+			value = (Map<Object, Object>)property.init(this, holder);
+		sharedObjects.add(value);
 
-    	Type[] keyValueTypes = TypeUtil.getKeyValueType(property.getGenericType());
-    	Type keyType = keyValueTypes[0];
-    	Type valType = keyValueTypes[1];
-    	
-    	for (int i = 0; i < indexOrLength; i++) {
-    		Object key = readAny(keyType);
-    		Object val = readAny(valType);
-    		value.put(key, val);
-    	}
+		Type[] keyValueTypes = TypeUtil.getKeyValueType(property.getGenericType());
+		Type keyType = keyValueTypes[0];
+		Type valType = keyValueTypes[1];
+		
+		for (int i = 0; i < indexOrLength; i++) {
+			Object key = readAny(keyType);
+			Object val = readAny(valType);
+			value.put(key, val);
+		}
 	}
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public Enum<?> readEnum(int parameterizedType, Type targetType) throws IOException {
-    	String className = readStringData(parameterizedType);
+		String className = readStringData(parameterizedType);
 		Class<? extends Enum> cls = (Class<? extends Enum>)context.loadClass(className, targetType);
-    	String value = readString(readNextByte());
-    	return Enum.valueOf(cls, value);
+		String value = readString(readNextByte());
+		return Enum.valueOf(cls, value);
 	}
 	
-    private void printEnum(SpearalPrinter printer, int parameterizedType) throws IOException {
-    	StringData className = getStringData(parameterizedType);
-    	parameterizedType = readNextByte();
-    	StringData value = getStringData(parameterizedType);
-    	printer.printEnum(className, value);
+	private void printEnum(SpearalPrinter printer, int parameterizedType) throws IOException {
+		StringData className = getStringData(parameterizedType);
+		parameterizedType = readNextByte();
+		StringData value = getStringData(parameterizedType);
+		printer.printEnum(className, value);
 	}
-    
-    @Override
-    public void skipEnum(int parameterizedType) throws IOException {
-    	skipStringData(parameterizedType);
-    	skipString(readNextByte());
-    }
 
 	@Override
 	public Class<?> readClass(int parameterizedType, Type targetType) throws IOException {
-    	String className = readStringData(parameterizedType);
+		String className = readStringData(parameterizedType);
 		return context.loadClass(className, targetType);
-	}
-	
-	@Override
-    public void skipClass(int parameterizedType) throws IOException {
-    	skipStringData(parameterizedType);
 	}
 	
 	private void printClass(SpearalPrinter printer, int parameterizedType) throws IOException {
@@ -844,97 +670,82 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	}
 
 	@Override
-    public Object readBean(int parameterizedType, Type targetType) throws IOException {
+	public Object readBean(int parameterizedType, Type targetType) throws IOException {
 		final int indexOrLength = readIndexOrLength(parameterizedType);
-    	
-    	if (isObjectReference(parameterizedType))
-    		return sharedObjects.get(indexOrLength);
-    	
-    	String classDescription = readStringData(parameterizedType, indexOrLength);
-    	ClassDescriptor descriptor = descriptors.putIfAbsent(context, classDescription, targetType);
+		
+		if (isObjectReference(parameterizedType))
+			return sharedObjects.get(indexOrLength);
+		
+		String classDescription = readStringData(parameterizedType, indexOrLength);
+		ClassDescriptor descriptor = descriptors.putIfAbsent(context, classDescription, targetType);
 
-    	try {
-	    	Class<?> cls = descriptor.cls;
-	    	
-	    	Object value;
-	    	if (cls == ClassNotFound.class)
-	    		value = new ClassNotFound(classDescription);
-	    	else if (descriptor.partial)
-	    		value = context.instantiatePartial(this, cls, descriptor.properties);
-	    	else
-	    		value = context.instantiate(this, cls);
-	    	sharedObjects.add(value);
-	    	
-	    	for (Property property : descriptor.properties) {
-	    		int propertyType = readNextByte();
-	    		if (property != null)
-	    			property.read(this, value, propertyType);
-	    		else
-	    			skipAny(propertyType);
-	    	}
-	    	
-	    	return value;
-    	}
-    	catch (Exception e) {
-    		throw new IOException(e);
-    	}
-    }
-	
-	@Override
-    public void skipBean(int parameterizedType) throws IOException {
-		final int indexOrLength = readIndexOrLength(parameterizedType);
-    	
-    	if (!isObjectReference(parameterizedType)) {
-    		String classDescription = readStringData(parameterizedType, indexOrLength);
-    		sharedObjects.add(null);
-    		
-    		int propertiesCount = ClassDescriptionUtil.propertiesCount(classDescription);
-    		for (int i = 0; i < propertiesCount; i++)
-    			skipAny();
-    	}
+		try {
+			Class<?> cls = descriptor.cls;
+			
+			Object value;
+			if (cls == ClassNotFound.class)
+				value = new ClassNotFound(classDescription);
+			else if (descriptor.partial)
+				value = context.instantiatePartial(this, cls, descriptor.properties);
+			else
+				value = context.instantiate(this, cls);
+			sharedObjects.add(value);
+			
+			for (Property property : descriptor.properties) {
+				int propertyType = readNextByte();
+				if (property != null)
+					property.read(this, value, propertyType);
+				else
+					skipAny(propertyType);
+			}
+			
+			return value;
+		}
+		catch (Exception e) {
+			throw new IOException(e);
+		}
 	}
 	
 	private void printBean(SpearalPrinter printer, int parameterizedType) throws IOException {
 		final int indexOrLength = readIndexOrLength(parameterizedType);
-    	
-    	if (isObjectReference(parameterizedType))
-    		printer.printBeanReference(indexOrLength);
-    	else {
-        	StringData classDescription = getStringData(parameterizedType, indexOrLength);
-    		String[] classNames = ClassDescriptionUtil.splitClassNames(classDescription.value);
-    		
-    		sharedObjects.add(null);
-    		printer.printBeanStart(sharedObjects.size() - 1, classDescription, classNames);
-    		
-    		String[] propertyNames = ClassDescriptionUtil.splitPropertyNames(classDescription.value);
-    		boolean first = true;
-    		for (String propertyName : propertyNames) {
-    			printer.printBeanPropertyStart(propertyName, first);
-    			if (first)
-    				first = false;
-    			printAny(printer);
-    			printer.printBeanPropertyEnd();
-    		}
-    		
-    		printer.printBeanEnd();
-    	}
+		
+		if (isObjectReference(parameterizedType))
+			printer.printBeanReference(indexOrLength);
+		else {
+			StringData classDescription = getStringData(parameterizedType, indexOrLength);
+			String[] classNames = ClassDescriptionUtil.splitClassNames(classDescription.value);
+			
+			final int index = sharedObjects.size();
+			sharedObjects.add(null);
+			printer.printBeanStart(index, classDescription, classNames);
+			
+			String[] propertyNames = ClassDescriptionUtil.splitPropertyNames(classDescription.value);
+			int propertyIndex = 0;
+			for (String propertyName : propertyNames) {
+				printer.printBeanPropertyStart(index, propertyName, propertyIndex);
+				printAny(printer);
+				printer.printBeanPropertyEnd(index, propertyIndex++);
+			}
+			
+			printer.printBeanEnd(index);
+		}
 	}
-    
-    private int readNextByte() throws IOException {
-    	ensureAvailable(1);
-        return (buffer[position++] & 0xff);
-    }
-    
-    private int readIndexOrLength(int parameterizedType) throws IOException {
+	
+	private int readNextByte() throws IOException {
+		ensureAvailable(1);
+		return (buffer[position++] & 0xff);
+	}
+	
+	private int readIndexOrLength(int parameterizedType) throws IOException {
 		int length0 = (parameterizedType & 0x03);
 		ensureAvailable(length0 + 1);
-    	return readUnsignedIntegerValue(length0);
-    }
-    
-    private int readUnsignedIntegerValue(int length0) {
+		return readUnsignedIntegerValue(length0);
+	}
+	
+	private int readUnsignedIntegerValue(int length0) {
 		int v = 0;
 
-    	switch (length0) {
+		switch (length0) {
 		case 3:
 			v |= (buffer[position++] & 0xff) << 24;
 		case 2:
@@ -946,95 +757,87 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 		}
 		
 		return v;
-    }
-    
-    private String readStringData(int parameterizedType) throws IOException {
-    	int indexOrLength = readIndexOrLength(parameterizedType);
-    	return readStringData(parameterizedType, indexOrLength);
-    }
-    
-    private String readStringData(int parameterizedType, int indexOrLength) throws IOException {
-    	if (isStringReference(parameterizedType))
-    		return sharedStrings.get(indexOrLength);
-    	
-    	if (indexOrLength == 0)
-    		return "";
-    	
-    	String value;
-        if (indexOrLength <= buffer.length) {
-        	ensureAvailable(indexOrLength);
-        	value = new String(buffer, position, indexOrLength, UTF8);
-        	position += indexOrLength;
-        }
-        else {
-	        byte[] bytes = new byte[indexOrLength];
-	        readFully(bytes, 0, indexOrLength);
-	        value = new String(bytes, UTF8);
-        }
-        
-    	sharedStrings.add(value);
-        
-        return value;
-    }
-    
-    private void skipStringData(int parameterizedType) throws IOException {
-    	int indexOrLength = readIndexOrLength(parameterizedType);
-    	if (!isStringReference(parameterizedType)) {
-    		sharedStrings.add(null);
-    		skipFully(indexOrLength);
-    	}
-    }
-    
-    private StringData getStringData(int parameterizedType) throws IOException {
-    	int indexOrLength = readIndexOrLength(parameterizedType);
-    	return getStringData(parameterizedType, indexOrLength);
-    }
-    
-    private StringData getStringData(int parameterizedType, int indexOrLength) throws IOException {
-    	if (isStringReference(parameterizedType))
-    		return new StringData(sharedStrings.get(indexOrLength), indexOrLength, true);
-    	
-    	if (indexOrLength == 0)
-    		return new StringData("", -1, false);
-    	
-    	String value = readStringData(parameterizedType, indexOrLength);
-    	return new StringData(value, sharedStrings.size() - 1, false);
-    }
+	}
 	
-    private String readBigNumberData(int length) throws IOException {
-    	char[] chars = new char[length];
-    	
-    	final byte[] buffer = this.buffer;
-    	final int bufferLength = buffer.length;
-    	int position = this.position;
-    	int size = this.size;
-    	
-    	final int count = (length / 2) + (length % 2);
-    	int iChar = 0;
-    	for (int i = 0; i < count; i++) {
-    		if (position == size) {
-    			this.position = position;
-    			fillBuffer(Math.min(count - i, bufferLength));
-    			position = 0;
-    			size = this.size;
-    		}
+	private String readStringData(int parameterizedType) throws IOException {
+		int indexOrLength = readIndexOrLength(parameterizedType);
+		return readStringData(parameterizedType, indexOrLength);
+	}
+	
+	private String readStringData(int parameterizedType, int indexOrLength) throws IOException {
+		if (isStringReference(parameterizedType))
+			return sharedStrings.get(indexOrLength);
+		
+		if (indexOrLength == 0)
+			return "";
+		
+		String value;
+		if (indexOrLength <= buffer.length) {
+			ensureAvailable(indexOrLength);
+			value = new String(buffer, position, indexOrLength, UTF8);
+			position += indexOrLength;
+		}
+		else {
+			byte[] bytes = new byte[indexOrLength];
+			readFully(bytes, 0, indexOrLength);
+			value = new String(bytes, UTF8);
+		}
+		
+		sharedStrings.add(value);
+		
+		return value;
+	}
+	
+	private StringData getStringData(int parameterizedType) throws IOException {
+		int indexOrLength = readIndexOrLength(parameterizedType);
+		return getStringData(parameterizedType, indexOrLength);
+	}
+	
+	private StringData getStringData(int parameterizedType, int indexOrLength) throws IOException {
+		if (isStringReference(parameterizedType))
+			return new StringData(sharedStrings.get(indexOrLength), indexOrLength, true);
+		
+		if (indexOrLength == 0)
+			return new StringData("", -1, false);
+		
+		String value = readStringData(parameterizedType, indexOrLength);
+		return new StringData(value, sharedStrings.size() - 1, false);
+	}
+	
+	private String readBigNumberData(int length) throws IOException {
+		char[] chars = new char[length];
+		
+		final byte[] buffer = this.buffer;
+		final int bufferLength = buffer.length;
+		int position = this.position;
+		int size = this.size;
+		
+		final int count = (length / 2) + (length % 2);
+		int iChar = 0;
+		for (int i = 0; i < count; i++) {
+			if (position == size) {
+				this.position = position;
+				fillBuffer(Math.min(count - i, bufferLength));
+				position = 0;
+				size = this.size;
+			}
 			int b = (buffer[position++] & 0xff);
 			chars[iChar++] = BIG_NUMBER_ALPHA[(b & 0xf0) >>> 4];
 			if (iChar == length)
 				break;
 			chars[iChar++] = BIG_NUMBER_ALPHA[b & 0x0f];
-    	}
-    	this.position = position;
-    	
-    	String representation = new String(chars);
-    	sharedStrings.add(representation);
-    	return representation;
-    }
+		}
+		this.position = position;
+		
+		String representation = new String(chars);
+		sharedStrings.add(representation);
+		return representation;
+	}
 
 	private long readLongData() {
-    	final byte[] buffer = this.buffer;
-    	int position = this.position;
-    	
+		final byte[] buffer = this.buffer;
+		int position = this.position;
+		
 		long v =
 			(buffer[position++] & 0xffL) << 56 |
 			(buffer[position++] & 0xffL) << 48 |
@@ -1048,17 +851,17 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 		this.position = position;
 		
 		return v;
-    }
+	}
 
 	private void readFully(byte[] b, int off, int len) throws IOException {
 		if (b == null)
 			throw new NullPointerException();
 		if (off < 0 || len < 0 || len > b.length - off)
 			throw new IndexOutOfBoundsException();
-        if (len == 0)
-        	return;
+		if (len == 0)
+			return;
 
-        final int left = size - position;
+		final int left = size - position;
 		if (len <= left) {
 			System.arraycopy(buffer, position, b, off, len);
 			position += len;
@@ -1075,74 +878,30 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 				int count = in.read(b, off, len);
 				if (count == len)
 					return;
-	            if (count <= 0)
-	                throw new EOFException();
-	            off += count;
-	            len -= count;
-			}
-		}
-	}
-
-	private void skipFully(int len) throws IOException {
-		if (len < 0)
-			throw new IndexOutOfBoundsException();
-        if (len == 0)
-        	return;
-
-        final int left = size - position;
-		if (len <= left)
-			position += len;
-		else {
-			if (left > 0) {
-				len -= left;
-				position = size;
-			}
-			
-			while (len > 0) {
-				int count = (int)in.skip(len);
-				if (count == len)
-					return;
-	            if (count <= 0)
-	                throw new EOFException();
-	            len -= count;
+				if (count <= 0)
+					throw new EOFException();
+				off += count;
+				len -= count;
 			}
 		}
 	}
 	
 	private void ensureAvailable(int count) throws IOException {
-		
-		// assert(count > 0);
-
 		if (size - position < count)
 			fillBuffer(count);
 	}
 
 	private void fillBuffer(int count) throws IOException {
-		final int left = size - position;
-		
-		// assert(left >= 0);
-		// assert(count > 0);
-		// assert(left < count);
-		
-		if (left > 0) {
-			if (left + count > buffer.length)
-				throw new IllegalArgumentException(Integer.toString(count));
-			System.arraycopy(buffer, position, buffer, 0, left);
+		if (position > 0) {
+			size -= position;
+			System.arraycopy(buffer, position, buffer, 0, size);
+			position = 0;
 		}
-		else if (eof) {
-			position = size = 0;
-			throw new EOFException();
-		}
-		
-		position = 0;
-		size = left;
 		
 		do {
 			int read = in.read(buffer, size, buffer.length - size);
-			if (read == -1) {
-				eof = true;
+			if (read == -1)
 				throw new EOFException();
-			}
 			size += read;
 		}
 		while (size < count);

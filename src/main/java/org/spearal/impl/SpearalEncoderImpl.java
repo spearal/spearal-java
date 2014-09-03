@@ -529,28 +529,20 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 	
 	private boolean putAndWriteObjectReference(int type, Object o) throws IOException {
 		int index = sharedObjects.putIfAbsent(o);
-		
-		if (index == -1)
-			return false;
-        
-		int length0 = unsignedIntLength0(index);
-		ensureCapacity(length0 + 2);
-		buffer[position++] = (byte)(type | 0x08 | length0);
-		writeUnsignedIntValue(index, length0);
-		return true;
+		if (index != -1) {
+			writeTypeUint(type | 0x08, index);
+			return true;
+		}
+		return false;
 	}
 	
 	private boolean putAndWriteStringReference(int type, String s) throws IOException {
 		int index = sharedStrings.putIfAbsent(s);
-		
-		if (index == -1)
-			return false;
-        
-		int length0 = unsignedIntLength0(index);
-		ensureCapacity(length0 + 2);
-		buffer[position++] = (byte)(type | 0x04 | length0);
-		writeUnsignedIntValue(index, length0);
-		return true;
+		if (index != -1) {
+			writeTypeUint(type | 0x04, index);
+			return true;
+		}
+		return false;
 	}
 	
 	private void writeTypeUint(int type, int uint) throws IOException {

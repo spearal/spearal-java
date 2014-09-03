@@ -19,8 +19,6 @@ package org.spearal.impl;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 
 import org.spearal.SpearalPrinter;
 
@@ -84,8 +82,8 @@ public class SpearalPrinterImpl implements SpearalPrinter {
 	}
 
 	@Override
-	public void printBigIntegral(BigInteger value) throws IOException {
-		out.print(value);
+	public void printBigIntegral(StringData value) throws IOException {
+		out.print(value.value);
 	}
 
 	@Override
@@ -94,8 +92,8 @@ public class SpearalPrinterImpl implements SpearalPrinter {
 	}
 
 	@Override
-	public void printBigFloating(BigDecimal value) throws IOException {
-		out.print(value);
+	public void printBigFloating(StringData value) throws IOException {
+		out.print(value.value);
 	}
 
 	@Override
@@ -129,18 +127,18 @@ public class SpearalPrinterImpl implements SpearalPrinter {
 	}
 
 	@Override
-	public void printCollectionItemStart(int index) throws IOException {
+	public void printCollectionItemStart(int index, int itemIndex) throws IOException {
 		if (index != 0)
 			out.print(',');
 		indent();
 	}
 
 	@Override
-	public void printCollectionItemEnd(int index) throws IOException {
+	public void printCollectionItemEnd(int index, int itemIndex) throws IOException {
 	}
 
 	@Override
-	public void printCollectionEnd() throws IOException {
+	public void printCollectionEnd(int index) throws IOException {
 		indent--;
 		indent();
 		out.print(']');
@@ -158,29 +156,29 @@ public class SpearalPrinterImpl implements SpearalPrinter {
 	}
 
 	@Override
-	public void printMapKeyStart(int index) throws IOException {
+	public void printMapKeyStart(int index, int entryIndex) throws IOException {
 		if (index != 0)
 			out.print(',');
 		indent();
 	}
 
 	@Override
-	public void printMapKeyEnd(int index) throws IOException {
+	public void printMapKeyEnd(int index, int entryIndex) throws IOException {
 		out.print(" -> ");
 	}
 
 	@Override
-	public void printMapValueStart(int index) throws IOException {
+	public void printMapValueStart(int index, int entryIndex) throws IOException {
 		indent++;
 	}
 
 	@Override
-	public void printMapValueEnd(int index) throws IOException {
+	public void printMapValueEnd(int index, int entryIndex) throws IOException {
 		indent--;
 	}
 
 	@Override
-	public void printMapEnd() throws IOException {
+	public void printMapEnd(int index) throws IOException {
 		indent--;
 		indent();
 		out.print('}');
@@ -218,8 +216,8 @@ public class SpearalPrinterImpl implements SpearalPrinter {
 	}
 
 	@Override
-	public void printBeanPropertyStart(String propertyName, boolean first) {
-		if (!first)
+	public void printBeanPropertyStart(int index, String propertyName, int propertyIndex) {
+		if (propertyIndex > 0)
 			out.print(',');
 		
 		indent();
@@ -227,11 +225,11 @@ public class SpearalPrinterImpl implements SpearalPrinter {
 	}
 
 	@Override
-	public void printBeanPropertyEnd() {
+	public void printBeanPropertyEnd(int index, int propertyIndex) {
 	}
 
 	@Override
-	public void printBeanEnd() throws IOException {
+	public void printBeanEnd(int index) throws IOException {
 		indent--;
 		indent();
 		out.print('}');

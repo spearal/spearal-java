@@ -28,7 +28,6 @@ public interface SpearalDecoder {
 	SpearalContext getContext();
 	
 	Object readAny() throws IOException;
-	
 	<T> T readAny(Type targetType) throws IOException;
 	
 	void skipAny() throws IOException;

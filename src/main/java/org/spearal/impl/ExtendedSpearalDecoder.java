@@ -38,42 +38,30 @@ public interface ExtendedSpearalDecoder extends SpearalDecoder {
 	void skipAny(int parameterizedType) throws IOException;
 	
 	SpearalDateTime readDateTime(int parameterizedType) throws IOException;
-	void skipDateTime(int parameterizedType) throws IOException;
 	
 	long readIntegral(int parameterizedType) throws IOException;
-	void skipIntegral(int parameterizedType) throws IOException;
 	
 	BigInteger readBigIntegral(int parameterizedType) throws IOException;
-	void skipBigIntegral(int parameterizedType) throws IOException;
 	
 	double readFloating(int parameterizedType) throws IOException;
-	void skipFloating(int parameterizedType) throws IOException;
 	
 	BigDecimal readBigFloating(int parameterizedType) throws IOException;
-	void skipBigFloating(int parameterizedType) throws IOException;
 
 	String readString(int parameterizedType) throws IOException;
-	void skipString(int parameterizedType) throws IOException;
 	
 	byte[] readByteArray(int parameterizedType) throws IOException;
-	void skipByteArray(int parameterizedType) throws IOException;
 	
 	Collection<?> readCollection(int parameterizedType) throws IOException;
-	void skipCollection(int parameterizedType) throws IOException;
 	void readCollection(int parameterizedType, Object holder, Property property)
 		throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException;
 
 	Map<?, ?> readMap(int parameterizedType) throws IOException;
-	void skipMap(int parameterizedType) throws IOException;
 	void readMap(int parameterizedType, Object holder, Property property)
 		throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException;
 	
 	Enum<?> readEnum(int parameterizedType, Type targetType) throws IOException;
-	void skipEnum(int parameterizedType) throws IOException;
 
 	Class<?> readClass(int parameterizedType, Type targetType) throws IOException;
-	void skipClass(int parameterizedType) throws IOException;
 	
 	Object readBean(int parameterizedType, Type targetType) throws IOException;
-	void skipBean(int parameterizedType) throws IOException;
 }
