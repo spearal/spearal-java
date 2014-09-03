@@ -25,6 +25,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.spearal.SpearalEncoder;
+import org.spearal.DefaultSpearalFactory;
 import org.spearal.SpearalFactory;
 import org.spearal.configuration.PartialObjectFactory.PartialObjectProxy;
 import org.spearal.configuration.PartialObjectFactory.UndefinedPropertyException;
@@ -54,7 +55,7 @@ public class TestPartialBean extends AbstractSpearalTestUnit {
 		bean.getSimpleBeans().add(new SimpleBean(false, -5, -10.09, "abc"));
 		
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		SpearalFactory factory = new SpearalFactory();
+		SpearalFactory factory = new DefaultSpearalFactory();
 		SpearalEncoder encoder = factory.newEncoder(baos);
 		encoder.getPropertyFilter().add(ChildBean.class, "childBooleanProperty", "parentStringProperty");
 		encoder.writeAny(bean);

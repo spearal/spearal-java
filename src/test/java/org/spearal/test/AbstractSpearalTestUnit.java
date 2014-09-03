@@ -24,9 +24,10 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Type;
 
-import org.spearal.SpearalFactory;
+import org.spearal.DefaultSpearalFactory;
 import org.spearal.SpearalDecoder;
 import org.spearal.SpearalEncoder;
+import org.spearal.SpearalFactory;
 import org.spearal.SpearalPropertyFilter;
 
 /**
@@ -47,11 +48,11 @@ public abstract class AbstractSpearalTestUnit {
 	}
 
 	protected byte[] encode(Object o) throws IOException {
-		return encode(new SpearalFactory(), null, o);
+		return encode(new DefaultSpearalFactory(), null, o);
 	}
 
 	protected byte[] encode(SpearalPropertyFilter request, Object o) throws IOException {
-		return encode(new SpearalFactory(), request, o);
+		return encode(new DefaultSpearalFactory(), request, o);
 	}
 
 	protected byte[] encode(SpearalFactory factory, Object o) throws IOException {
@@ -82,12 +83,12 @@ public abstract class AbstractSpearalTestUnit {
 	}
 	
 	protected Object decode(byte[] bytes) throws IOException {
-		return decode(new SpearalFactory(), bytes, null);
+		return decode(new DefaultSpearalFactory(), bytes, null);
 	}
 	
 	@SuppressWarnings("unchecked")
 	protected <T> T decode(byte[] bytes, Type targetType) throws IOException {
-		return (T)decode(new SpearalFactory(), bytes, targetType);
+		return (T)decode(new DefaultSpearalFactory(), bytes, targetType);
 	}
 	
 	protected Object decode(SpearalFactory factory, byte[] bytes, Type targetType) throws IOException {

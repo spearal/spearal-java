@@ -27,6 +27,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.spearal.SpearalDecoder;
 import org.spearal.SpearalEncoder;
+import org.spearal.DefaultSpearalFactory;
 import org.spearal.SpearalFactory;
 import org.spearal.configuration.AliasStrategy;
 import org.spearal.impl.SpearalDecoderImpl.ClassNotFound;
@@ -53,7 +54,7 @@ public class TestAliasedBean extends AbstractSpearalTestUnit {
 	public void test() throws IOException {
 		SimpleBean bean = new SimpleBean(true, 1, 0.1, "blabla");
 		
-		SpearalFactory serverFactory = new SpearalFactory();
+		SpearalFactory serverFactory = new DefaultSpearalFactory();
 		serverFactory.getContext().configure(new AliasStrategy() {
 			
 			@Override
@@ -67,7 +68,7 @@ public class TestAliasedBean extends AbstractSpearalTestUnit {
 			}
 		});
 		
-		SpearalFactory clientFactory = new SpearalFactory();
+		SpearalFactory clientFactory = new DefaultSpearalFactory();
 		clientFactory.getContext().configure(new AliasStrategy() {
 			
 			@Override
@@ -126,7 +127,7 @@ public class TestAliasedBean extends AbstractSpearalTestUnit {
 	public void testClassNotFoundBean() throws IOException {
 		SimpleBean bean = new SimpleBean(true, 1, 0.1, "blabla");
 		
-		SpearalFactory serverFactory = new SpearalFactory();
+		SpearalFactory serverFactory = new DefaultSpearalFactory();
 		serverFactory.getContext().configure(new AliasStrategy() {
 			
 			@Override
@@ -140,7 +141,7 @@ public class TestAliasedBean extends AbstractSpearalTestUnit {
 			}
 		});
 		
-		SpearalFactory clientFactory = new SpearalFactory();
+		SpearalFactory clientFactory = new DefaultSpearalFactory();
 
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		SpearalEncoder encoder = serverFactory.newEncoder(baos);
