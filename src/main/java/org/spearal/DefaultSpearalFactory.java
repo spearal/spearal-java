@@ -121,41 +121,26 @@ public class DefaultSpearalFactory implements SpearalFactory {
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.spearal.SpearalFactory#getContext()
-	 */
 	@Override
 	public SpearalContext getContext() {
 		return context;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.spearal.SpearalFactory#newEncoder(java.io.OutputStream)
-	 */
 	@Override
 	public SpearalEncoder newEncoder(OutputStream out) {
 		return new SpearalEncoderImpl(context, out);
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.spearal.SpearalFactory#newEncoder(java.io.OutputStream, org.spearal.SpearalPropertyFilter)
-	 */
 	@Override
 	public SpearalEncoder newEncoder(OutputStream out, SpearalPropertyFilter request) {
 		return new SpearalEncoderImpl(context, request, out);
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.spearal.SpearalFactory#newDecoder(java.io.InputStream)
-	 */
 	@Override
 	public SpearalDecoder newDecoder(InputStream in) {
 		return new SpearalDecoderImpl(context, in);
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.spearal.SpearalFactory#newPrinter(java.io.PrintStream)
-	 */
 	@Override
 	public SpearalPrinter newPrinter(PrintStream out) {
 		return new SpearalPrinterImpl(out);
