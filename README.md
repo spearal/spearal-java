@@ -22,7 +22,7 @@ The built library can then be found in the `build/libs/` directory.
 First, you need to create a SpearalFactory:
 
 ````java
-SpearalFactory factory = new SpearalFactory();
+SpearalFactory factory = new DefaultSpearalFactory();
 ````
 
 Encoding data is then a matter of creating a new encoder and call the writeAny method:
@@ -59,7 +59,7 @@ class Person implements Serializable {
 If you are retrieving a collection of Persons and just need their first and last names, it is useless to serialize their phones. Spearal lets you encode just the firstName and lastName properties:
 
 ````java
-SpearalFactory factory = new SpearalFactory();
+SpearalFactory factory = new DefaultSpearalFactory();
 ByteArrayOutputStream baos = new ByteArrayOutputStream();
 SpearalEncoder encoder = factory.newEncoder(baos);
 
