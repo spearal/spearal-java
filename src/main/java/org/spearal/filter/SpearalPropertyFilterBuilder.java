@@ -73,8 +73,8 @@ public class SpearalPropertyFilterBuilder {
 	 * @param context context 
 	 * @return list of strings
 	 */
-	public List<Object> toHeaders(SpearalContext context) {
-		List<Object> headers = new ArrayList<Object>();
+	public List<String> toHeaders(SpearalContext context) {
+		List<String> headers = new ArrayList<String>();
 		for (Entry<Class<?>, String[]> pf : propertyFiltersByClass.entrySet())
 			headers.add(ClassDescriptionUtil.createAliasedDescription(context, pf.getKey(), pf.getValue()));		
 		return headers;
