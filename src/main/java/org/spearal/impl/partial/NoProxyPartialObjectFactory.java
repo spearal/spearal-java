@@ -24,7 +24,7 @@ import org.spearal.impl.ExtendedSpearalDecoder;
 import org.spearal.impl.cache.AnyMap.ValueProvider;
 
 /**
- * @author Franck WOLFF
+ * @author William DRAI
  */
 public class NoProxyPartialObjectFactory implements PartialObjectFactory, ValueProvider<Class<?>, Object, Class<?>> {
 	
