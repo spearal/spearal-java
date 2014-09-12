@@ -53,7 +53,23 @@ public abstract class TypeUtil {
         // Should never append...
         return Object.class;
     }
-    
+	
+	public static Type unwrapTypeVariable(Type type) {
+		if (type instanceof TypeVariable)
+			return getBoundType((TypeVariable<?>)type);
+		return type;
+	}
+	
+	public static Type getBoundType(TypeVariable<?> typeVariable) {
+    	Type[] ubs = typeVariable.getBounds();
+    	if (ubs.length > 0)
+    		return ubs[0];
+    	
+    	// should never happen...
+    	if (typeVariable.getGenericDeclaration() instanceof Type)
+    		return (Type)typeVariable.getGenericDeclaration();
+    	return typeVariable;
+    }
 	
     public static Type getElementType(Type collectionType) {
     	if (collectionType instanceof ParameterizedType) {

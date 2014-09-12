@@ -17,7 +17,6 @@
  */
 package org.spearal.impl.introspector;
 
-import static java.beans.Introspector.decapitalize;
 import static java.lang.reflect.Modifier.PRIVATE;
 import static java.lang.reflect.Modifier.PROTECTED;
 import static java.lang.reflect.Modifier.STATIC;
@@ -38,8 +37,8 @@ import org.spearal.annotation.Exclude;
 import org.spearal.annotation.Include;
 import org.spearal.configuration.Introspector;
 import org.spearal.configuration.PropertyFactory.Property;
-import org.spearal.impl.cache.CopyOnWriteMap;
 import org.spearal.impl.cache.AnyMap.ValueProvider;
+import org.spearal.impl.cache.CopyOnWriteMap;
 
 /**
  * @author Franck WOLFF
@@ -254,4 +253,16 @@ public class IntrospectorImpl implements Introspector {
 		System.arraycopy(properties2, 0, properties, length1, length2);
 		return properties;
 	}
+	
+    private static String decapitalize(String name) {
+        if (name == null || name.length() == 0)
+            return name;
+        
+        if (name.length() > 1 && Character.isUpperCase(name.charAt(1)) && Character.isUpperCase(name.charAt(0)))
+            return name;
+        
+        char chars[] = name.toCharArray();
+        chars[0] = Character.toLowerCase(chars[0]);
+        return new String(chars);
+    }
 }

@@ -143,6 +143,8 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	@Override
 	public Object readAny(int parameterizedType, Type targetType) throws IOException {
 
+		targetType = TypeUtil.unwrapTypeVariable(targetType);
+		
 		Object value;
 		boolean convert;
 		
