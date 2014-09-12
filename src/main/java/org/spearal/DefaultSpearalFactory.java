@@ -43,6 +43,7 @@ import org.spearal.impl.instantiator.MapInstantiator;
 import org.spearal.impl.instantiator.ProxyInstantiator;
 import org.spearal.impl.introspector.IntrospectorImpl;
 import org.spearal.impl.loader.TypeLoaderImpl;
+import org.spearal.impl.partial.NoProxyPartialObjectFactory;
 import org.spearal.impl.property.SimplePropertiesFactory;
 import org.spearal.impl.security.SecurizerImpl;
 import org.spearal.impl.util.ServiceLoader;
@@ -113,11 +114,15 @@ public class DefaultSpearalFactory implements SpearalFactory {
 	
 	protected static final PartialObjectFactory newDefaultPartialObjectFactory() {
 		try {
+			// Check if javassist is available
+			Class.forName("javassist.util.proxy.ProxyObject");
+			// Instantiate factory
 			Class<?> cls = Class.forName("org.spearal.impl.partial.JavassistPartialObjectFactory");
 			return (PartialObjectFactory)cls.newInstance();
 		}
-		catch (Exception e) {
-			throw new RuntimeException("Could not create default PartialObjectFactory", e);
+		catch (Throwable e) {
+			// javassist not present, fallback to incomplete classes
+			return new NoProxyPartialObjectFactory();
 		}
 	}
 	
