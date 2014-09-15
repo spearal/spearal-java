@@ -971,18 +971,21 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
 			
 			Property[] properties = context.getProperties(cls);
+
 			Property[] serializedProperties = new Property[propertyNames.length];
-			for (int i = 0; i < propertyNames.length; i++) {
-				String propertyName = propertyNames[i];
-				for (Property property : properties) {
-					if (propertyName.equals(property.getName())) {
+			boolean partial = false;
+			
+			propertiesLoop:
+			for (Property property : properties) {
+				String propertyName = property.getName();
+				for (int i = 0; i < propertyNames.length; i++) {
+					if (propertyName.equals(propertyNames[i])) {
 						serializedProperties[i] = property;
-						break;
+						continue propertiesLoop;
 					}
 				}
+				partial = true;
 			}
-			
-			boolean partial = serializedProperties.length < properties.length;
 			
 			return new ClassDescriptor(cls, serializedProperties, partial);
 		}

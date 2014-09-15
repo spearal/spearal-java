@@ -17,6 +17,7 @@
  */
 package org.spearal.test;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
@@ -24,11 +25,14 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.spearal.SpearalEncoder;
 import org.spearal.DefaultSpearalFactory;
+import org.spearal.SpearalDecoder;
+import org.spearal.SpearalEncoder;
 import org.spearal.SpearalFactory;
+import org.spearal.configuration.AliasStrategy;
 import org.spearal.configuration.PartialObjectFactory.PartialObjectProxy;
 import org.spearal.configuration.PartialObjectFactory.UndefinedPropertyException;
+import org.spearal.test.model.AliasedAlteredSimpleBean;
 import org.spearal.test.model.ChildBean;
 import org.spearal.test.model.SimpleBean;
 
@@ -122,5 +126,56 @@ public class TestPartialBean extends AbstractSpearalTestUnit {
 		}
 		
 		Assert.assertEquals(bean.getSimpleBeans().size(), ((ChildBean)result).getSimpleBeans().size());
+	}
+
+	@Test
+	public void testAltered() throws IOException {
+		SimpleBean bean = new SimpleBean(true, 1, 0.1, "blabla");
+		
+		SpearalFactory serverFactory = new DefaultSpearalFactory();
+		serverFactory.getContext().configure(new AliasStrategy() {
+			
+			@Override
+			public String alias(Class<?> cls) {
+				return cls.getSimpleName();
+			}
+			
+			@Override
+			public String unalias(String aliasedClassName) {
+				return "org.spearal.test.model." + aliasedClassName;
+			}
+		});
+		
+		SpearalFactory clientFactory = new DefaultSpearalFactory();
+		clientFactory.getContext().configure(new AliasStrategy() {
+			
+			@Override
+			public String alias(Class<?> cls) {
+				return cls.getSimpleName().substring("Aliased".length());
+			}
+			
+			@Override
+			public String unalias(String aliasedClassName) {
+				return "org.spearal.test.model.AliasedAltered" + aliasedClassName;
+			}
+		});
+
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		SpearalEncoder encoder = serverFactory.newEncoder(baos);
+		encoder.writeAny(bean);
+		
+		byte[] bytes = baos.toByteArray();
+		
+		ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+		SpearalDecoder decoder = clientFactory.newDecoder(bais);
+		decoder.printAny(clientFactory.newPrinter(printStream));
+		printStream.println();
+		
+		bais.reset();
+		decoder = clientFactory.newDecoder(bais);
+		AliasedAlteredSimpleBean clientBean = decoder.readAny(AliasedAlteredSimpleBean.class);
+		
+		if (!(clientBean instanceof PartialObjectProxy))
+			Assert.fail("Not a PartialObjectProxy: " + clientBean);
 	}
 }
