@@ -17,8 +17,6 @@
  */
 package org.spearal.impl;
 
-import static org.spearal.configuration.PropertyFactory.ZERO_PROPERTIES;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -43,26 +41,25 @@ public class SpearalPropertyFilterImpl implements SpearalPropertyFilter {
 
 	@Override
 	public void add(Class<?> cls, String... propertyNames) {
-		if (propertyNames == null || propertyNames.length == 0)
-			this.propertiesMap.put(cls, ZERO_PROPERTIES);
-		else {
-			Set<String> propertyNamesSet = new HashSet<String>(propertyNames.length);
-			for (String propertyName : propertyNames)
+		if (propertyNames == null)
+			propertyNames = new String[0];
+
+		Set<String> propertyNamesSet = new HashSet<String>(propertyNames.length);
+		for (String propertyName : propertyNames)
+			propertyNamesSet.add(propertyName);
+		
+		String[] unfilterableProperties = context.getUnfilterableProperties(cls);
+		if (unfilterableProperties != null) {
+			for (String propertyName : unfilterableProperties)
 				propertyNamesSet.add(propertyName);
-			
-			String[] unfilterableProperties = context.getUnfilterableProperties(cls);
-			if (unfilterableProperties != null) {
-				for (String propertyName : unfilterableProperties)
-					propertyNamesSet.add(propertyName);
-			}
-			
-			Property[] properties = context.getProperties(cls).clone();
-			for (int i = 0; i < properties.length; i++) {
-				if (!propertyNamesSet.contains(properties[i].getName()))
-					properties[i] = null;
-			}
-			this.propertiesMap.put(cls, properties);
 		}
+		
+		Property[] properties = context.getProperties(cls).clone();
+		for (int i = 0; i < properties.length; i++) {
+			if (!propertyNamesSet.contains(properties[i].getName()))
+				properties[i] = null;
+		}
+		this.propertiesMap.put(cls, properties);
 	}
 
 	@Override
