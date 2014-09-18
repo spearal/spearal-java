@@ -18,13 +18,28 @@
 
 apply plugin: 'java'
 apply plugin: 'maven'
+apply plugin: 'signing'
 
 group = 'org.spearal'
 version =  spearalVersion
+description = 'Spearal Java'
 
 repositories {
     mavenLocal()
     mavenCentral()
+}
+
+configurations {
+	deployerJars
+}
+
+dependencies {
+
+	compile "org.javassist:javassist:3.18.2-GA"
+	
+	testCompile "junit:junit:4.11"
+
+	deployerJars 'org.apache.maven.wagon:wagon-http:2.2'
 }
 
 compileJava {
@@ -37,11 +52,16 @@ jar {
     version =  spearalVersion
 }
 
-dependencies {
-
-    compile "org.javassist:javassist:3.18.2-GA"
-    
-    testCompile "junit:junit:4.11"
+javadoc {
+	title "${project.description} API Documentation"
+	
+	configure(options) {
+		version = true
+		author = true
+		use = true
+		windowTitle = "${project.description} API Documentation"
+		docTitle = "${project.description} API Documentation ${spearalVersion}"
+	}
 }
 
 task sourcesJar(type: Jar, dependsOn: 'classes') {
@@ -49,10 +69,83 @@ task sourcesJar(type: Jar, dependsOn: 'classes') {
 	from sourceSets.main.allSource
 }
 
+task javadocJar(type: Jar, dependsOn: 'javadoc') {
+	classifier = 'javadoc'
+	from javadoc.destinationDir
+}
+
 artifacts {
 	archives sourcesJar
+	archives javadocJar
 }
 
 task wrapper(type: Wrapper) {
     gradleVersion = '1.12'
+}
+
+signing {
+	required {
+		gradle.taskGraph.hasTask('uploadArchives')
+	}
+	sign configurations.archives
+}
+
+install {
+	repositories {
+		mavenInstaller {
+			// Generated dependencies are not suitable for maven pom, remove everything for now
+			pom.whenConfigured { pom -> pom.dependencies.clear() }
+		}
+	}
+}
+
+uploadArchives {
+	repositories {
+		mavenDeployer {
+			beforeDeployment {
+				MavenDeployment deployment -> signing.signPom(deployment)
+			}
+			
+			repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+				authentication(userName: sonatypeOssUserName, password: sonatypeOssPassword)
+			}
+			snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+				authentication(userName: sonatypeOssUserName, password: sonatypeOssPassword)
+			}
+			
+			pom.project {
+				name 'Spearal Java'
+				description project.description
+				url 'http://www.spearal.io'
+				
+				scm {
+					url 'scm:git@github.com:spearal/spearal-java.git'
+					connection 'scm:git@github.com:spearal/spearal-java.git'
+					developerConnection 'scm:git@github.com:spearal/spearal-java.git'
+				}
+				
+				licenses {
+					license {
+						name 'Apache License, Version 2.0'
+						url 'http://www.apache.org/licenses/LICENSE-2.0'
+						distribution 'repo'
+					}
+				}
+				
+				developers {
+					developer {
+						id 'fwolff'
+						name 'Franck Wolff'
+					}
+					developer {
+						id 'wdrai'
+						name 'William Drai'
+					}
+				}
+			}
+			
+			// Generated dependencies are not suitable for maven pom, remove everything for now
+			pom.whenConfigured { pom -> pom.dependencies.clear() }
+		}
+	}
 }
