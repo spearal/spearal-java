@@ -17,9 +17,6 @@
  */
 package org.spearal.impl.property;
 
-import static org.spearal.impl.SpearalIType.ITYPE_FALSE;
-import static org.spearal.impl.SpearalIType.ITYPE_TRUE;
-
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -27,6 +24,7 @@ import java.lang.reflect.Method;
 
 import org.spearal.impl.ExtendedSpearalDecoder;
 import org.spearal.impl.ExtendedSpearalEncoder;
+import org.spearal.impl.SpearalType;
 
 /**
  * @author Franck WOLFF
@@ -53,17 +51,17 @@ public class PrimitiveBooleanProperty extends AnyProperty {
 		throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException {
 		
 		if (field != null) {
-			if (parameterizedType == ITYPE_TRUE)
+			if (parameterizedType == SpearalType.TRUE.id())
 				field.setBoolean(holder, true);
-			else if (parameterizedType == ITYPE_FALSE)
+			else if (parameterizedType == SpearalType.FALSE.id())
 				field.setBoolean(holder, false);
 			else
 				field.setBoolean(holder, ((Boolean)decoder.readAny(parameterizedType, boolean.class)).booleanValue());
 		}
 		else if (setter != null) {
-			if (parameterizedType == ITYPE_TRUE)
+			if (parameterizedType == SpearalType.TRUE.id())
 				setter.invoke(holder, Boolean.TRUE);
-			else if (parameterizedType == ITYPE_FALSE)
+			else if (parameterizedType == SpearalType.FALSE.id())
 				setter.invoke(holder, Boolean.FALSE);
 			else
 				setter.invoke(holder, decoder.readAny(parameterizedType, boolean.class));

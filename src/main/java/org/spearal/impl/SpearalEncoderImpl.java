@@ -39,7 +39,7 @@ import org.spearal.impl.cache.StringIndexMap;
 /**
  * @author Franck WOLFF
  */
-public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType {
+public class SpearalEncoderImpl implements ExtendedSpearalEncoder {
 
 	private final SpearalContext context;
 	private final SpearalPropertyFilter propertyFilter;
@@ -107,13 +107,13 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 	@Override
 	public void writeNull() throws IOException {
 		ensureCapacity(1);
-		buffer[position++] = ITYPE_NULL;
+		buffer[position++] = (byte)SpearalType.NULL.id();
 	}
 	
 	@Override
 	public void writeBoolean(boolean value) throws IOException {
 		ensureCapacity(1);
-		buffer[position++] = (value ? (byte)ITYPE_TRUE : (byte)ITYPE_FALSE);
+		buffer[position++] = (byte)(value ? SpearalType.TRUE.id() : SpearalType.FALSE.id());
 	}
 	
 	@Override
@@ -144,7 +144,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 		}
 		
 		ensureCapacity(1);
-		buffer[position++] = (byte)(ITYPE_DATE_TIME | parameters);
+		buffer[position++] = (byte)(SpearalType.DATE_TIME.id() | parameters);
 		
 		if (date.hasDate) {
 			int year = date.year - 2000;
@@ -193,7 +193,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 		}
 		
 		ensureCapacity(2);
-		buffer[position++] = (byte)(ITYPE_INTEGRAL | inverse);
+		buffer[position++] = (byte)(SpearalType.INTEGRAL.id() | inverse);
 		buffer[position++] = value;
 	}
 	
@@ -216,7 +216,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 		}
 		
 		ensureCapacity(length0 + 2);
-		buffer[position++] = (byte)(ITYPE_INTEGRAL | inverse | length0);
+		buffer[position++] = (byte)(SpearalType.INTEGRAL.id() | inverse | length0);
 		
 		if (length0 == 1)
 			buffer[position++] = (byte)(value >>> 8);
@@ -242,7 +242,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 		}
 		
 		ensureCapacity(length0 + 2);
-		buffer[position++] = (byte)(ITYPE_INTEGRAL | inverse | length0);
+		buffer[position++] = (byte)(SpearalType.INTEGRAL.id() | inverse | length0);
 		writeUnsignedIntValue(value, length0);
 	}
 	
@@ -267,7 +267,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 		final byte[] buffer = this.buffer;
 		int position = this.position;
 		
-		buffer[position++] = (byte)(ITYPE_INTEGRAL | inverse | length0);
+		buffer[position++] = (byte)(SpearalType.INTEGRAL.id() | inverse | length0);
 		
 		switch (length0) {
 		case 7:
@@ -296,7 +296,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 	
 	@Override
 	public void writeBigInteger(BigInteger value) throws IOException {
-		writeBigNumberData(ITYPE_BIG_INTEGRAL, exponentize(value));
+		writeBigNumberData(SpearalType.BIG_INTEGRAL.id(), exponentize(value));
 	}
 
 	@Override
@@ -345,7 +345,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 						final byte[] buffer = this.buffer;
 						int position = this.position;
 						
-						buffer[position++] = (byte)(ITYPE_FLOATING | 0x08 | inverse | length0);
+						buffer[position++] = (byte)(SpearalType.FLOATING.id() | 0x08 | inverse | length0);
 						
 						switch (length0) {
 						case 3:
@@ -370,38 +370,38 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 		}
 		
 		ensureCapacity(9);
-		buffer[position++] = ITYPE_FLOATING;
+		buffer[position++] = (byte)SpearalType.FLOATING.id();
 		writeLongData(bits);
 	}
 
 	@Override
 	public void writeBigDecimal(BigDecimal value) throws IOException {
-		writeBigNumberData(ITYPE_BIG_FLOATING, value.toString());
+		writeBigNumberData(SpearalType.BIG_FLOATING.id(), value.toString());
 	}
 	
 	@Override
 	public void writeChar(char value) throws IOException {
-		writeStringData(ITYPE_STRING, String.valueOf(value));
+		writeStringData(SpearalType.STRING.id(), String.valueOf(value));
 	}
 
 	@Override
 	public final void writeString(String value) throws IOException {
-		writeStringData(ITYPE_STRING, value);
+		writeStringData(SpearalType.STRING.id(), value);
 	}
 
 	@Override
 	public void writeByteArray(byte[] value) throws IOException {
-		if (!putAndWriteObjectReference(ITYPE_BYTE_ARRAY, value)) {
-			writeTypeUint(ITYPE_BYTE_ARRAY, value.length);
+		if (!putAndWriteObjectReference(SpearalType.BYTE_ARRAY.id(), value)) {
+			writeTypeUint(SpearalType.BYTE_ARRAY.id(), value.length);
 			writeBytes(value);
 		}
 	}
 
 	@Override
 	public void writeArray(Object value) throws IOException {
-		if (!putAndWriteObjectReference(ITYPE_COLLECTION, value)) {
+		if (!putAndWriteObjectReference(SpearalType.COLLECTION.id(), value)) {
 			final int size = Array.getLength(value);
-			writeTypeUint(ITYPE_COLLECTION, size);
+			writeTypeUint(SpearalType.COLLECTION.id(), size);
 			for (int i = 0; i < size; i++)
 				writeAny(Array.get(value, i));
 		}
@@ -409,9 +409,9 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 
 	@Override
 	public void writeCollection(Collection<?> value) throws IOException {
-		if (!putAndWriteObjectReference(ITYPE_COLLECTION, value)) {
+		if (!putAndWriteObjectReference(SpearalType.COLLECTION.id(), value)) {
 			final int size = value.size();
-			writeTypeUint(ITYPE_COLLECTION, size);
+			writeTypeUint(SpearalType.COLLECTION.id(), size);
 			for (Object item : value)
 				writeAny(item);
 		}
@@ -419,9 +419,9 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 
 	@Override
 	public void writeMap(Map<?, ?> value) throws IOException {
-		if (!putAndWriteObjectReference(ITYPE_MAP, value)) {
+		if (!putAndWriteObjectReference(SpearalType.MAP.id(), value)) {
 			final int size = value.size();
-			writeTypeUint(ITYPE_MAP, size);
+			writeTypeUint(SpearalType.MAP.id(), size);
 			for (Map.Entry<?, ?> entry : value.entrySet()) {
 				writeAny(entry.getKey());
 				writeAny(entry.getValue());
@@ -431,18 +431,18 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 
 	@Override
 	public void writeEnum(Enum<?> value) throws IOException {
-		writeStringData(ITYPE_ENUM, value.getClass().getName());
-		writeStringData(ITYPE_STRING, value.name());
+		writeStringData(SpearalType.ENUM.id(), value.getClass().getName());
+		writeStringData(SpearalType.STRING.id(), value.name());
 	}
 	
 	@Override
 	public void writeClass(Class<?> value) throws IOException {
-		writeStringData(ITYPE_CLASS, value.getName());
+		writeStringData(SpearalType.CLASS.id(), value.getName());
 	}
 
 	@Override
 	public void writeBean(Object value) throws IOException {
-		if (!putAndWriteObjectReference(ITYPE_BEAN, value)) {
+		if (!putAndWriteObjectReference(SpearalType.BEAN.id(), value)) {
 			Class<?> cls = value.getClass();
 			
 			FilteredBeanDescriptor descriptor = descriptors.get(cls);
@@ -452,7 +452,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 					descriptors.put(cls, descriptor);
 			}
 			
-			writeStringData(ITYPE_BEAN, descriptor.getDescription());
+			writeStringData(SpearalType.BEAN.id(), descriptor.getDescription());
 			
 			for (Property property : descriptor.getProperties()) {
 				if (property == null)
