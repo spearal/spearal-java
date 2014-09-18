@@ -17,12 +17,16 @@
  */
 package org.spearal.test;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.spearal.DefaultSpearalFactory;
+import org.spearal.SpearalDecoder;
+import org.spearal.SpearalFactory;
 import org.spearal.test.model.ChildBean;
 import org.spearal.test.model.SimpleBean;
 
@@ -57,6 +61,17 @@ public class TestBean extends AbstractSpearalTestUnit {
 		bean.getSimpleBeans().add(new SimpleBean(false, -5, -10.09, "abc"));
 		
 		encodeDecode(bean, -1);
+	}
+	
+	@Test
+	public void testNoPartial() throws IOException {
+		byte[] data = encode(new ChildBean());
+		
+		SpearalFactory factory = new DefaultSpearalFactory();
+		SpearalDecoder decoder = factory.newDecoder(new ByteArrayInputStream(data));
+		decoder.readAny();
+		
+		Assert.assertFalse(decoder.containsPartialObjects());
 	}
 	
 	private void encodeDecode(Object value, int expectedSize) throws IOException {

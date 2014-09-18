@@ -20,6 +20,7 @@ package org.spearal.test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Type;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -43,7 +44,7 @@ public class TestPartialBean extends AbstractSpearalTestUnit {
 
 	@Before
 	public void setUp() throws Exception {
-		// printStream = System.out;
+		printStream = System.out;
 	}
 
 	@After
@@ -64,7 +65,8 @@ public class TestPartialBean extends AbstractSpearalTestUnit {
 		encoder.getPropertyFilter().add(ChildBean.class, "childBooleanProperty", "parentStringProperty");
 		encoder.writeAny(bean);
 		
-		Object result = decode(baos.toByteArray());
+		Object result = decodeCheckPartial(new DefaultSpearalFactory(), baos.toByteArray(), null);
+		
 		if (!(result instanceof PartialObjectProxy))
 			Assert.fail("Not a PartialObjectProxy: " + result);
 		if (!(result instanceof ChildBean))
@@ -97,7 +99,8 @@ public class TestPartialBean extends AbstractSpearalTestUnit {
 		encoder.getPropertyFilter().add(SimpleBean.class, "booleanValue", "stringValue");
 		encoder.writeAny(bean);
 		
-		result = decode(baos.toByteArray());
+		result = decodeCheckPartial(new DefaultSpearalFactory(), baos.toByteArray(), null);
+
 		if (!(result instanceof PartialObjectProxy))
 			Assert.fail("Not a PartialObjectProxy: " + result);
 		if (!(result instanceof ChildBean))
@@ -164,18 +167,25 @@ public class TestPartialBean extends AbstractSpearalTestUnit {
 		SpearalEncoder encoder = serverFactory.newEncoder(baos);
 		encoder.writeAny(bean);
 		
-		byte[] bytes = baos.toByteArray();
-		
-		ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-		SpearalDecoder decoder = clientFactory.newDecoder(bais);
-		decoder.printAny(clientFactory.newPrinter(printStream));
-		printStream.println();
-		
-		bais.reset();
-		decoder = clientFactory.newDecoder(bais);
-		AliasedAlteredSimpleBean clientBean = decoder.readAny(AliasedAlteredSimpleBean.class);
+		AliasedAlteredSimpleBean clientBean = decodeCheckPartial(clientFactory, baos.toByteArray(), AliasedAlteredSimpleBean.class);
 		
 		if (!(clientBean instanceof PartialObjectProxy))
 			Assert.fail("Not a PartialObjectProxy: " + clientBean);
+	}
+	
+	@SuppressWarnings("unchecked")
+	private <T> T decodeCheckPartial(SpearalFactory factory, byte[] bytes, Type targetType) throws IOException {
+		ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+		SpearalDecoder decoder = factory.newDecoder(bais);
+		decoder.printAny(factory.newPrinter(printStream));
+		printStream.println();
+		
+		bais.reset();
+		decoder = factory.newDecoder(bais);
+		Object result = decoder.readAny(targetType);
+		
+		Assert.assertTrue(decoder.containsPartialObjects());
+
+		return (T)result;
 	}
 }

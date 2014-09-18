@@ -30,6 +30,8 @@ public interface SpearalDecoder {
 	Object readAny() throws IOException;
 	<T> T readAny(Type targetType) throws IOException;
 	
+	boolean containsPartialObjects();
+	
 	void skipAny() throws IOException;
 	
 	void printAny(SpearalPrinter printer) throws IOException;

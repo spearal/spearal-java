@@ -64,6 +64,8 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	private final byte[] buffer;
 	private int position;
 	private int size;
+	
+	private boolean partialObjects;
 
 	public SpearalDecoderImpl(SpearalContext context, InputStream in) {
 		this(context, in, 1024);
@@ -107,6 +109,8 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 		this.buffer = new byte[capacity];
 		this.position = 0;
 		this.size = 0;
+		
+		this.partialObjects = false;
 	}
 	
 	@Override
@@ -123,6 +127,11 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	@Override
 	public <T> T readAny(Type targetType) throws IOException {
 		return (T)readAny(readNextByte(), targetType);
+	}
+
+	@Override
+	public boolean containsPartialObjects() {
+		return partialObjects;
 	}
 
 	@Override
@@ -718,10 +727,12 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 			Object value;
 			if (cls == ClassNotFound.class)
 				value = new ClassNotFound(classDescription);
-			else if (descriptor.partial)
-				value = context.instantiatePartial(this, cls, descriptor.properties);
-			else
+			else if (!descriptor.partial)
 				value = context.instantiate(this, cls);
+			else {
+				value = context.instantiatePartial(this, cls, descriptor.properties);
+				this.partialObjects = true;
+			}
 			sharedObjects.add(value);
 			
 			for (Property property : descriptor.properties) {
