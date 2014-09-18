@@ -19,9 +19,9 @@ package org.spearal.impl.converter;
 
 import java.lang.reflect.Type;
 
+import org.spearal.SpearalContext;
 import org.spearal.configuration.ConverterProvider;
 import org.spearal.configuration.ConverterProvider.Converter;
-import org.spearal.impl.ExtendedSpearalDecoder;
 import org.spearal.impl.util.TypeUtil;
 
 /**
@@ -35,7 +35,7 @@ public class EnumConverter implements ConverterProvider, Converter<Enum<?>> {
 	}
 
 	@Override
-	public Enum<?> convert(ExtendedSpearalDecoder decoder, Object value, Type targetType) {
+	public Enum<?> convert(SpearalContext context, Object value, Type targetType) {
 		if (value == null)
 			return null;
 		

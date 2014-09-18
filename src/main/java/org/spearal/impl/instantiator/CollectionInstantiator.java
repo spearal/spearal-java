@@ -23,12 +23,12 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.TreeSet;
 
+import org.spearal.SpearalContext;
+import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.configuration.PropertyInstantiatorProvider;
 import org.spearal.configuration.PropertyInstantiatorProvider.PropertyInstantiator;
 import org.spearal.configuration.TypeInstantiatorProvider;
 import org.spearal.configuration.TypeInstantiatorProvider.TypeInstantiator;
-import org.spearal.configuration.PropertyFactory.Property;
-import org.spearal.impl.ExtendedSpearalDecoder;
 import org.spearal.impl.util.TypeUtil;
 
 /**
@@ -44,7 +44,7 @@ public class CollectionInstantiator implements
 	}
 
 	@Override
-	public Object instantiate(ExtendedSpearalDecoder decoder, Type type) {
+	public Object instantiate(SpearalContext context, Type type) {
 		Class<?> cls = TypeUtil.classOfType(type);
 
 		if (cls.isInterface()) {
@@ -57,7 +57,7 @@ public class CollectionInstantiator implements
             throw new IllegalArgumentException("Unsupported collection interface: " + cls);
         }
 		
-		decoder.getContext().getSecurizer().checkDecodable(type);
+		context.getSecurizer().checkDecodable(type);
 		
         try {
 			return cls.newInstance();
@@ -73,8 +73,8 @@ public class CollectionInstantiator implements
 	}
 
 	@Override
-	public Object instantiate(ExtendedSpearalDecoder decoder, Property property) {
-		return instantiate(decoder, property.getGenericType());
+	public Object instantiate(SpearalContext context, Property property) {
+		return instantiate(context, property.getGenericType());
 	}
 
 	private static boolean canInstantiate(Type type) {

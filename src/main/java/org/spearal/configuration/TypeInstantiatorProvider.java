@@ -19,7 +19,7 @@ package org.spearal.configuration;
 
 import java.lang.reflect.Type;
 
-import org.spearal.impl.ExtendedSpearalDecoder;
+import org.spearal.SpearalContext;
 
 /**
  * @author Franck WOLFF
@@ -28,7 +28,7 @@ public interface TypeInstantiatorProvider extends Repeatable {
 
 	public interface TypeInstantiator {
 		
-		Object instantiate(ExtendedSpearalDecoder decoder, Type type);
+		Object instantiate(SpearalContext context, Type type);
 	}
 	
 	TypeInstantiator getInstantiator(Type type);

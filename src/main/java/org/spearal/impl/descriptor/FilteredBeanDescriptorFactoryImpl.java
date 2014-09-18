@@ -17,22 +17,23 @@
  */
 package org.spearal.impl.descriptor;
 
-import org.spearal.SpearalEncoder;
-import org.spearal.configuration.EncoderBeanDescriptorFactory;
+import org.spearal.SpearalContext;
+import org.spearal.SpearalPropertyFilter;
+import org.spearal.configuration.FilteredBeanDescriptorFactory;
 import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.util.ClassDescriptionUtil;
 
 /**
  * @author Franck WOLFF
  */
-public class EncoderBeanDescriptorFactoryImpl implements EncoderBeanDescriptorFactory {
+public class FilteredBeanDescriptorFactoryImpl implements FilteredBeanDescriptorFactory {
 	
-	public static class BeanDescriptor implements EncoderBeanDescriptor {
+	private static class FilteredBeanDescriptorImpl implements FilteredBeanDescriptor {
 
 		private final String description;
 		private final Property[] properties;
 		
-		public BeanDescriptor(String description, Property[] properties) {
+		public FilteredBeanDescriptorImpl(String description, Property[] properties) {
 			this.description = description;
 			this.properties = properties;
 		}
@@ -54,10 +55,10 @@ public class EncoderBeanDescriptorFactoryImpl implements EncoderBeanDescriptorFa
 	}
 
 	@Override
-	public EncoderBeanDescriptor createDescription(SpearalEncoder encoder, Object value) {
+	public FilteredBeanDescriptor createDescription(SpearalContext context, SpearalPropertyFilter filter, Object value) {
 		Class<?> type = value.getClass();
-		Property[] properties = encoder.getPropertyFilter().get(type);
-		String description = ClassDescriptionUtil.createAliasedDescription(encoder.getContext(), type, properties);
-		return new BeanDescriptor(description, properties);
+		Property[] properties = filter.get(type);
+		String description = ClassDescriptionUtil.createAliasedDescription(context, type, properties);
+		return new FilteredBeanDescriptorImpl(description, properties);
 	}
 }

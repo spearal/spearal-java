@@ -17,15 +17,16 @@
  */
 package org.spearal.configuration;
 
-import org.spearal.SpearalEncoder;
+import org.spearal.SpearalContext;
+import org.spearal.SpearalPropertyFilter;
 import org.spearal.configuration.PropertyFactory.Property;
 
 /**
  * @author Franck WOLFF
  */
-public interface EncoderBeanDescriptorFactory extends Repeatable {
+public interface FilteredBeanDescriptorFactory extends Repeatable {
 
-	public interface EncoderBeanDescriptor {
+	public interface FilteredBeanDescriptor {
 		
 		String getDescription();
 		Property[] getProperties();
@@ -33,5 +34,5 @@ public interface EncoderBeanDescriptorFactory extends Repeatable {
 		boolean isCacheable();
 	}
 	
-	EncoderBeanDescriptor createDescription(SpearalEncoder encoder, Object value);
+	FilteredBeanDescriptor createDescription(SpearalContext context, SpearalPropertyFilter filter, Object value);
 }

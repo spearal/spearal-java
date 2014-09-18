@@ -19,7 +19,6 @@ package org.spearal.configuration;
 
 import org.spearal.SpearalContext;
 import org.spearal.configuration.PropertyFactory.Property;
-import org.spearal.impl.ExtendedSpearalDecoder;
 
 /**
  * @author Franck WOLFF
@@ -42,6 +41,6 @@ public interface PartialObjectFactory extends Configurable {
 		}
 	}
 
-	Object instantiatePartial(ExtendedSpearalDecoder decoder, Class<?> cls, Property[] partialProperties)
+	Object instantiatePartial(SpearalContext context, Class<?> cls, Property[] partialProperties)
 		throws InstantiationException, IllegalAccessException;
 }

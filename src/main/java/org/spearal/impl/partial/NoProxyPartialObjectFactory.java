@@ -20,7 +20,6 @@ package org.spearal.impl.partial;
 import org.spearal.SpearalContext;
 import org.spearal.configuration.PartialObjectFactory;
 import org.spearal.configuration.PropertyFactory.Property;
-import org.spearal.impl.ExtendedSpearalDecoder;
 import org.spearal.impl.cache.AnyMap.ValueProvider;
 
 /**
@@ -39,7 +38,7 @@ public class NoProxyPartialObjectFactory implements PartialObjectFactory, ValueP
 	}
 
 	@Override
-	public Object instantiatePartial(ExtendedSpearalDecoder decoder, Class<?> cls, Property[] partialProperties)
+	public Object instantiatePartial(SpearalContext context, Class<?> cls, Property[] partialProperties)
 		throws InstantiationException, IllegalAccessException {
 		
 		return cls.newInstance();

@@ -23,7 +23,7 @@ import java.lang.reflect.Type;
 
 import org.spearal.configuration.CoderProvider.Coder;
 import org.spearal.configuration.Configurable;
-import org.spearal.configuration.EncoderBeanDescriptorFactory.EncoderBeanDescriptor;
+import org.spearal.configuration.FilteredBeanDescriptorFactory.FilteredBeanDescriptor;
 import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.configuration.Securizer;
 
@@ -45,20 +45,20 @@ public interface SpearalContext {
 	
 	Property[] getProperties(Class<?> cls);
 	
-	Object instantiate(SpearalDecoder decoder, Type type)
+	Object instantiate(Type type)
 		throws InstantiationException, IllegalAccessException;
-	Object instantiate(SpearalDecoder decoder, Property property)
+	Object instantiate(Property property)
 		throws InstantiationException, IllegalAccessException;
-	Object instantiatePartial(SpearalDecoder decoder, Class<?> cls, Property[] partialProperties)
+	Object instantiatePartial(Class<?> cls, Property[] partialProperties)
 		throws InstantiationException, IllegalAccessException;
 	
 	Coder getCoder(Class<?> valueClass);
 	
 	String[] getUnfilterableProperties(Class<?> valueClass);
 	
-	Object convert(SpearalDecoder decoder, Object value, Type targetType);
+	Object convert(Object value, Type targetType);
 	
 	Property createProperty(String name, Field field, Method getter, Method setter);
 	
-	EncoderBeanDescriptor createDescriptor(SpearalEncoder encoder, Object value);
+	FilteredBeanDescriptor createDescriptor(SpearalPropertyFilter filter, Object value);
 }

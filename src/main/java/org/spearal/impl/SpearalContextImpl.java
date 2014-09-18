@@ -24,16 +24,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.spearal.SpearalContext;
-import org.spearal.SpearalDecoder;
-import org.spearal.SpearalEncoder;
+import org.spearal.SpearalPropertyFilter;
 import org.spearal.configuration.AliasStrategy;
 import org.spearal.configuration.CoderProvider;
 import org.spearal.configuration.CoderProvider.Coder;
 import org.spearal.configuration.Configurable;
 import org.spearal.configuration.ConverterProvider;
 import org.spearal.configuration.ConverterProvider.Converter;
-import org.spearal.configuration.EncoderBeanDescriptorFactory;
-import org.spearal.configuration.EncoderBeanDescriptorFactory.EncoderBeanDescriptor;
+import org.spearal.configuration.FilteredBeanDescriptorFactory;
+import org.spearal.configuration.FilteredBeanDescriptorFactory.FilteredBeanDescriptor;
 import org.spearal.configuration.Introspector;
 import org.spearal.configuration.PartialObjectFactory;
 import org.spearal.configuration.PropertyFactory;
@@ -80,7 +79,7 @@ public class SpearalContextImpl implements SpearalContext {
 	
 	private final List<PropertyFactory> propertyFactories;
 	
-	private final List<EncoderBeanDescriptorFactory> descriptorFactories;
+	private final List<FilteredBeanDescriptorFactory> descriptorFactories;
 	
 	private static final String[] EMPTY_STRING_ARRAY = new String[] {};
 	
@@ -164,7 +163,7 @@ public class SpearalContextImpl implements SpearalContext {
 		
 		this.propertyFactories = new ArrayList<PropertyFactory>();
 		
-		this.descriptorFactories = new ArrayList<EncoderBeanDescriptorFactory>();
+		this.descriptorFactories = new ArrayList<FilteredBeanDescriptorFactory>();
 	}
 
 	@Override
@@ -212,8 +211,8 @@ public class SpearalContextImpl implements SpearalContext {
 				added = true;
 			}
 			
-			if (configurable instanceof EncoderBeanDescriptorFactory) {
-				descriptorFactories.add((append ? descriptorFactories.size() : 0), (EncoderBeanDescriptorFactory)configurable);
+			if (configurable instanceof FilteredBeanDescriptorFactory) {
+				descriptorFactories.add((append ? descriptorFactories.size() : 0), (FilteredBeanDescriptorFactory)configurable);
 				added = true;
 			}
 		}
@@ -269,31 +268,29 @@ public class SpearalContextImpl implements SpearalContext {
 	}
 
 	@Override
-	public Object instantiate(SpearalDecoder decoder, Type type) throws InstantiationException {
-		return typeInstantiatorsCache.getOrPutIfAbsent(this, type)
-			.instantiate((ExtendedSpearalDecoder)decoder, type);
+	public Object instantiate(Type type) throws InstantiationException {
+		return typeInstantiatorsCache.getOrPutIfAbsent(this, type).instantiate(this, type);
 	}
 
 	@Override
-	public Object instantiate(SpearalDecoder decoder, Property property) throws InstantiationException {
-		return propertyInstantiatorsCache.getOrPutIfAbsent(this, property)
-			.instantiate((ExtendedSpearalDecoder)decoder, property);
+	public Object instantiate(Property property) throws InstantiationException {
+		return propertyInstantiatorsCache.getOrPutIfAbsent(this, property).instantiate(this, property);
 	}
 
 	@Override
-	public Object instantiatePartial(SpearalDecoder decoder, Class<?> cls, Property[] partialProperties)
+	public Object instantiatePartial(Class<?> cls, Property[] partialProperties)
 		throws InstantiationException, IllegalAccessException {
 
-		return partialObjectFactory.instantiatePartial((ExtendedSpearalDecoder)decoder, cls, partialProperties);
+		return partialObjectFactory.instantiatePartial(this, cls, partialProperties);
 	}
 
 	@Override
-	public Object convert(SpearalDecoder decoder, Object value, Type targetType) {
+	public Object convert(Object value, Type targetType) {
 		Class<?> valueClass = (value != null ? value.getClass() : null);
 		if (valueClass == targetType)
 			return value;
 		return convertersCache.getOrPutIfAbsent(this, valueClass, targetType)
-			.convert((ExtendedSpearalDecoder)decoder, value, targetType);
+			.convert(this, value, targetType);
 	}
 	
 	@Override
@@ -323,9 +320,9 @@ public class SpearalContextImpl implements SpearalContext {
 	}
 	
 	@Override
-	public EncoderBeanDescriptor createDescriptor(SpearalEncoder encoder, Object value) {
-		for (EncoderBeanDescriptorFactory factory : descriptorFactories) {
-			EncoderBeanDescriptor descriptor = factory.createDescription(encoder, value);
+	public FilteredBeanDescriptor createDescriptor(SpearalPropertyFilter filter, Object value) {
+		for (FilteredBeanDescriptorFactory factory : descriptorFactories) {
+			FilteredBeanDescriptor descriptor = factory.createDescription(this, filter, value);
 			if (descriptor != null)
 				return descriptor;
 		}

@@ -31,7 +31,7 @@ import java.util.Map;
 
 import org.spearal.SpearalContext;
 import org.spearal.SpearalPropertyFilter;
-import org.spearal.configuration.EncoderBeanDescriptorFactory.EncoderBeanDescriptor;
+import org.spearal.configuration.FilteredBeanDescriptorFactory.FilteredBeanDescriptor;
 import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.cache.IdentityIndexMap;
 import org.spearal.impl.cache.StringIndexMap;
@@ -47,7 +47,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 	
 	private final StringIndexMap sharedStrings;
 	private final IdentityIndexMap sharedObjects;
-	private final Map<Class<?>, EncoderBeanDescriptor> descriptors;
+	private final Map<Class<?>, FilteredBeanDescriptor> descriptors;
 	
 	private final byte[] buffer;
 	private int position;
@@ -73,7 +73,7 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 		
 		this.sharedStrings = new StringIndexMap();
 		this.sharedObjects = new IdentityIndexMap();
-		this.descriptors = new IdentityHashMap<Class<?>, EncoderBeanDescriptor>(32);
+		this.descriptors = new IdentityHashMap<Class<?>, FilteredBeanDescriptor>(32);
 
 		this.buffer = new byte[capacity];
         this.position = 0;
@@ -445,9 +445,9 @@ public class SpearalEncoderImpl implements ExtendedSpearalEncoder, SpearalIType 
 		if (!putAndWriteObjectReference(ITYPE_BEAN, value)) {
 			Class<?> cls = value.getClass();
 			
-			EncoderBeanDescriptor descriptor = descriptors.get(cls);
+			FilteredBeanDescriptor descriptor = descriptors.get(cls);
 			if (descriptor == null) {
-				descriptor = context.createDescriptor(this, value);
+				descriptor = context.createDescriptor(propertyFilter, value);
 				if (descriptor.isCacheable())
 					descriptors.put(cls, descriptor);
 			}

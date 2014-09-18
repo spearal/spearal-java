@@ -19,7 +19,7 @@ package org.spearal.configuration;
 
 import java.lang.reflect.Type;
 
-import org.spearal.impl.ExtendedSpearalDecoder;
+import org.spearal.SpearalContext;
 
 /**
  * @author Franck WOLFF
@@ -28,7 +28,7 @@ public interface ConverterProvider extends Repeatable {
 
 	public interface Converter<T> {
 		
-		T convert(ExtendedSpearalDecoder decoder, Object value, Type targetType);
+		T convert(SpearalContext context, Object value, Type targetType);
 	}
 	
 	Converter<?> getConverter(Class<?> valueClass, Type targetType);

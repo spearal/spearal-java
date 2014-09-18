@@ -17,8 +17,8 @@
  */
 package org.spearal.configuration;
 
+import org.spearal.SpearalContext;
 import org.spearal.configuration.PropertyFactory.Property;
-import org.spearal.impl.ExtendedSpearalDecoder;
 
 /**
  * @author Franck WOLFF
@@ -27,7 +27,7 @@ public interface PropertyInstantiatorProvider extends Repeatable {
 
 	public interface PropertyInstantiator {
 		
-		Object instantiate(ExtendedSpearalDecoder decoder, Property property);
+		Object instantiate(SpearalContext context, Property property);
 	}
 	
 	PropertyInstantiator getInstantiator(Property property);

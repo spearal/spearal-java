@@ -31,8 +31,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
+import org.spearal.SpearalContext;
 import org.spearal.configuration.ConverterProvider;
-import org.spearal.impl.ExtendedSpearalDecoder;
 import org.spearal.impl.SpearalDateTime;
 
 /**
@@ -49,7 +49,7 @@ public class SimpleConvertersProvider implements ConverterProvider {
 		
 		Converter<?> converter = new Converter<Boolean>() {
 			@Override
-			public Boolean convert(ExtendedSpearalDecoder decoder, Object value, Type targetType) {
+			public Boolean convert(SpearalContext context, Object value, Type targetType) {
 				if (value == null)
 					return (targetType == boolean.class ? Boolean.FALSE : null);
 
@@ -74,7 +74,7 @@ public class SimpleConvertersProvider implements ConverterProvider {
 		
 		converter = new Converter<Byte>() {
 			@Override
-			public Byte convert(ExtendedSpearalDecoder decoder, Object value, Type targetType) {
+			public Byte convert(SpearalContext context, Object value, Type targetType) {
 				if (value == null)
 					return (targetType == byte.class ? Byte.valueOf((byte)0) : null);
 
@@ -105,7 +105,7 @@ public class SimpleConvertersProvider implements ConverterProvider {
 		
 		converter = new Converter<Short>() {
 			@Override
-			public Short convert(ExtendedSpearalDecoder decoder, Object value, Type targetType) {
+			public Short convert(SpearalContext context, Object value, Type targetType) {
 				if (value == null)
 					return (targetType == int.class ? Short.valueOf((short)0) : null);
 
@@ -136,7 +136,7 @@ public class SimpleConvertersProvider implements ConverterProvider {
 		
 		converter = new Converter<Integer>() {
 			@Override
-			public Integer convert(ExtendedSpearalDecoder decoder, Object value, Type targetType) {
+			public Integer convert(SpearalContext context, Object value, Type targetType) {
 				if (value == null)
 					return (targetType == int.class ? Integer.valueOf(0) : null);
 
@@ -167,7 +167,7 @@ public class SimpleConvertersProvider implements ConverterProvider {
 		
 		converter = new Converter<Long>() {
 			@Override
-			public Long convert(ExtendedSpearalDecoder decoder, Object value, Type targetType) {
+			public Long convert(SpearalContext context, Object value, Type targetType) {
 				if (value == null)
 					return (targetType == long.class ? Long.valueOf(0L) : null);
 				
@@ -198,7 +198,7 @@ public class SimpleConvertersProvider implements ConverterProvider {
 		
 		converter = new Converter<BigInteger>() {
 			@Override
-			public BigInteger convert(ExtendedSpearalDecoder decoder, Object value, Type targetType) {
+			public BigInteger convert(SpearalContext context, Object value, Type targetType) {
 				if (value == null)
 					return null;
 				
@@ -233,7 +233,7 @@ public class SimpleConvertersProvider implements ConverterProvider {
 		converter = new Converter<Float>() {
 			
 			@Override
-			public Float convert(ExtendedSpearalDecoder decoder, Object value, Type targetType) {
+			public Float convert(SpearalContext context, Object value, Type targetType) {
 				if (value == null)
 					return (targetType == float.class ? Float.valueOf(0.0f) : null);
 				
@@ -267,7 +267,7 @@ public class SimpleConvertersProvider implements ConverterProvider {
 
 		converter = new Converter<Double>() {
 			@Override
-			public Double convert(ExtendedSpearalDecoder decoder, Object value, Type targetType) {
+			public Double convert(SpearalContext context, Object value, Type targetType) {
 				if (value == null)
 					return (targetType == double.class ? Double.valueOf(0.0) : null);
 				
@@ -298,7 +298,7 @@ public class SimpleConvertersProvider implements ConverterProvider {
 		
 		converter = new Converter<BigDecimal>() {
 			@Override
-			public BigDecimal convert(ExtendedSpearalDecoder decoder, Object value, Type targetType) {
+			public BigDecimal convert(SpearalContext context, Object value, Type targetType) {
 				if (value == null)
 					return null;
 				
@@ -330,7 +330,7 @@ public class SimpleConvertersProvider implements ConverterProvider {
 		
 		converter = new Converter<String>() {
 			@Override
-			public String convert(ExtendedSpearalDecoder decoder, Object value, Type targetType) {
+			public String convert(SpearalContext context, Object value, Type targetType) {
 				if (value == null)
 					return null;
 				
@@ -355,7 +355,7 @@ public class SimpleConvertersProvider implements ConverterProvider {
 		
 		converter = new Converter<Character>() {
 			@Override
-			public Character convert(ExtendedSpearalDecoder decoder, Object value, Type targetType) {
+			public Character convert(SpearalContext context, Object value, Type targetType) {
 				if (value == null)
 					return null;
 				
@@ -379,7 +379,7 @@ public class SimpleConvertersProvider implements ConverterProvider {
 		
 		converter = new Converter<Character>() {
 			@Override
-			public Character convert(ExtendedSpearalDecoder decoder, Object value, Type targetType) {
+			public Character convert(SpearalContext context, Object value, Type targetType) {
 				if (value == null)
 					return Character.valueOf('\0');
 				
@@ -403,7 +403,7 @@ public class SimpleConvertersProvider implements ConverterProvider {
 		
 		converter = new Converter<Character[]>() {
 			@Override
-			public Character[] convert(ExtendedSpearalDecoder decoder, Object value, Type targetType) {
+			public Character[] convert(SpearalContext context, Object value, Type targetType) {
 				if (value == null)
 					return null;
 				
@@ -426,7 +426,7 @@ public class SimpleConvertersProvider implements ConverterProvider {
 		
 		converter = new Converter<char[]>() {
 			@Override
-			public char[] convert(ExtendedSpearalDecoder decoder, Object value, Type targetType) {
+			public char[] convert(SpearalContext context, Object value, Type targetType) {
 				if (value == null)
 					return null;
 				
@@ -455,7 +455,7 @@ public class SimpleConvertersProvider implements ConverterProvider {
 		
 		converter = new Converter<byte[]>() {
 			@Override
-			public byte[] convert(ExtendedSpearalDecoder decoder, Object value, Type targetType) {
+			public byte[] convert(SpearalContext context, Object value, Type targetType) {
 				if (value == null)
 					return null;
 				
@@ -474,7 +474,7 @@ public class SimpleConvertersProvider implements ConverterProvider {
 		
 		converter = new Converter<GregorianCalendar>() {
 			@Override
-			public GregorianCalendar convert(ExtendedSpearalDecoder decoder, Object value, Type targetType) {
+			public GregorianCalendar convert(SpearalContext context, Object value, Type targetType) {
 				if (value == null)
 					return null;
 				
@@ -504,7 +504,7 @@ public class SimpleConvertersProvider implements ConverterProvider {
 		
 		converter = new Converter<Date>() {
 			@Override
-			public Date convert(ExtendedSpearalDecoder decoder, Object value, Type targetType) {
+			public Date convert(SpearalContext context, Object value, Type targetType) {
 				if (value == null)
 					return null;
 				
@@ -524,7 +524,7 @@ public class SimpleConvertersProvider implements ConverterProvider {
 		
 		converter = new Converter<java.sql.Date>() {
 			@Override
-			public java.sql.Date convert(ExtendedSpearalDecoder decoder, Object value, Type targetType) {
+			public java.sql.Date convert(SpearalContext context, Object value, Type targetType) {
 				if (value == null)
 					return null;
 				
@@ -547,7 +547,7 @@ public class SimpleConvertersProvider implements ConverterProvider {
 		
 		converter = new Converter<java.sql.Time>() {
 			@Override
-			public java.sql.Time convert(ExtendedSpearalDecoder decoder, Object value, Type targetType) {
+			public java.sql.Time convert(SpearalContext context, Object value, Type targetType) {
 				if (value == null)
 					return null;
 				
@@ -570,7 +570,7 @@ public class SimpleConvertersProvider implements ConverterProvider {
 		
 		converter = new Converter<java.sql.Timestamp>() {
 			@Override
-			public java.sql.Timestamp convert(ExtendedSpearalDecoder decoder, Object value, Type targetType) {
+			public java.sql.Timestamp convert(SpearalContext context, Object value, Type targetType) {
 				if (value == null)
 					return null;
 				
@@ -595,7 +595,7 @@ public class SimpleConvertersProvider implements ConverterProvider {
 		
 		converter = new Converter<Class<?>>() {
 			@Override
-			public Class<?> convert(ExtendedSpearalDecoder decoder, Object value, Type targetType) {
+			public Class<?> convert(SpearalContext context, Object value, Type targetType) {
 				if (value == null)
 					return null;
 				
@@ -603,7 +603,7 @@ public class SimpleConvertersProvider implements ConverterProvider {
 					return ((Class<?>)value);
 
 				try {
-					return decoder.getContext().loadClass(value.toString(), targetType);
+					return context.loadClass(value.toString(), targetType);
 				}
 				catch (Exception e) {
 					return null;
@@ -616,7 +616,7 @@ public class SimpleConvertersProvider implements ConverterProvider {
 		
 		converter = new Converter<Object>() {
 			@Override
-			public Object convert(ExtendedSpearalDecoder decoder, Object value, Type targetType) {
+			public Object convert(SpearalContext context, Object value, Type targetType) {
 				if (value != null && value.getClass() == SpearalDateTime.class)
 					return ((SpearalDateTime)value).toDate();
 				return value;

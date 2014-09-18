@@ -247,7 +247,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 			throw new RuntimeException("Unexpected parameterized type: " + parameterizedType);
 		}
 		
-		return (convert ? context.convert(this, value, targetType) : value);
+		return (convert ? context.convert(value, targetType) : value);
 	}
 
 	@Override
@@ -533,7 +533,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 		Type elementType = null;	
 		if (targetType != null && Collection.class.isAssignableFrom(TypeUtil.classOfType(targetType))) {		
 			try {
-				value = (Collection<Object>)context.instantiate(this, targetType);
+				value = (Collection<Object>)context.instantiate(targetType);
 			} 
 			catch (Exception e) {
 				throw new RuntimeException("Couldn't instantiate type: " + targetType, e);
@@ -608,7 +608,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 		Type valType = null;
 		if (targetType != null && Map.class.isAssignableFrom(TypeUtil.classOfType(targetType))) {		
 			try {
-				value = (Map<Object, Object>)context.instantiate(this, targetType);
+				value = (Map<Object, Object>)context.instantiate(targetType);
 			} 
 			catch (Exception e) {
 				throw new RuntimeException("Couldn't instantiate type: " + targetType, e);
@@ -728,9 +728,9 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 			if (cls == ClassNotFound.class)
 				value = new ClassNotFound(classDescription);
 			else if (!descriptor.partial)
-				value = context.instantiate(this, cls);
+				value = context.instantiate(cls);
 			else {
-				value = context.instantiatePartial(this, cls, descriptor.properties);
+				value = context.instantiatePartial(cls, descriptor.properties);
 				this.partialObjects = true;
 			}
 			sharedObjects.add(value);

@@ -20,12 +20,12 @@ package org.spearal.impl.instantiator;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
 
+import org.spearal.SpearalContext;
+import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.configuration.PropertyInstantiatorProvider;
 import org.spearal.configuration.PropertyInstantiatorProvider.PropertyInstantiator;
 import org.spearal.configuration.TypeInstantiatorProvider;
 import org.spearal.configuration.TypeInstantiatorProvider.TypeInstantiator;
-import org.spearal.configuration.PropertyFactory.Property;
-import org.spearal.impl.ExtendedSpearalDecoder;
 import org.spearal.impl.util.TypeUtil;
 
 /**
@@ -41,8 +41,8 @@ public class ClassInstantiator implements
 	}
 
 	@Override
-	public Object instantiate(ExtendedSpearalDecoder decoder, Type type) {
-		decoder.getContext().getSecurizer().checkDecodable(type);
+	public Object instantiate(SpearalContext context, Type type) {
+		context.getSecurizer().checkDecodable(type);
 		
 		Class<?> cls = TypeUtil.classOfType(type);
         try {
@@ -59,8 +59,8 @@ public class ClassInstantiator implements
 	}
 
 	@Override
-	public Object instantiate(ExtendedSpearalDecoder decoder, Property property) {
-		return instantiate(decoder, property.getGenericType());
+	public Object instantiate(SpearalContext context, Property property) {
+		return instantiate(context, property.getGenericType());
 	}
 
 	private static boolean canInstantiate(Type type) {

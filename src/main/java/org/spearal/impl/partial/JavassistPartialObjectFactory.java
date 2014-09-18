@@ -29,9 +29,8 @@ import javassist.util.proxy.ProxyObject;
 import org.spearal.SpearalContext;
 import org.spearal.configuration.PartialObjectFactory;
 import org.spearal.configuration.PropertyFactory.Property;
-import org.spearal.impl.ExtendedSpearalDecoder;
-import org.spearal.impl.cache.CopyOnWriteMap;
 import org.spearal.impl.cache.AnyMap.ValueProvider;
+import org.spearal.impl.cache.CopyOnWriteMap;
 
 /**
  * @author Franck WOLFF
@@ -56,10 +55,9 @@ public class JavassistPartialObjectFactory implements PartialObjectFactory, Valu
 	}
 
 	@Override
-	public Object instantiatePartial(ExtendedSpearalDecoder decoder, Class<?> cls, Property[] partialProperties)
+	public Object instantiatePartial(SpearalContext context, Class<?> cls, Property[] partialProperties)
 		throws InstantiationException, IllegalAccessException {
 		
-		SpearalContext context = decoder.getContext();
 		Class<?> proxyClass = proxyClassesCache.getOrPutIfAbsent(context, cls);
 		ProxyObject proxyObject = (ProxyObject)proxyClass.newInstance();
 		proxyObject.setHandler(new PartialObjectProxyHandler(context, partialProperties));
