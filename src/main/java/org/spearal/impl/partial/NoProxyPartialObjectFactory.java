@@ -41,6 +41,6 @@ public class NoProxyPartialObjectFactory implements PartialObjectFactory, ValueP
 	public Object instantiatePartial(SpearalContext context, Class<?> cls, Property[] partialProperties)
 		throws InstantiationException, IllegalAccessException {
 		
-		return cls.newInstance();
+		return context.instantiate(cls);
 	}
 }
