@@ -19,11 +19,39 @@ package org.spearal;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
+import org.spearal.configuration.PropertyFactory.Property;
 
 /**
  * @author Franck WOLFF
  */
 public interface SpearalDecoder {
+	
+	public interface PathSegment {
+		
+		PathSegment copy();
+	}
+
+	public interface CollectionPathSegment extends PathSegment {
+		
+		public Collection<?> getCollection();
+		public int getIndex();
+	}
+	
+	public interface MapPathSegment extends PathSegment {
+
+		public Map<?, ?> getMap();
+		public Object getKey();
+	}
+	
+	public interface BeanPathSegment extends PathSegment {
+
+		public Object getBean();
+		public Property getProperty();
+	}
 
 	SpearalContext getContext();
 	
@@ -31,6 +59,7 @@ public interface SpearalDecoder {
 	<T> T readAny(Type targetType) throws IOException;
 	
 	boolean containsPartialObjects();
+	Map<Object, List<PathSegment>> getPartialObjectsMap();
 	
 	void skipAny() throws IOException;
 	

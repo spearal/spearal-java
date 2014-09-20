@@ -33,6 +33,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +55,9 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	private final List<String> sharedStrings;
 	private final List<Object> sharedObjects;
 	
+	private final Path path;
+	private final PartialObjectMap partialObjectsMap;
+	
 	private final EqualityMap<String, Type, ClassDescriptor> descriptors;
 	private final EqualityMap<String, Object, BigInteger> bigIntegers;
 	private final EqualityMap<String, Object, BigDecimal> bigDecimals;
@@ -64,8 +68,6 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	private final byte[] buffer;
 	private int position;
 	private int size;
-	
-	private boolean partialObjects;
 
 	public SpearalDecoderImpl(SpearalContext context, InputStream in) {
 		this(context, in, 1024);
@@ -74,6 +76,9 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	public SpearalDecoderImpl(final SpearalContext context, InputStream in, int capacity) {
 		this.sharedStrings = new ArrayList<String>(64);
 		this.sharedObjects = new ArrayList<Object>(64);
+		
+		this.path = new Path();
+		this.partialObjectsMap = new PartialObjectMap();
 		
 		this.descriptors = new EqualityMap<String, Type, ClassDescriptor>(new ValueProvider<String, Type, ClassDescriptor>() {
 			@Override
@@ -109,8 +114,6 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 		this.buffer = new byte[capacity];
 		this.position = 0;
 		this.size = 0;
-		
-		this.partialObjects = false;
 	}
 	
 	@Override
@@ -131,7 +134,12 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
 	@Override
 	public boolean containsPartialObjects() {
-		return partialObjects;
+		return !partialObjectsMap.isEmpty();
+	}
+
+	@Override
+	public Map<Object, List<PathSegment>> getPartialObjectsMap() {
+		return partialObjectsMap;
 	}
 
 	@Override
@@ -545,8 +553,11 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 		
 		sharedObjects.add(value);
 
-		for (int i = 0; i < indexOrLength; i++)
+		CollectionPathSegmentImpl segment = new CollectionPathSegmentImpl(value);
+		path.push(segment);
+		for (segment.index = 0; segment.index < indexOrLength; segment.index++)
 			value.add(readAny(elementType));
+		path.pop();
 
 		return value;
 	}
@@ -591,8 +602,12 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 		sharedObjects.add(value);
 		
 		Type elementType = TypeUtil.getElementType(property.getGenericType());
-		for (int i = 0; i < indexOrLength; i++)
+		
+		CollectionPathSegmentImpl segment = new CollectionPathSegmentImpl(value);
+		path.push(segment);
+		for (segment.index = 0; segment.index < indexOrLength; segment.index++)
 			value.add(readAny(elementType));
+		path.pop();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -622,11 +637,16 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 		
 		sharedObjects.add(value);
 		
+		MapPathSegmentImpl segment = new MapPathSegmentImpl(value);
+		path.push(segment);
 		for (int i = 0; i < indexOrLength; i++) {
+			segment.key = null;
 			Object key = readAny(keyType);
+			segment.key = key;
 			Object val = readAny(valType);
 			value.put(key, val);
 		}
+		path.pop();
 		
 		return value;
 	}
@@ -678,11 +698,16 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 		Type keyType = keyValueTypes[0];
 		Type valType = keyValueTypes[1];
 		
+		MapPathSegmentImpl segment = new MapPathSegmentImpl(value);
+		path.push(segment);
 		for (int i = 0; i < indexOrLength; i++) {
+			segment.key = null;
 			Object key = readAny(keyType);
+			segment.key = key;
 			Object val = readAny(valType);
 			value.put(key, val);
 		}
+		path.pop();
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -715,8 +740,11 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	public Object readBean(int parameterizedType, Type targetType) throws IOException {
 		final int indexOrLength = readIndexOrLength(parameterizedType);
 		
-		if (isObjectReference(parameterizedType))
-			return sharedObjects.get(indexOrLength);
+		if (isObjectReference(parameterizedType)) {
+			Object value = sharedObjects.get(indexOrLength);
+			partialObjectsMap.appendIfPresent(value, path.peek());
+			return value;
+		}
 		
 		String classDescription = readStringData(parameterizedType, indexOrLength);
 		ClassDescriptor descriptor = descriptors.putIfAbsent(context, classDescription, targetType);
@@ -730,18 +758,22 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 			else if (!descriptor.partial)
 				value = context.instantiate(cls);
 			else {
-				value = context.instantiatePartial(cls, descriptor.properties);
-				this.partialObjects = true;
+				value = context.instantiatePartial(cls, descriptor.properties, partialObjectsMap);
+				partialObjectsMap.put(value, path.peek());
 			}
 			sharedObjects.add(value);
 			
+			BeanPathSegmentImpl segment = new BeanPathSegmentImpl(value);
+			path.push(segment);
 			for (Property property : descriptor.properties) {
+				segment.property = property;
 				int propertyType = readNextByte();
 				if (property != null)
 					property.read(this, value, propertyType);
 				else
 					skipAny(propertyType);
 			}
+			path.pop();
 			
 			return value;
 		}
@@ -1110,6 +1142,149 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 			throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException {
 			
 			set(holder, decoder.readAny(parameterizedType));
+		}
+	}
+	
+	public static class CollectionPathSegmentImpl implements CollectionPathSegment {
+		
+		private final Collection<?> collection;
+		private int index;
+		
+		public CollectionPathSegmentImpl(Collection<?> collection) {
+			this.collection = collection;
+		}
+
+		public Collection<?> getCollection() {
+			return collection;
+		}
+
+		public int getIndex() {
+			return index;
+		}
+
+		@Override
+		public CollectionPathSegment copy() {
+			CollectionPathSegmentImpl copy = new CollectionPathSegmentImpl(collection);
+			copy.index = index;
+			return copy;
+		}
+
+		@Override
+		public String toString() {
+			return "collection: " + index;
+		}
+	}
+	
+	public static class MapPathSegmentImpl implements MapPathSegment {
+		
+		private final Map<?, ?> map;
+		private Object key;
+
+		public MapPathSegmentImpl(Map<?, ?> map) {
+			this.map = map;
+		}
+
+		public Map<?, ?> getMap() {
+			return map;
+		}
+
+		public Object getKey() {
+			return key;
+		}
+
+		@Override
+		public MapPathSegment copy() {
+			MapPathSegmentImpl copy = new MapPathSegmentImpl(map);
+			copy.key = key;
+			return copy;
+		}
+
+		@Override
+		public String toString() {
+			return "map: " + key;
+		}
+	}
+	
+	public static class BeanPathSegmentImpl implements BeanPathSegment {
+		
+		private final Object bean;
+		private Property property;
+
+		public BeanPathSegmentImpl(Object bean) {
+			this.bean = bean;
+		}
+
+		public Object getBean() {
+			return bean;
+		}
+
+		public Property getProperty() {
+			return property;
+		}
+
+		@Override
+		public BeanPathSegment copy() {
+			BeanPathSegmentImpl copy = new BeanPathSegmentImpl(bean);
+			copy.property = property;
+			return copy;
+		}
+
+		@Override
+		public String toString() {
+			return "bean: " + property;
+		}
+	}
+	
+	private static class Path {
+		
+		private static final int DEFAULT_SIZE_INCREMENT = 8;
+		
+		private PathSegment[] segments;
+		private int size; 
+		
+		public Path() {
+			this.segments = new PathSegment[0];
+			this.size = 0;
+		}
+
+		public void push(PathSegment segment) {
+			if (size == segments.length) {
+				PathSegment[] newSegments = new PathSegment[segments.length + DEFAULT_SIZE_INCREMENT];
+				if (segments.length > 0)
+					System.arraycopy(segments, 0, newSegments, 0, segments.length);
+				segments = newSegments;
+			}
+			segments[size++] = segment;
+		}
+		
+		public void pop() {
+			if (size == 0)
+				throw new IndexOutOfBoundsException("Empty path");
+			size--;
+		}
+		
+		public PathSegment peek() {
+			return (size == 0 ? null : segments[size - 1]);
+		}
+	}
+	
+	private static class PartialObjectMap extends IdentityHashMap<Object, List<PathSegment>> {
+
+		private static final long serialVersionUID = 1L;
+		
+		public void put(Object partialObject, PathSegment segment) {
+			List<PathSegment> segments = new ArrayList<PathSegment>();
+			if (segment != null)
+				segments.add(segment.copy());
+			put(partialObject, segments);
+		}
+		
+		public void appendIfPresent(Object partialObject, PathSegment segment) {
+			if (segment != null) {
+				List<PathSegment> segments = get(partialObject);
+				if (segments != null)
+					segments.add(segment.copy());
+			}
 		}
 	}
 }
