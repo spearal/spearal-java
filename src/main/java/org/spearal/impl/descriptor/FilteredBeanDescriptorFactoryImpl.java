@@ -20,6 +20,7 @@ package org.spearal.impl.descriptor;
 import org.spearal.SpearalContext;
 import org.spearal.SpearalPropertyFilter;
 import org.spearal.configuration.FilteredBeanDescriptorFactory;
+import org.spearal.configuration.PartialObjectFactory.PartialObjectProxy;
 import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.util.ClassDescriptionUtil;
 
@@ -53,10 +54,42 @@ public class FilteredBeanDescriptorFactoryImpl implements FilteredBeanDescriptor
 			return true;
 		}
 	}
+	
+	private static class FilteredPartialBeanDescriptorImpl extends FilteredBeanDescriptorImpl {
+
+		public FilteredPartialBeanDescriptorImpl(String description, Property[] properties) {
+			super(description, properties);
+		}
+
+		@Override
+		public boolean isCacheable() {
+			return false;
+		}
+	}
 
 	@Override
 	public FilteredBeanDescriptor createDescription(SpearalContext context, SpearalPropertyFilter filter, Object value) {
 		Class<?> type = value.getClass();
+		
+		if (value instanceof PartialObjectProxy) {
+			type = type.getSuperclass();
+			Property[] filteredProperties = filter.get(type).clone();
+			Property[] partialProperties = ((PartialObjectProxy)value).$getDefinedProperties();
+			
+			filteredPropertiesLoop:
+			for (int i = 0; i < filteredProperties.length; i++) {
+				Property filteredProperty = filteredProperties[i];
+				for (Property property : partialProperties) {
+					if (property.equals(filteredProperty))
+						continue filteredPropertiesLoop;
+				}
+				filteredProperties[i] = null;
+			}
+			
+			String description = ClassDescriptionUtil.createAliasedDescription(context, type, filteredProperties);
+			return new FilteredPartialBeanDescriptorImpl(description, filteredProperties);
+		}
+		
 		Property[] properties = filter.get(type);
 		String description = ClassDescriptionUtil.createAliasedDescription(context, type, properties);
 		return new FilteredBeanDescriptorImpl(description, properties);
