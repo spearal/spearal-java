@@ -19,8 +19,6 @@ package org.spearal.impl.partial;
 
 import java.lang.reflect.Method;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javassist.util.proxy.MethodFilter;
@@ -29,7 +27,6 @@ import javassist.util.proxy.ProxyFactory;
 import javassist.util.proxy.ProxyObject;
 
 import org.spearal.SpearalContext;
-import org.spearal.SpearalDecoder.PathSegment;
 import org.spearal.configuration.PartialObjectFactory;
 import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.cache.AnyMap.ValueProvider;
@@ -58,12 +55,12 @@ public class JavassistPartialObjectFactory implements PartialObjectFactory, Valu
 	}
 
 	@Override
-	public Object instantiatePartial(SpearalContext context, Class<?> cls, Property[] partialProperties, Map<Object, List<PathSegment>> partialObjectsMap)
+	public Object instantiatePartial(SpearalContext context, Class<?> cls, Property[] partialProperties)
 		throws InstantiationException, IllegalAccessException {
 		
 		Class<?> proxyClass = proxyClassesCache.getOrPutIfAbsent(context, cls);
 		ProxyObject proxyObject = (ProxyObject)proxyClass.newInstance();
-		proxyObject.setHandler(new PartialObjectProxyHandler(context, partialProperties, partialObjectsMap));
+		proxyObject.setHandler(new PartialObjectProxyHandler(context, partialProperties));
 		return proxyObject;
 	}
 	
@@ -101,9 +98,8 @@ public class JavassistPartialObjectFactory implements PartialObjectFactory, Valu
 		private final Property[] partialProperties;
 		private final Set<Method> partialGetters;
 		private final Set<String> partialPropertiesNames;
-		private final Map<Object, List<PathSegment>> partialObjectsMap;
 
-		public PartialObjectProxyHandler(SpearalContext context, Property[] partialProperties, Map<Object, List<PathSegment>> partialObjectsMap) {
+		public PartialObjectProxyHandler(SpearalContext context, Property[] partialProperties) {
 			this.context = context;
 			this.partialProperties = partialProperties;
 			
@@ -116,8 +112,6 @@ public class JavassistPartialObjectFactory implements PartialObjectFactory, Valu
 				if (property.getGetter() != null)
 					partialGetters.add(property.getGetter());
 			}
-			
-			this.partialObjectsMap = partialObjectsMap;
 		}
 
 		public Object invoke(Object obj, Method method, Method proceed, Object[] args) throws Exception {
@@ -129,8 +123,6 @@ public class JavassistPartialObjectFactory implements PartialObjectFactory, Valu
 				return Boolean.valueOf(partialPropertiesNames.contains(args[0]));
 			if ("$getDefinedProperties".equals(name))
 				return partialProperties;
-			if ("$getPartialObjectsMap".equals(name))
-				return partialObjectsMap;
 			if ("$getContext".equals(name))
 				return context;
 			

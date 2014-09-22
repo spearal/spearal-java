@@ -20,10 +20,7 @@ package org.spearal;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.util.List;
-import java.util.Map;
 
-import org.spearal.SpearalDecoder.PathSegment;
 import org.spearal.configuration.CoderProvider.Coder;
 import org.spearal.configuration.Configurable;
 import org.spearal.configuration.FilteredBeanDescriptorFactory.FilteredBeanDescriptor;
@@ -52,7 +49,7 @@ public interface SpearalContext {
 		throws InstantiationException, IllegalAccessException;
 	Object instantiate(Property property)
 		throws InstantiationException, IllegalAccessException;
-	Object instantiatePartial(Class<?> cls, Property[] partialProperties, Map<Object, List<PathSegment>> partialObjectsMap)
+	Object instantiatePartial(Class<?> cls, Property[] partialProperties)
 		throws InstantiationException, IllegalAccessException;
 	
 	Coder getCoder(Class<?> valueClass);

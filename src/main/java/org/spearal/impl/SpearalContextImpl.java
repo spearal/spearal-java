@@ -22,11 +22,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.spearal.SpearalContext;
 import org.spearal.SpearalPropertyFilter;
-import org.spearal.SpearalDecoder.PathSegment;
 import org.spearal.configuration.AliasStrategy;
 import org.spearal.configuration.CoderProvider;
 import org.spearal.configuration.CoderProvider.Coder;
@@ -280,10 +278,10 @@ public class SpearalContextImpl implements SpearalContext {
 	}
 
 	@Override
-	public Object instantiatePartial(Class<?> cls, Property[] partialProperties, Map<Object, List<PathSegment>> partialObjectsMap)
+	public Object instantiatePartial(Class<?> cls, Property[] partialProperties)
 		throws InstantiationException, IllegalAccessException {
 
-		return partialObjectFactory.instantiatePartial(this, cls, partialProperties, partialObjectsMap);
+		return partialObjectFactory.instantiatePartial(this, cls, partialProperties);
 	}
 
 	@Override

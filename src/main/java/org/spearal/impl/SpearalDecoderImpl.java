@@ -758,7 +758,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 			else if (!descriptor.partial)
 				value = context.instantiate(cls);
 			else {
-				value = context.instantiatePartial(cls, descriptor.properties, partialObjectsMap);
+				value = context.instantiatePartial(cls, descriptor.properties);
 				partialObjectsMap.put(value, path.peek());
 			}
 			sharedObjects.add(value);

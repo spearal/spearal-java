@@ -17,11 +17,7 @@
  */
 package org.spearal.impl.partial;
 
-import java.util.List;
-import java.util.Map;
-
 import org.spearal.SpearalContext;
-import org.spearal.SpearalDecoder.PathSegment;
 import org.spearal.configuration.PartialObjectFactory;
 import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.cache.AnyMap.ValueProvider;
@@ -42,7 +38,7 @@ public class NoProxyPartialObjectFactory implements PartialObjectFactory, ValueP
 	}
 
 	@Override
-	public Object instantiatePartial(SpearalContext context, Class<?> cls, Property[] partialProperties, Map<Object, List<PathSegment>> partialObjectsMap)
+	public Object instantiatePartial(SpearalContext context, Class<?> cls, Property[] partialProperties)
 		throws InstantiationException, IllegalAccessException {
 		
 		return context.instantiate(cls);

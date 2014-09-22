@@ -17,11 +17,7 @@
  */
 package org.spearal.configuration;
 
-import java.util.List;
-import java.util.Map;
-
 import org.spearal.SpearalContext;
-import org.spearal.SpearalDecoder.PathSegment;
 import org.spearal.configuration.PropertyFactory.Property;
 
 /**
@@ -33,9 +29,6 @@ public interface PartialObjectFactory extends Configurable {
 
 		boolean $isDefined(String propertyName);
 		Property[] $getDefinedProperties();
-		
-		Map<Object, List<PathSegment>> $getPartialObjectsMap();
-		
 		SpearalContext $getContext();
 	}
 
@@ -48,6 +41,6 @@ public interface PartialObjectFactory extends Configurable {
 		}
 	}
 
-	Object instantiatePartial(SpearalContext context, Class<?> cls, Property[] partialProperties, Map<Object, List<PathSegment>> partialObjectsMap)
+	Object instantiatePartial(SpearalContext context, Class<?> cls, Property[] partialProperties)
 		throws InstantiationException, IllegalAccessException;
 }
