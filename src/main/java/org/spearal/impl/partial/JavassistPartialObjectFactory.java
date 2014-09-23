@@ -18,7 +18,9 @@
 package org.spearal.impl.partial;
 
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import javassist.util.proxy.MethodFilter;
@@ -36,7 +38,7 @@ import org.spearal.impl.cache.CopyOnWriteMap;
  * @author Franck WOLFF
  */
 public class JavassistPartialObjectFactory implements PartialObjectFactory, ValueProvider<Class<?>, Object, Class<?>> {
-	
+
 	private final CopyOnWriteMap<Class<?>, Object, Class<?>> proxyClassesCache;
 	
 	public JavassistPartialObjectFactory() {
@@ -60,71 +62,85 @@ public class JavassistPartialObjectFactory implements PartialObjectFactory, Valu
 		
 		Class<?> proxyClass = proxyClassesCache.getOrPutIfAbsent(context, cls);
 		ProxyObject proxyObject = (ProxyObject)proxyClass.newInstance();
-		proxyObject.setHandler(new PartialObjectProxyHandler(context, partialProperties));
+		proxyObject.setHandler(new PartialObjectProxyHandler(context, cls, partialProperties));
 		return proxyObject;
 	}
 	
-	private static boolean isPartialObjectProxyMethod(Method method) {
-		for (Method m : PartialObjectProxy.class.getMethods()) {
-			if (m.equals(method))
-				return true;
-		}
-		
-		return false;
-	}
-	
 	private static class PartialObjectFilter implements MethodFilter {
+		
+		private static final Method[] partialObjectProxyMethods = PartialObjectProxy.class.getMethods();
 
-		private final Set<Method> getters;
+		private final Set<Method> accessors;
 
 		public PartialObjectFilter(SpearalContext ctx, Class<?> cls) {
-			this.getters = new HashSet<Method>();
+			this.accessors = new HashSet<Method>();
 			
 			for (Property property : ctx.getProperties(cls)) {
-				if (property.getGetter() != null)
-					getters.add(property.getGetter());
+				if (property.hasGetter())
+					accessors.add(property.getGetter());
+				if (property.hasSetter())
+					accessors.add(property.getSetter());
 			}
 		}
 
 		@Override
 		public boolean isHandled(Method method) {
-			return getters.contains(method) || isPartialObjectProxyMethod(method);
+			return accessors.contains(method) || isPartialObjectProxyMethod(method);
+		}
+		
+		private static boolean isPartialObjectProxyMethod(Method method) {
+			for (Method partialObjectProxyMethod : partialObjectProxyMethods) {
+				if (partialObjectProxyMethod.equals(method))
+					return true;
+			}
+			return false;
 		}
 	}
 	
 	private static class PartialObjectProxyHandler implements MethodHandler {
 
-		private final SpearalContext context;
-		private final Property[] partialProperties;
-		private final Set<Method> partialGetters;
-		private final Set<String> partialPropertiesNames;
+		private final Property[] allProperties;
+		private final Map<String, Property> definedProperties;
 
-		public PartialObjectProxyHandler(SpearalContext context, Property[] partialProperties) {
-			this.context = context;
-			this.partialProperties = partialProperties;
+		public PartialObjectProxyHandler(SpearalContext context, Class<?> cls, Property[] partialProperties) {
+			this.allProperties = context.getProperties(cls);
 			
-			this.partialGetters = new HashSet<Method>(partialProperties.length);
-			this.partialPropertiesNames = new HashSet<String>(partialProperties.length);
+			this.definedProperties = new HashMap<String, Property>(partialProperties.length);
 			for (Property property : partialProperties) {
-				if (property == null)
-					continue;
-				partialPropertiesNames.add(property.getName());
-				if (property.getGetter() != null)
-					partialGetters.add(property.getGetter());
+				if (property != null)
+					this.definedProperties.put(property.getName(), property);
 			}
 		}
 
 		public Object invoke(Object obj, Method method, Method proceed, Object[] args) throws Exception {
-			if (partialGetters.contains(method))
-				return proceed.invoke(obj, args);
 
-			String name = method.getName();
-			if ("$isDefined".equals(name))
-				return Boolean.valueOf(partialPropertiesNames.contains(args[0]));
-			if ("$getDefinedProperties".equals(name))
-				return partialProperties;
-			if ("$getContext".equals(name))
-				return context;
+			// Proxy methods.
+			if (method.getDeclaringClass() == PartialObjectProxy.class) {
+				String name = method.getName();
+				if ("$isDefined".equals(name))
+					return Boolean.valueOf(definedProperties.containsKey(args[0]));
+				if ("$getDefinedProperties".equals(name))
+					return definedProperties.values().toArray(new Property[definedProperties.size()]);
+				throw new UnsupportedOperationException("Internal error: " + method.toString());
+			}
+			
+			// Setters.
+			if (method.getReturnType() == void.class) {
+				for (Property property : allProperties) {
+					if (method.equals(property.getSetter())) {
+						proceed.invoke(obj, args);
+						definedProperties.put(property.getName(), property);
+						return null;
+					}
+				}
+				throw new UnsupportedOperationException("Internal error: " + method.toString());
+			}
+			
+			// Getters.
+			for (Property property : definedProperties.values()) {
+				if (method.equals(property.getGetter()))
+					return proceed.invoke(obj, args);
+			}
 			
 			throw new UndefinedPropertyException(method.toString());
 		}

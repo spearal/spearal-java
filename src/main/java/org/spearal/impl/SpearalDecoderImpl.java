@@ -1079,13 +1079,28 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 		}
 
 		@Override
+		public boolean hasField() {
+			return false;
+		}
+
+		@Override
 		public Field getField() {
 			return null;
 		}
 
 		@Override
+		public boolean hasGetter() {
+			return false;
+		}
+
+		@Override
 		public Method getGetter() {
 			return null;
+		}
+
+		@Override
+		public boolean hasSetter() {
+			return false;
 		}
 
 		@Override

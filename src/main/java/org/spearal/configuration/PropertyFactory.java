@@ -40,8 +40,11 @@ public interface PropertyFactory extends Repeatable {
 		Class<?> getType();
 		Type getGenericType();
 		
+		boolean hasField();
 		Field getField();
+		boolean hasGetter();
 		Method getGetter();
+		boolean hasSetter();
 		Method getSetter();
 		
 		Class<?> getDeclaringClass();

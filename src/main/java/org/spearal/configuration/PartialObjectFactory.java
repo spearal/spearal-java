@@ -29,7 +29,6 @@ public interface PartialObjectFactory extends Configurable {
 
 		boolean $isDefined(String propertyName);
 		Property[] $getDefinedProperties();
-		SpearalContext $getContext();
 	}
 
 	public static class UndefinedPropertyException extends RuntimeException {

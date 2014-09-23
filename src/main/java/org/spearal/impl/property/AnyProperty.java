@@ -93,13 +93,28 @@ public class AnyProperty implements Property {
 	}
 
 	@Override
+	public boolean hasField() {
+		return field != null;
+	}
+
+	@Override
 	public Field getField() {
 		return field;
 	}
 
 	@Override
+	public boolean hasGetter() {
+		return getter != null;
+	}
+
+	@Override
 	public Method getGetter() {
 		return getter;
+	}
+
+	@Override
+	public boolean hasSetter() {
+		return setter != null;
 	}
 
 	@Override
