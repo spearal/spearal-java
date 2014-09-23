@@ -107,10 +107,11 @@ public class TestPartialBean extends AbstractSpearalTestUnit {
 			Assert.fail("Not a ChildBean: " + result);
 
 		PartialObjectProxy partial = (PartialObjectProxy)result;
+		Assert.assertTrue(partial.$hasUndefinedProperties());
+		Assert.assertEquals(3, partial.$getDefinedProperties().length);
 		Assert.assertTrue(partial.$isDefined("childBooleanProperty"));
 		Assert.assertTrue(partial.$isDefined("simpleBeans"));
 		Assert.assertTrue(partial.$isDefined("parentStringProperty"));
-		Assert.assertEquals(3, partial.$getDefinedProperties().length);
 		
 		Assert.assertEquals(bean.isChildBooleanProperty(), ((ChildBean)result).isChildBooleanProperty());
 		Assert.assertEquals(bean.getParentStringProperty(), ((ChildBean)result).getParentStringProperty());
@@ -130,6 +131,7 @@ public class TestPartialBean extends AbstractSpearalTestUnit {
 		Assert.assertEquals(bean.getSimpleBeans().size(), ((ChildBean)result).getSimpleBeans().size());
 
 		((ChildBean)result).setChildDoubleProperty(1.0);
+		Assert.assertTrue(partial.$hasUndefinedProperties());
 		Assert.assertEquals(4, partial.$getDefinedProperties().length);
 		Assert.assertTrue(partial.$isDefined("childDoubleProperty"));
 		Assert.assertEquals(1.0, ((ChildBean)result).getChildDoubleProperty(), 0.0);
@@ -139,6 +141,11 @@ public class TestPartialBean extends AbstractSpearalTestUnit {
 		}
 		catch (UndefinedPropertyException e) {
 		}
+		
+		((ChildBean)result).setParentIntProperty(123);
+		Assert.assertFalse(partial.$hasUndefinedProperties());
+		Assert.assertEquals(5, partial.$getDefinedProperties().length);
+		Assert.assertEquals(123, ((ChildBean)result).getParentIntProperty());
 	}
 
 	@Test

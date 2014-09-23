@@ -117,6 +117,8 @@ public class JavassistPartialObjectFactory implements PartialObjectFactory, Valu
 			// Proxy methods.
 			if (method.getDeclaringClass() == PartialObjectProxy.class) {
 				String name = method.getName();
+				if ("$hasUndefinedProperties".equals(name))
+					return Boolean.valueOf(definedProperties.size() < allProperties.length);
 				if ("$isDefined".equals(name))
 					return Boolean.valueOf(definedProperties.containsKey(args[0]));
 				if ("$getDefinedProperties".equals(name))

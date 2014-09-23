@@ -27,6 +27,7 @@ public interface PartialObjectFactory extends Configurable {
 
 	public interface PartialObjectProxy {
 
+		boolean $hasUndefinedProperties();
 		boolean $isDefined(String propertyName);
 		Property[] $getDefinedProperties();
 	}
