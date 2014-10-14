@@ -31,7 +31,12 @@ public interface PartialObjectFactory extends Configurable {
 		boolean $isDefined(String propertyName);
 		Property[] $getDefinedProperties();
 	}
-
+	
+	public interface ExtendedPartialObjectProxy extends PartialObjectProxy {
+		
+		Class<?> $getActualClass();
+	}
+	
 	public static class UndefinedPropertyException extends RuntimeException {
 
 		private static final long serialVersionUID = 1L;

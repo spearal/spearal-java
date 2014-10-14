@@ -17,10 +17,13 @@
  */
 package org.spearal.impl.partial;
 
+import java.lang.reflect.Proxy;
+
 import org.spearal.SpearalContext;
 import org.spearal.configuration.PartialObjectFactory;
 import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.cache.AnyMap.ValueProvider;
+import org.spearal.impl.instantiator.ProxyInstantiator;
 
 /**
  * @author William DRAI
@@ -40,6 +43,9 @@ public class NoProxyPartialObjectFactory implements PartialObjectFactory, ValueP
 	@Override
 	public Object instantiatePartial(SpearalContext context, Class<?> cls, Property[] partialProperties)
 		throws InstantiationException, IllegalAccessException {
+		
+		if (Proxy.isProxyClass(cls))
+			return ProxyInstantiator.instantiatePartial(context, cls, partialProperties);
 		
 		return context.instantiate(cls);
 	}

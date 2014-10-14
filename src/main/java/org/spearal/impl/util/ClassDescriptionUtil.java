@@ -20,6 +20,7 @@ package org.spearal.impl.util;
 import java.lang.reflect.Proxy;
 
 import org.spearal.SpearalContext;
+import org.spearal.configuration.PartialObjectFactory.PartialObjectProxy;
 import org.spearal.configuration.PropertyFactory.Property;
 
 /**
@@ -66,10 +67,15 @@ public class ClassDescriptionUtil {
 			sb.append(context.alias(cls)).append('#');
 		else {
 			Class<?>[] interfaces = cls.getInterfaces();
-			if (interfaces.length > 0) {
-				sb.append(context.alias(interfaces[0]));
-				for (int i = 1; i < interfaces.length; i++)
-					sb.append(',').append(context.alias(interfaces[i]));
+			boolean first = true;
+			for (int i = 0; i < interfaces.length; i++) {
+				if (PartialObjectProxy.class.isAssignableFrom(interfaces[i]))
+					continue;
+				if (first)
+					first = false;
+				else
+					sb.append(',');
+				sb.append(context.alias(interfaces[i]));
 			}
 			sb.append('#');
 		}

@@ -20,6 +20,7 @@ package org.spearal.impl.descriptor;
 import org.spearal.SpearalContext;
 import org.spearal.SpearalPropertyFilter;
 import org.spearal.configuration.FilteredBeanDescriptorFactory;
+import org.spearal.configuration.PartialObjectFactory.ExtendedPartialObjectProxy;
 import org.spearal.configuration.PartialObjectFactory.PartialObjectProxy;
 import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.util.ClassDescriptionUtil;
@@ -72,7 +73,10 @@ public class FilteredBeanDescriptorFactoryImpl implements FilteredBeanDescriptor
 		Class<?> type = value.getClass();
 		
 		if (value instanceof PartialObjectProxy) {
-			type = type.getSuperclass();
+			
+			if (value instanceof ExtendedPartialObjectProxy)
+				type = ((ExtendedPartialObjectProxy)value).$getActualClass();
+			
 			Property[] filteredProperties = filter.get(type).clone();
 			Property[] partialProperties = ((PartialObjectProxy)value).$getDefinedProperties();
 			

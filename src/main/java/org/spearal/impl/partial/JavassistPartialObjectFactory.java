@@ -18,6 +18,7 @@
 package org.spearal.impl.partial;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -33,6 +34,7 @@ import org.spearal.configuration.PartialObjectFactory;
 import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.cache.AnyMap.ValueProvider;
 import org.spearal.impl.cache.CopyOnWriteMap;
+import org.spearal.impl.instantiator.ProxyInstantiator;
 
 /**
  * @author Franck WOLFF
@@ -52,13 +54,16 @@ public class JavassistPartialObjectFactory implements PartialObjectFactory, Valu
 		ProxyFactory proxyFactory = new ProxyFactory();
 		proxyFactory.setFilter(new PartialObjectFilter(context, key));
 		proxyFactory.setSuperclass(key);
-		proxyFactory.setInterfaces(new Class<?>[] { PartialObjectProxy.class });
+		proxyFactory.setInterfaces(new Class<?>[] { ExtendedPartialObjectProxy.class });
 		return proxyFactory.createClass();
 	}
 
 	@Override
 	public Object instantiatePartial(SpearalContext context, Class<?> cls, Property[] partialProperties)
 		throws InstantiationException, IllegalAccessException {
+		
+		if (Proxy.isProxyClass(cls))
+			return ProxyInstantiator.instantiatePartial(context, cls, partialProperties);
 		
 		Class<?> proxyClass = proxyClassesCache.getOrPutIfAbsent(context, cls);
 		ProxyObject proxyObject = (ProxyObject)proxyClass.newInstance();
@@ -123,6 +128,8 @@ public class JavassistPartialObjectFactory implements PartialObjectFactory, Valu
 					return Boolean.valueOf(definedProperties.containsKey(args[0]));
 				if ("$getDefinedProperties".equals(name))
 					return definedProperties.values().toArray(new Property[definedProperties.size()]);
+				if ("$getActualClass".equals(name))
+					return obj.getClass().getSuperclass();
 				throw new UnsupportedOperationException("Internal error: " + method.toString());
 			}
 			

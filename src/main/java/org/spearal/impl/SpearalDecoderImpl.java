@@ -27,6 +27,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -41,6 +42,7 @@ import java.util.Map;
 import org.spearal.SpearalContext;
 import org.spearal.SpearalPrinter;
 import org.spearal.SpearalPrinter.StringData;
+import org.spearal.configuration.PartialObjectFactory.PartialObjectProxy;
 import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.impl.cache.AnyMap.ValueProvider;
 import org.spearal.impl.cache.EqualityMap;
@@ -1029,6 +1031,9 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 				}
 				partial = true;
 			}
+			
+			if (partial && Proxy.isProxyClass(cls))
+				cls = context.loadClass(classNames + "," + PartialObjectProxy.class.getName(), targetType);
 			
 			return new ClassDescriptor(cls, serializedProperties, partial);
 		}
