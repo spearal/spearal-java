@@ -27,6 +27,7 @@ import org.junit.Test;
 import org.spearal.DefaultSpearalFactory;
 import org.spearal.SpearalDecoder;
 import org.spearal.SpearalFactory;
+import org.spearal.test.model.BeanWithArray;
 import org.spearal.test.model.ChildBean;
 import org.spearal.test.model.SimpleBean;
 
@@ -74,12 +75,19 @@ public class TestBean extends AbstractSpearalTestUnit {
 		Assert.assertFalse(decoder.containsPartialObjects());
 	}
 	
-	private void encodeDecode(Object value, int expectedSize) throws IOException {
+	@Test
+	public void testBeanWithArray() throws IOException {
+		BeanWithArray bean = new BeanWithArray(new int[]{ 0, 1, 2, 3 });
+		encodeDecode(bean, -1);
+	}
+	
+	private Object encodeDecode(Object value, int expectedSize) throws IOException {
 		byte[] data = encode(value);
 		Object clone = decode(data);
 		
 		if (expectedSize >= 0)
 			Assert.assertEquals(expectedSize, data.length);
 		Assert.assertEquals(value, clone);
+		return clone;
 	}
 }

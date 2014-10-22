@@ -37,6 +37,7 @@ import org.spearal.impl.coder.SimpleCodersProvider;
 import org.spearal.impl.converter.EnumConverter;
 import org.spearal.impl.converter.SimpleConvertersProvider;
 import org.spearal.impl.descriptor.FilteredBeanDescriptorFactoryImpl;
+import org.spearal.impl.instantiator.ArrayInstantiator;
 import org.spearal.impl.instantiator.ClassInstantiator;
 import org.spearal.impl.instantiator.CollectionInstantiator;
 import org.spearal.impl.instantiator.MapInstantiator;
@@ -79,6 +80,7 @@ public class DefaultSpearalFactory implements SpearalFactory {
 		// Instantiators.
 		
 		context.configure(new CollectionInstantiator(), true);
+		context.configure(new ArrayInstantiator(), true);
 		context.configure(new MapInstantiator(), true);
 		context.configure(new ProxyInstantiator(), true);
 		context.configure(new ClassInstantiator(), true);

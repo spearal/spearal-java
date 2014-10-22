@@ -46,7 +46,7 @@ public class ProxyInstantiator implements
 	}
 
 	@Override
-	public Object instantiate(SpearalContext context, Type type) {
+	public Object instantiate(SpearalContext context, Type type, Object param) {
 		context.getSecurizer().checkDecodable(type);
 		
         try {
@@ -80,8 +80,8 @@ public class ProxyInstantiator implements
 	}
 
 	@Override
-	public Object instantiate(SpearalContext context, Property property) {
-		return instantiate(context, property.getGenericType());
+	public Object instantiate(SpearalContext context, Property property, Object param) {
+		return instantiate(context, property.getGenericType(), param);
 	}
 
 	private static boolean canInstantiate(Type type) {

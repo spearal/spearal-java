@@ -268,13 +268,13 @@ public class SpearalContextImpl implements SpearalContext {
 	}
 
 	@Override
-	public Object instantiate(Type type) throws InstantiationException {
-		return typeInstantiatorsCache.getOrPutIfAbsent(this, type).instantiate(this, type);
+	public Object instantiate(Type type, Object param) throws InstantiationException {
+		return typeInstantiatorsCache.getOrPutIfAbsent(this, type).instantiate(this, type, param);
 	}
 
 	@Override
-	public Object instantiate(Property property) throws InstantiationException {
-		return propertyInstantiatorsCache.getOrPutIfAbsent(this, property).instantiate(this, property);
+	public Object instantiate(Property property, Object param) throws InstantiationException {
+		return propertyInstantiatorsCache.getOrPutIfAbsent(this, property).instantiate(this, property, param);
 	}
 
 	@Override

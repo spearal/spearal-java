@@ -50,25 +50,15 @@ public class TestArray extends AbstractSpearalTestUnit {
 	
 	private void encodeDecode(boolean[] value, int expectedSize) throws IOException {
 		byte[] data = encode(value);
-		Object clone = decode(data);
+		boolean[] clone = decode(data, boolean[].class);
 		
 		if (expectedSize >= 0)
 			Assert.assertEquals(expectedSize, data.length);
-		if (!(clone instanceof Collection))
-			Assert.fail("Not a Collection: " + clone);
+
+		Assert.assertEquals(value.length, clone.length);
 		
-		Collection<?> coll = (Collection<?>)clone;
-		Assert.assertEquals(value.length, coll.size());
-		
-		int i = 0;
-		for (Object item : coll) {
-			if (!(item instanceof Boolean))
-				Assert.fail("Not a Boolean: " + item);
-			if (value[i++])
-				Assert.assertTrue(((Boolean)item).booleanValue());
-			else
-				Assert.assertFalse(((Boolean)item).booleanValue());
-		}
+		for (int i = 0; i < value.length; i++)
+			Assert.assertTrue(value[i] == clone[i]);
 	}
 
 	@Test
@@ -85,22 +75,12 @@ public class TestArray extends AbstractSpearalTestUnit {
 	
 	private void encodeDecode(short[] value, int expectedSize) throws IOException {
 		byte[] data = encode(value);
-		Object clone = decode(data);
+		short[] clone = decode(data, short[].class);
 		
 		if (expectedSize >= 0)
 			Assert.assertEquals(expectedSize, data.length);
-		if (!(clone instanceof Collection))
-			Assert.fail("Not a Collection: " + clone);
-		
-		Collection<?> coll = (Collection<?>)clone;
-		Assert.assertEquals(value.length, coll.size());
-		
-		int i = 0;
-		for (Object item : coll) {
-			if (!(item instanceof Long))
-				Assert.fail("Not a Long: " + item);
-			Assert.assertEquals(value[i++], ((Long)item).longValue());
-		}
+
+		Assert.assertArrayEquals(value, clone);
 	}
 
 	@Test
@@ -117,22 +97,12 @@ public class TestArray extends AbstractSpearalTestUnit {
 	
 	private void encodeDecode(int[] value, int expectedSize) throws IOException {
 		byte[] data = encode(value);
-		Object clone = decode(data);
+		int[] clone = decode(data, int[].class);
 		
 		if (expectedSize >= 0)
 			Assert.assertEquals(expectedSize, data.length);
-		if (!(clone instanceof Collection))
-			Assert.fail("Not a Collection: " + clone);
-		
-		Collection<?> coll = (Collection<?>)clone;
-		Assert.assertEquals(value.length, coll.size());
-		
-		int i = 0;
-		for (Object item : coll) {
-			if (!(item instanceof Long))
-				Assert.fail("Not a Long: " + item);
-			Assert.assertEquals(value[i++], ((Long)item).longValue());
-		}
+
+		Assert.assertArrayEquals(value, clone);
 	}
 
 	@Test
@@ -149,22 +119,12 @@ public class TestArray extends AbstractSpearalTestUnit {
 	
 	private void encodeDecode(long[] value, int expectedSize) throws IOException {
 		byte[] data = encode(value);
-		Object clone = decode(data);
+		long[] clone = decode(data, long[].class);
 		
 		if (expectedSize >= 0)
 			Assert.assertEquals(expectedSize, data.length);
-		if (!(clone instanceof Collection))
-			Assert.fail("Not a Collection: " + clone);
-		
-		Collection<?> coll = (Collection<?>)clone;
-		Assert.assertEquals(value.length, coll.size());
-		
-		int i = 0;
-		for (Object item : coll) {
-			if (!(item instanceof Long))
-				Assert.fail("Not a Long: " + item);
-			Assert.assertEquals(value[i++], ((Long)item).longValue());
-		}
+
+		Assert.assertArrayEquals(value, clone);
 	}
 
 	@Test
@@ -184,29 +144,12 @@ public class TestArray extends AbstractSpearalTestUnit {
 	
 	private void encodeDecode(float[] value, int expectedSize) throws IOException {
 		byte[] data = encode(value);
-		Object clone = decode(data);
+		float[] clone = decode(data, float[].class);
 		
 		if (expectedSize >= 0)
 			Assert.assertEquals(expectedSize, data.length);
-		if (!(clone instanceof Collection))
-			Assert.fail("Not a Collection: " + clone);
-		
-		Collection<?> coll = (Collection<?>)clone;
-		Assert.assertEquals(value.length, coll.size());
-		
-		int i = 0;
-		for (Object item : coll) {
-			if (!(item instanceof Double)) {
-				if (item instanceof Long)
-					item = Double.valueOf(((Long)item).doubleValue());
-				else
-					Assert.fail("Not a Double: " + item);
-			}
-			Assert.assertEquals(
-				Double.doubleToLongBits(value[i++]),
-				Double.doubleToLongBits(((Double)item).doubleValue())
-			);
-		}
+
+		Assert.assertArrayEquals(value, clone, 0.0f);
 	}
 
 	@Test
@@ -226,29 +169,12 @@ public class TestArray extends AbstractSpearalTestUnit {
 	
 	private void encodeDecode(double[] value, int expectedSize) throws IOException {
 		byte[] data = encode(value);
-		Object clone = decode(data);
+		double[] clone = decode(data, double[].class);
 		
 		if (expectedSize >= 0)
 			Assert.assertEquals(expectedSize, data.length);
-		if (!(clone instanceof Collection))
-			Assert.fail("Not a Collection: " + clone);
 		
-		Collection<?> coll = (Collection<?>)clone;
-		Assert.assertEquals(value.length, coll.size());
-		
-		int i = 0;
-		for (Object item : coll) {
-			if (!(item instanceof Double)) {
-				if (item instanceof Long)
-					item = Double.valueOf(((Long)item).doubleValue());
-				else
-					Assert.fail("Not a Double: " + item);
-			}
-			Assert.assertEquals(
-				Double.doubleToLongBits(value[i++]),
-				Double.doubleToLongBits(((Double)item).doubleValue())
-			);
-		}
+		Assert.assertArrayEquals(value, clone, 0.0);
 	}
 
 	@Test
@@ -263,36 +189,12 @@ public class TestArray extends AbstractSpearalTestUnit {
 	
 	private void encodeDecode(int[][] value, int expectedSize) throws IOException {
 		byte[] data = encode(value);
-		Object clone = decode(data);
+		int[][] clone = decode(data, int[][].class);
 		
 		if (expectedSize >= 0)
 			Assert.assertEquals(expectedSize, data.length);
-		if (!(clone instanceof Collection))
-			Assert.fail("Not a Collection: " + clone);
 		
-		Collection<?> coll = (Collection<?>)clone;
-		Assert.assertEquals(value.length, coll.size());
-		
-		int i = 0;
-		for (Object item : coll) {
-			int[] subValue = value[i++];
-			if (subValue == null) {
-				Assert.assertNull(item);
-				continue;
-			}
-			if (!(item instanceof Collection))
-				Assert.fail("Not a Collection: " + item);
-			
-			Collection<?> subColl = (Collection<?>)item;
-			Assert.assertEquals(subValue.length, subColl.size());
-			
-			int j = 0;
-			for (Object subItem : subColl) {
-				if (!(subItem instanceof Long))
-					Assert.fail("Not a Long: " + subItem);
-				Assert.assertEquals(subValue[j++], ((Long)subItem).longValue());
-			}
-		}
+		Assert.assertArrayEquals(value, clone);
 	}
 
 	@Test

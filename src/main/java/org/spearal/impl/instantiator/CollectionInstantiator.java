@@ -44,14 +44,15 @@ public class CollectionInstantiator implements
 	}
 
 	@Override
-	public Object instantiate(SpearalContext context, Type type) {
+	public Object instantiate(SpearalContext context, Type type, Object param) {
 		Class<?> cls = TypeUtil.classOfType(type);
+		int capacity = (param instanceof Integer ? ((Integer)param).intValue() : -1);
 
 		if (cls.isInterface()) {
 			if (cls.isAssignableFrom(ArrayList.class))
-				return new ArrayList<Object>();
+				return (capacity < 0 ? new ArrayList<Object>() : new ArrayList<Object>(capacity));
 			if (cls.isAssignableFrom(HashSet.class))
-				return new HashSet<Object>();
+				return (capacity < 0 ? new HashSet<Object>() : new HashSet<Object>(capacity));
 			if (cls.isAssignableFrom(TreeSet.class))
 				return new TreeSet<Object>();
             throw new IllegalArgumentException("Unsupported collection interface: " + cls);
@@ -73,8 +74,8 @@ public class CollectionInstantiator implements
 	}
 
 	@Override
-	public Object instantiate(SpearalContext context, Property property) {
-		return instantiate(context, property.getGenericType());
+	public Object instantiate(SpearalContext context, Property property, Object param) {
+		return instantiate(context, property.getGenericType(), param);
 	}
 
 	private static boolean canInstantiate(Type type) {

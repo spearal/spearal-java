@@ -45,9 +45,9 @@ public interface SpearalContext {
 	
 	Property[] getProperties(Class<?> cls);
 	
-	Object instantiate(Type type)
+	Object instantiate(Type type, Object param)
 		throws InstantiationException, IllegalAccessException;
-	Object instantiate(Property property)
+	Object instantiate(Property property, Object param)
 		throws InstantiationException, IllegalAccessException;
 	Object instantiatePartial(Class<?> cls, Property[] partialProperties)
 		throws InstantiationException, IllegalAccessException;

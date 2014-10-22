@@ -40,6 +40,12 @@ public interface SpearalDecoder {
 		public Collection<?> getCollection();
 		public int getIndex();
 	}
+
+	public interface ArrayPathSegment extends PathSegment {
+		
+		public Object getArray();
+		public int getIndex();
+	}
 	
 	public interface MapPathSegment extends PathSegment {
 

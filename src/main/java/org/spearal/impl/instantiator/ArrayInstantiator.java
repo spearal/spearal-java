@@ -17,10 +17,8 @@
  */
 package org.spearal.impl.instantiator;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Type;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.TreeMap;
 
 import org.spearal.SpearalContext;
 import org.spearal.configuration.PropertyFactory.Property;
@@ -33,7 +31,7 @@ import org.spearal.impl.util.TypeUtil;
 /**
  * @author Franck WOLFF
  */
-public class MapInstantiator implements
+public class ArrayInstantiator implements
 	TypeInstantiatorProvider, TypeInstantiator,
 	PropertyInstantiatorProvider, PropertyInstantiator {
 
@@ -45,24 +43,24 @@ public class MapInstantiator implements
 	@Override
 	public Object instantiate(SpearalContext context, Type type, Object param) {
 		Class<?> cls = TypeUtil.classOfType(type);
-		int capacity = (param instanceof Integer ? ((Integer)param).intValue() : -1);
-
-		if (cls.isInterface()) {
-			if (cls.isAssignableFrom(LinkedHashMap.class))
-				return (capacity < 0 ? new LinkedHashMap<Object, Object>() : new LinkedHashMap<Object, Object>(capacity));
-			if (cls.isAssignableFrom(TreeMap.class))
-				return new TreeMap<Object, Object>();
-            throw new IllegalArgumentException("Unsupported map interface: " + cls);
-        }
 		
-		context.getSecurizer().checkDecodable(type);
+		if (!(param instanceof Integer))
+			throw new IllegalArgumentException("param should be the length of the array: " + param);
+		int length = ((Integer)param).intValue();
 		
-        try {
-			return cls.newInstance();
+		Class<?> componentType = cls.getComponentType();
+		if (!componentType.isArray())
+			return Array.newInstance(componentType, length);
+		
+		int depth = 0;
+		while (componentType.isArray()) {
+			depth++;
+			componentType = componentType.getComponentType();
 		}
-        catch (Exception e) {
-			throw new RuntimeException("Could not create instance of: " + cls, e);
-		}
+		
+		int[] dimensions = new int[depth + 1];
+		dimensions[0] = length;
+		return Array.newInstance(componentType, dimensions);
 	}
 
 	@Override
@@ -76,6 +74,6 @@ public class MapInstantiator implements
 	}
 
 	private static boolean canInstantiate(Type type) {
-		return Map.class.isAssignableFrom(TypeUtil.classOfType(type));
+		return TypeUtil.classOfType(type).isArray();
 	}
 }

@@ -23,6 +23,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
+import java.util.Collection;
 
 /**
  * @author Franck WOLFF
@@ -72,12 +73,18 @@ public abstract class TypeUtil {
     }
 	
     public static Type getElementType(Type collectionType) {
-    	if (collectionType instanceof ParameterizedType) {
+    	Class<?> collectionClass = classOfType(collectionType);
+    	
+    	if (collectionClass.isArray())
+    		return collectionClass.getComponentType();
+    	
+    	if (Collection.class.isAssignableFrom(collectionClass) && collectionType instanceof ParameterizedType) {
             Type[] componentTypes = ((ParameterizedType)collectionType).getActualTypeArguments();
             if (componentTypes != null && componentTypes.length == 1)
                 return componentTypes[0];
         }
-        return Object.class;
+        
+    	return Object.class;
 	}
 
     public static Type getKeyType(Type mapType) {

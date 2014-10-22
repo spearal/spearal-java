@@ -24,6 +24,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -226,7 +227,12 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 			
 		case COLLECTION:
 			value = readCollection(parameterizedType, targetType);
-			convert = (targetType != null && !Collection.class.isAssignableFrom(TypeUtil.classOfType(targetType)));
+			if (targetType == null)
+				convert = false;
+			else {
+				Class<?> targetClass = TypeUtil.classOfType(targetType);
+				convert = !(targetClass.isArray() || Collection.class.isAssignableFrom(targetClass));
+			}
 			break;
 			
 		case MAP:
@@ -533,17 +539,17 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public Collection<?> readCollection(int parameterizedType, Type targetType) throws IOException {
+	public Object readCollection(int parameterizedType, Type targetType) throws IOException {
 		final int indexOrLength = readIndexOrLength(parameterizedType);
 
 		if (isObjectReference(parameterizedType))
-			return (List<?>)sharedObjects.get(indexOrLength);
+			return sharedObjects.get(indexOrLength);
 		
-		Collection<Object> value = null;
-		Type elementType = null;	
-		if (targetType != null && Collection.class.isAssignableFrom(TypeUtil.classOfType(targetType))) {		
+		Object value = null;
+		Type elementType = null;
+		if (targetType != null) {		
 			try {
-				value = (Collection<Object>)context.instantiate(targetType);
+				value = context.instantiate(targetType, Integer.valueOf(indexOrLength));
 			} 
 			catch (Exception e) {
 				throw new RuntimeException("Couldn't instantiate type: " + targetType, e);
@@ -554,12 +560,22 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 			value = new ArrayList<Object>(indexOrLength);
 		
 		sharedObjects.add(value);
-
-		CollectionPathSegmentImpl segment = new CollectionPathSegmentImpl(value);
-		path.push(segment);
-		for (segment.index = 0; segment.index < indexOrLength; segment.index++)
-			value.add(readAny(elementType));
-		path.pop();
+		
+		if (value.getClass().isArray()) {
+			ArrayPathSegmentImpl segment = new ArrayPathSegmentImpl(value);
+			path.push(segment);
+			for (int i = 0; i < indexOrLength; i++)
+				Array.set(value, i, readAny(elementType));
+			path.pop();
+		}
+		else {
+			Collection<Object> collection = (Collection<Object>)value;
+			CollectionPathSegmentImpl segment = new CollectionPathSegmentImpl(collection);
+			path.push(segment);
+			for (int i = 0; i < indexOrLength; i++)
+				collection.add(readAny(elementType));
+			path.pop();
+		}
 
 		return value;
 	}
@@ -625,7 +641,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 		Type valType = null;
 		if (targetType != null && Map.class.isAssignableFrom(TypeUtil.classOfType(targetType))) {		
 			try {
-				value = (Map<Object, Object>)context.instantiate(targetType);
+				value = (Map<Object, Object>)context.instantiate(targetType, Integer.valueOf(indexOrLength));
 			} 
 			catch (Exception e) {
 				throw new RuntimeException("Couldn't instantiate type: " + targetType, e);
@@ -758,7 +774,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 			if (cls == ClassNotFound.class)
 				value = new ClassNotFound(classDescription);
 			else if (!descriptor.partial)
-				value = context.instantiate(cls);
+				value = context.instantiate(cls, null);
 			else {
 				value = context.instantiatePartial(cls, descriptor.properties);
 				partialObjectsMap.put(value, path.peek());
@@ -1192,6 +1208,36 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 		@Override
 		public String toString() {
 			return "collection: " + index;
+		}
+	}
+	
+	public static class ArrayPathSegmentImpl implements ArrayPathSegment {
+		
+		private final Object array;
+		private int index;
+		
+		public ArrayPathSegmentImpl(Object array) {
+			this.array = array;
+		}
+
+		public Object getArray() {
+			return array;
+		}
+
+		public int getIndex() {
+			return index;
+		}
+
+		@Override
+		public ArrayPathSegment copy() {
+			ArrayPathSegmentImpl copy = new ArrayPathSegmentImpl(array);
+			copy.index = index;
+			return copy;
+		}
+
+		@Override
+		public String toString() {
+			return "array: " + index;
 		}
 	}
 	

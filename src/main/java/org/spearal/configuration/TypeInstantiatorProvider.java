@@ -28,7 +28,7 @@ public interface TypeInstantiatorProvider extends Repeatable {
 
 	public interface TypeInstantiator {
 		
-		Object instantiate(SpearalContext context, Type type);
+		Object instantiate(SpearalContext context, Type type, Object param);
 	}
 	
 	TypeInstantiator getInstantiator(Type type);

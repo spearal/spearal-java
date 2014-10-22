@@ -131,7 +131,7 @@ public class AnyProperty implements Property {
 	public Object init(ExtendedSpearalDecoder decoder, Object holder)
 		throws InstantiationException, IllegalAccessException, InvocationTargetException {
 
-		Object value = decoder.getContext().instantiate(this);
+		Object value = decoder.getContext().instantiate(this, null);
 		set(holder, value);
 		return value;
 	}
