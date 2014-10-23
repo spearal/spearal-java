@@ -42,6 +42,7 @@ public interface SpearalContext {
 	
 	Class<?> loadClass(String classNames, Type target)
 		throws SecurityException;
+	Object newInstance(Class<?> cls);
 	
 	Property[] getProperties(Class<?> cls);
 	

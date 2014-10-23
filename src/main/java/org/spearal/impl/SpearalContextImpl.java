@@ -19,6 +19,7 @@ package org.spearal.impl;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +36,7 @@ import org.spearal.configuration.FilteredBeanDescriptorFactory;
 import org.spearal.configuration.FilteredBeanDescriptorFactory.FilteredBeanDescriptor;
 import org.spearal.configuration.Introspector;
 import org.spearal.configuration.PartialObjectFactory;
+import org.spearal.configuration.PartialObjectFactory.PartialObjectProxy;
 import org.spearal.configuration.PropertyFactory;
 import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.configuration.PropertyInstantiatorProvider;
@@ -265,6 +267,22 @@ public class SpearalContextImpl implements SpearalContext {
 	@Override
 	public Property[] getProperties(Class<?> cls) {
 		return introspector.getProperties(this, cls);
+	}
+	
+	@Override
+	public Object newInstance(Class<?> cls) {
+		if (cls.isInterface())
+			cls = Proxy.getProxyClass(cls.getClassLoader(), cls, PartialObjectProxy.class);
+        try {
+			Property[] properties = getProperties(cls);
+			return instantiatePartial(cls, properties);
+        }
+        catch (InstantiationException e) {
+            throw new RuntimeException("Could not create instance of " + cls, e);
+        }
+        catch (IllegalAccessException e) {
+            throw new RuntimeException("Could not create instance of " + cls, e);
+        }
 	}
 
 	@Override
