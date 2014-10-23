@@ -112,8 +112,10 @@ public class ProxyInstantiator implements
 					methods.put(property.getSetter(), property.getName());
 			}
 			if (definedProperties != null) {
-				for (Property property : definedProperties)
+				for (Property property : definedProperties) {
 					this.definedProperties.put(property.getName(), property);
+					this.values.put(property.getName(), null);
+				}
 			}
 		}
 
