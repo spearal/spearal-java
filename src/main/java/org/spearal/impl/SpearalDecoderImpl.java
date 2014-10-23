@@ -58,7 +58,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	private final List<String> sharedStrings;
 	private final List<Object> sharedObjects;
 	
-	private final Path path;
+	private final PathImpl path;
 	private final PartialObjectMap partialObjectsMap;
 	
 	private final EqualityMap<String, Type, ClassDescriptor> descriptors;
@@ -80,7 +80,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 		this.sharedStrings = new ArrayList<String>(64);
 		this.sharedObjects = new ArrayList<Object>(64);
 		
-		this.path = new Path();
+		this.path = new PathImpl();
 		this.partialObjectsMap = new PartialObjectMap();
 		
 		this.descriptors = new EqualityMap<String, Type, ClassDescriptor>(new ValueProvider<String, Type, ClassDescriptor>() {
@@ -124,15 +124,8 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 		return context;
 	}
 
-	@Override
-	public Object readAny() throws IOException {
-		return readAny(readNextByte(), null);
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public <T> T readAny(Type targetType) throws IOException {
-		return (T)readAny(readNextByte(), targetType);
+	public Path getPath() {
+		return path;
 	}
 
 	@Override
@@ -143,6 +136,17 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 	@Override
 	public Map<Object, List<PathSegment>> getPartialObjectsMap() {
 		return partialObjectsMap;
+	}
+
+	@Override
+	public Object readAny() throws IOException {
+		return readAny(readNextByte(), null);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> T readAny(Type targetType) throws IOException {
+		return (T)readAny(readNextByte(), targetType);
 	}
 
 	@Override
@@ -564,15 +568,15 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 		if (value.getClass().isArray()) {
 			ArrayPathSegmentImpl segment = new ArrayPathSegmentImpl(value);
 			path.push(segment);
-			for (int i = 0; i < indexOrLength; i++)
-				Array.set(value, i, readAny(elementType));
+			for (segment.index = 0; segment.index < indexOrLength; segment.index++)
+				Array.set(value, segment.index, readAny(elementType));
 			path.pop();
 		}
 		else {
 			Collection<Object> collection = (Collection<Object>)value;
 			CollectionPathSegmentImpl segment = new CollectionPathSegmentImpl(collection);
 			path.push(segment);
-			for (int i = 0; i < indexOrLength; i++)
+			for (segment.index = 0; segment.index < indexOrLength; segment.index++)
 				collection.add(readAny(elementType));
 			path.pop();
 		}
@@ -1207,7 +1211,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
 		@Override
 		public String toString() {
-			return "collection: " + index;
+			return "[" + index + "]";
 		}
 	}
 	
@@ -1237,7 +1241,7 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
 		@Override
 		public String toString() {
-			return "array: " + index;
+			return "[" + index + "]";
 		}
 	}
 	
@@ -1267,7 +1271,14 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
 		@Override
 		public String toString() {
-			return "map: " + key;
+			if (key == null)
+				return "";
+			try {
+				return key.toString();
+			}
+			catch (Exception e) {
+				return "[ERROR: " + e.getMessage() + "]";
+			}
 		}
 	}
 	
@@ -1297,20 +1308,28 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 
 		@Override
 		public String toString() {
-			return "bean: " + property;
+			return property.getName();
 		}
 	}
 	
-	private static class Path {
+	private static class PathImpl implements Path {
 		
 		private static final int DEFAULT_SIZE_INCREMENT = 8;
 		
 		private PathSegment[] segments;
 		private int size; 
 		
-		public Path() {
+		public PathImpl() {
 			this.segments = new PathSegment[0];
 			this.size = 0;
+		}
+
+		@Override
+		public Collection<PathSegment> segments() {
+			List<PathSegment> segmentsList = new ArrayList<PathSegment>(size);
+			for (int i = 0; i < size; i++)
+				segmentsList.add(segments[i]);
+			return segmentsList;
 		}
 
 		public void push(PathSegment segment) {
@@ -1331,6 +1350,17 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 		
 		public PathSegment peek() {
 			return (size == 0 ? null : segments[size - 1]);
+		}
+
+		@Override
+		public String toString() {
+			if (size == 0)
+				return "";
+			
+			StringBuilder sb = new StringBuilder().append(segments[0]);
+			for (int i = 1; i < size; i++)
+				sb.append('.').append(segments[i]);
+			return sb.toString();
 		}
 	}
 	
