@@ -27,7 +27,7 @@ public interface PropertyInstantiatorProvider extends Repeatable {
 
 	public interface PropertyInstantiator {
 		
-		Object instantiate(SpearalContext context, Property property);
+		Object instantiate(SpearalContext context, Property property, Object param);
 	}
 	
 	PropertyInstantiator getInstantiator(Property property);

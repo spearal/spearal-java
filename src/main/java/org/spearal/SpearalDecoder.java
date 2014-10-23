@@ -30,6 +30,11 @@ import org.spearal.configuration.PropertyFactory.Property;
  */
 public interface SpearalDecoder {
 	
+	public interface Path {
+		
+		Collection<PathSegment> segments();
+	}
+	
 	public interface PathSegment {
 		
 		PathSegment copy();
@@ -38,6 +43,12 @@ public interface SpearalDecoder {
 	public interface CollectionPathSegment extends PathSegment {
 		
 		public Collection<?> getCollection();
+		public int getIndex();
+	}
+
+	public interface ArrayPathSegment extends PathSegment {
+		
+		public Object getArray();
 		public int getIndex();
 	}
 	
@@ -55,11 +66,12 @@ public interface SpearalDecoder {
 
 	SpearalContext getContext();
 	
-	Object readAny() throws IOException;
-	<T> T readAny(Type targetType) throws IOException;
-	
+	Path getPath();
 	boolean containsPartialObjects();
 	Map<Object, List<PathSegment>> getPartialObjectsMap();
+	
+	Object readAny() throws IOException;
+	<T> T readAny(Type targetType) throws IOException;
 	
 	void skipAny() throws IOException;
 	

@@ -22,7 +22,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Collection;
 import java.util.Map;
 
 import org.spearal.SpearalDecoder;
@@ -51,7 +50,7 @@ public interface ExtendedSpearalDecoder extends SpearalDecoder {
 	
 	byte[] readByteArray(int parameterizedType) throws IOException;
 	
-	Collection<?> readCollection(int parameterizedType, Type targetType) throws IOException;
+	Object readCollection(int parameterizedType, Type targetType) throws IOException;
 	void readCollection(int parameterizedType, Object holder, Property property)
 		throws IOException, InstantiationException, IllegalAccessException, InvocationTargetException;
 

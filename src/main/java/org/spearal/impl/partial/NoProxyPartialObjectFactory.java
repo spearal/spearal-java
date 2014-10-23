@@ -47,6 +47,6 @@ public class NoProxyPartialObjectFactory implements PartialObjectFactory, ValueP
 		if (Proxy.isProxyClass(cls))
 			return ProxyInstantiator.instantiatePartial(context, cls, partialProperties);
 		
-		return context.instantiate(cls);
+		return context.instantiate(cls, null);
 	}
 }
