@@ -124,8 +124,10 @@ public class JavassistPartialObjectFactory implements PartialObjectFactory, Valu
 				String name = method.getName();
 				if ("$hasUndefinedProperties".equals(name))
 					return Boolean.valueOf(definedProperties.size() < allProperties.length);
-				if ("$isDefined".equals(name))
+				if ("$isDefined".equals(name) && args.length == 1)
 					return Boolean.valueOf(definedProperties.containsKey(args[0]));
+				if ("$undefine".equals(name) && args.length == 1)
+					return definedProperties.remove(args[0]);
 				if ("$getDefinedProperties".equals(name))
 					return definedProperties.values().toArray(new Property[definedProperties.size()]);
 				if ("$getActualClass".equals(name))

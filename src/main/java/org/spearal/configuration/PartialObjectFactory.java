@@ -29,6 +29,7 @@ public interface PartialObjectFactory extends Configurable {
 
 		boolean $hasUndefinedProperties();
 		boolean $isDefined(String propertyName);
+		boolean $undefine(String propertyName);
 		Property[] $getDefinedProperties();
 	}
 	

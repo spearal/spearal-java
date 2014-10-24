@@ -1052,8 +1052,10 @@ public class SpearalDecoderImpl implements ExtendedSpearalDecoder {
 				partial = true;
 			}
 			
-			if (partial && Proxy.isProxyClass(cls))
+			if (Proxy.isProxyClass(cls)) {
+				partial = true;
 				cls = context.loadClass(classNames + "," + PartialObjectProxy.class.getName(), targetType);
+			}
 			
 			return new ClassDescriptor(cls, serializedProperties, partial);
 		}

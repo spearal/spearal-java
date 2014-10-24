@@ -17,11 +17,22 @@
  */
 package org.spearal;
 
+import org.spearal.configuration.PartialObjectFactory.PartialObjectProxy;
+
 /**
  * @author Franck WOLFF
+ * @author William DRAI
  */
 public class Spearal {
 
 	public final static String APPLICATION_SPEARAL = "application/spearal";
 	public final static String PROPERTY_FILTER_HEADER = "Spearal-PropertyFilter";
+	
+	
+	public static void undefine(Object object, String propertyName) {
+		if (!(object instanceof PartialObjectProxy))
+			return;
+		
+		((PartialObjectProxy)object).$undefine(propertyName);
+	}
 }

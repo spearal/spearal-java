@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.spearal.SpearalContext;
+import org.spearal.configuration.PartialObjectFactory.PartialObjectProxy;
 import org.spearal.configuration.PartialObjectFactory.UndefinedPropertyException;
 import org.spearal.configuration.PropertyFactory.Property;
 import org.spearal.configuration.PropertyInstantiatorProvider;
@@ -123,18 +124,24 @@ public class ProxyInstantiator implements
 		public Object invoke(Object proxy, Method method, Object[] args)
 			throws Throwable {
 			
-			if ("$hasUndefinedProperties".equals(method.getName()) && method.getParameterTypes().length == 0) {
-				return properties.length > definedProperties.size();
+			if (method.getDeclaringClass() == PartialObjectProxy.class) {
+				if ("$hasUndefinedProperties".equals(method.getName()) && method.getParameterTypes().length == 0) {
+					return properties.length > definedProperties.size();
+				}
+				else if ("$isDefined".equals(method.getName()) && method.getParameterTypes().length == 1 && method.getParameterTypes()[0] == String.class) {
+					if (values.containsKey(args[0]))
+						return true;
+					if (definedProperties.containsKey(args[0]))
+						return true;						
+					return false;
+				}
+				else if ("$undefine".equals(method.getName()) && method.getParameterTypes().length == 1 && method.getParameterTypes()[0] == String.class) {
+					values.remove(args[0]);
+					return definedProperties.remove(args[0]);
+				}
+				else if ("$getDefinedProperties".equals(method.getName()) && method.getParameterTypes().length == 0)
+					return definedProperties.values().toArray(new Property[definedProperties.size()]);
 			}
-			else if ("$isDefined".equals(method.getName()) && method.getParameterTypes().length == 1 && method.getParameterTypes()[0] == String.class) {
-				if (values.containsKey(args[0]))
-					return true;
-				if (definedProperties.containsKey(args[0]))
-					return true;						
-				return false;
-			}
-			else if ("$getDefinedProperties".equals(method.getName()) && method.getParameterTypes().length == 0)
-				return definedProperties.values().toArray(new Property[definedProperties.size()]);
 			
 			String propertyName = methods.get(method);
 			if (propertyName != null) {
