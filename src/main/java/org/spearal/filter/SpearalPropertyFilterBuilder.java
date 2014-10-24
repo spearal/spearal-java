@@ -22,6 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Logger;
 
 import org.spearal.SpearalContext;
 import org.spearal.SpearalPropertyFilter;
@@ -33,6 +34,8 @@ import org.spearal.impl.util.ClassDescriptionUtil;
  * @author William DRAI
  */
 public class SpearalPropertyFilterBuilder {
+	
+	private static final Logger log = Logger.getLogger(SpearalPropertyFilterBuilder.class.getName());
 	
 	private final Map<Class<?>, String[]> propertyFiltersByClass = new LinkedHashMap<Class<?>, String[]>();
 	
@@ -91,6 +94,11 @@ public class SpearalPropertyFilterBuilder {
 		for (String header : headers) {
 			String classNames = ClassDescriptionUtil.classNames(header);
 			Class<?> filterClass = context.loadClass(classNames, null);
+			if (filterClass == null) {
+				log.warning("Ignored filter on unknown class/classes " + classNames);
+				continue;
+			}
+			
 			String[] propertyNames = ClassDescriptionUtil.splitPropertyNames(header);
 			if (propertyFilters == null)
 				propertyFilters = of(filterClass, propertyNames);
