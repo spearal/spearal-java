@@ -146,6 +146,7 @@ from a local qualified name to the remote qualified name.
 The built-in implementation `PackageTranslatorAliasStrategy` simply translates the package prefix from one name to another. For example with 
 a client package prefix `com.mycompany.client` and a server package prefix `com.mycompany.server`, the class name `com.mycompany.server.domain.DomainObject`
 will be translated to `com.mycompany.client.domain.DomainObject` and the corresponding class will be instantiated.
+
 The default does not alias or unalias anything.
 
 
@@ -177,9 +178,9 @@ public Object instantiatePartial(SpearalContext context, Class<?> cls, Property[
 ----
 
 
-=== Securizer
+=== `Securizer`
 
-The role of the securizer is to allow or forbid the serialization/deserialization of an particular type. It can be important in particular
+The role of the securizer is to allow or forbid the serialization/deserialization of any particular type. It can be important in particular
 during deserialization to prevent an attacker to let Spearal instantiate a sensitive class with which it could access the underlying system. 
 The default `SecurizerImpl` enforces that the target class must implement `Serializable` but any other policy can be implemented.
 
@@ -192,9 +193,9 @@ void checkEncodable(Class<?> cls) throws SecurityException;
 ----
 
 
-=== TypeLoader
+=== `TypeLoader`
 
-The role of the loader is to instantiate the target class from its aliased name (or names when muliple interfaces are received).
+The role of the loader is to instantiate the target class from its aliased name (or names when multiple interfaces are received).
 The default `TypeLoaderImpl` parses the class names, and does the following depending on the cases:
 
 - If there is only one name, it loads the type. If the type is an interface, it instantiates a Java proxy, else it instantiates the class itself.
@@ -219,7 +220,7 @@ Class<?> loadClass(SpearalContext context, String classNames, Type target);
 ----
 
 
-=== UnfilterablePropertiesProvider
+=== `UnfilterablePropertiesProvider`
 
 TODO
 
